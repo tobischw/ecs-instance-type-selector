@@ -3,11 +3,7 @@ Easily calculate AWS cluster pricing rates, in many different configurations. Wr
 
 
 ## How to build/run
-First, ensure you have Elm installed.
-
-Next, `git clone` the master branch and `cd` into it.
-From there, run
-
-`elm-app start`
-
-to start the app.
+* First, ensure you have Elm installed.
+* Next, `git clone` the master branch and `cd` into it.
+* Make sure you install create-elm-app by doing `npm i create-elm-app -g`
+* From there, run `elm-app start` to start the app.

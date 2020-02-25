@@ -1,6 +1,6 @@
 {
-  "short_name": "Elm App",
-  "name": "Create Elm App Sample",
+  "short_name": "ECS Instance Type Selector",
+  "name": "Identify cheapest AWS EC2 cluster instance configurations.",
   "icons": [
     {
       "src": "favicon.ico",
