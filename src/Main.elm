@@ -114,6 +114,40 @@ view model =
                                 button [class "btn btn-sm btn-outline-secondary dropdown-toggle"] [text "Templates"]
                             ]
                         ]
+                    ],
+                    div [class "flex-container"] [
+                        div [class "row"] [
+                            div [class "col-lg-12"] [
+                                div [class "card"] [
+                                    div [class "card-header"] [
+                                        div [class "d-flex align-items-center"] [
+                                            div [class "mr-auto"] [
+                                                h5 [] [text "Unnamed Service"],
+                                                span [class "text-muted"] [text "2 tasks · Created 20 minutes ago"],
+                                                text "·",
+                                                button [class "btn btn-link btn-sm p-0 collapsed", attribute "data-toggle" "collapse", attribute "data-target" "#collapseExample2"] [text "configure"]
+                                            ],
+                                            div [class "btn-group"] [
+                                                button [class "btn btn-outline-secondary btn-sm"] [text "Duplicate"],
+                                                button [class "btn btn-outline-secondary btn-sm"] [text "Hide"],
+                                                button [class "btn btn-outline-danger btn-sm"] [text "X"]
+                                            ]
+                                        ],
+                                        div [id "collapseExample2", class "collapse"] [
+                                            hr [] [],
+                                            Html.form [] [
+                                                div [class "form-group row"] [
+                                                    label [class "col-sm-3 col-form-label"] [ text "Scale tasks", span [class "text-muted"] [text "(Is this right?)"] ],
+                                                    div [class "col-sm-9 mt-2"] [
+                                                        input [id "formControlRange", class "form-control-range custom-range", type_ "range"] []
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
                     ]
                 ]
             ]
