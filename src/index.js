@@ -1,7 +1,7 @@
-import { Elm } from './Main.elm';
+import { Elm } from './App/Main.elm';
 import registerServiceWorker from './registerServiceWorker';
 
-Elm.Main.init({
+Elm.App.Main.init({
   node: document.getElementById('root')
 });
 
