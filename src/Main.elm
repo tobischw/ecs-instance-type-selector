@@ -723,16 +723,6 @@ view model =
         ]
       ]
     ]
-  , node "script" [ attribute "crossorigin" "anonymous", attribute "integrity" "sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n", src "ECS%20Instance%20Selector_files/jquery-3.js" ]
-    []
-  , node "script" [ attribute "crossorigin" "anonymous", attribute "integrity" "sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm", src "ECS%20Instance%20Selector_files/bootstrap.js" ]
-    []
-  , node "script" [ src "ECS%20Instance%20Selector_files/feather.js" ]
-    []
-  , node "script" [ src "ECS%20Instance%20Selector_files/Chart.js" ]
-    []
-  , node "script" [ src "ECS%20Instance%20Selector_files/dashboard.js" ]
-    []
         ]
     }
 
