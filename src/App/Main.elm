@@ -1,4 +1,4 @@
-module Main exposing (..)
+module App.Main exposing (..)
 
 import Browser exposing (Document)
 import Html exposing (..)
