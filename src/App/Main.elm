@@ -61,18 +61,31 @@ viewContent : Model -> Html Msg
 viewContent model =
     Grid.containerFluid []
         [ Grid.row []
-            [ Grid.col [ Col.md3, Col.attrs [ class "p-0"] ] [ viewConfiguration model, text "test" ]
+            [ Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ] [ viewConfiguration model ]
+            , Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ] [ viewDetailedConfiguration model ]
             ]
         ]
 
 
 viewConfiguration : Model -> Html Msg
 viewConfiguration model =
-    ListGroup.ul
-        [ ListGroup.li [ ListGroup.active ] [ text "List item 1" ]
-        , ListGroup.li [] [ text "List item 2" ]
-        , ListGroup.li [] [ text "List item 3" ]
+    div [ class "sidebar px-3" ]
+        [ h6 [ class "sidebar-heading text-muted pt-2" ] [ text "Configuration" ]
+        , ListGroup.ul
+            [ ListGroup.li [] [ text "Service A" ]
+            , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-5" ] ] [ text "Task A" ]
+            , ListGroup.li [] [ text "Service B" ]
+            ]
         ]
+
+
+viewDetailedConfiguration : Model -> Html Msg
+viewDetailedConfiguration model =
+    div [ class "sidebar px-3"] 
+    [
+        h6 [ class "sidebar-heading text-muted pt-2" ] [ text "Task A" ]
+        , div [] [ text "Idea: If a user changes configuration on the left, the detailed configuration will show up here."]
+    ]
 
 
 viewNavbar : Model -> Html Msg
