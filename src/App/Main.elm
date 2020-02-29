@@ -1,5 +1,9 @@
 module App.Main exposing (..)
 
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Row
+import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
 import Html exposing (..)
@@ -48,22 +52,39 @@ view model =
     { title = "ECS Instance Selector"
     , body =
         [ viewNavbar model
+        , viewContent model
         ]
     }
+
+
+viewContent : Model -> Html Msg
+viewContent model =
+    Grid.containerFluid []
+        [ Grid.row []
+            [ Grid.col [ Col.md3, Col.attrs [ class "p-0"] ] [ viewConfiguration model, text "test" ]
+            ]
+        ]
+
+
+viewConfiguration : Model -> Html Msg
+viewConfiguration model =
+    ListGroup.ul
+        [ ListGroup.li [ ListGroup.active ] [ text "List item 1" ]
+        , ListGroup.li [] [ text "List item 2" ]
+        , ListGroup.li [] [ text "List item 3" ]
+        ]
 
 
 viewNavbar : Model -> Html Msg
 viewNavbar model =
     Navbar.config NavbarMsg
-        |> Navbar.attrs [ class "flex-md-nowrap", class "p-0" ]
+        |> Navbar.attrs [ class "flex-md-nowrap", class "p-0", class "shadow" ]
         |> Navbar.withAnimation
         |> Navbar.dark
-        |> Navbar.fixTop
-        |> Navbar.brand [ href "#", class "text-center" ]
+        |> Navbar.brand [ href "#", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0" ]
             [ img [ src "logo.png", class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.items
-            [ Navbar.itemLink [ href "#" ] [ text "Item 1" ]
-            , Navbar.itemLink [ href "#" ] [ text "Item 2" ]
+            [ Navbar.itemLink [ href "#", class "px-3" ] [ text "Resync" ]
             ]
         |> Navbar.view model.navbarState
 
