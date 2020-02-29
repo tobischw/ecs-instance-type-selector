@@ -13,10 +13,11 @@ view =
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Settings"
             , div []
-                [ span [] [ text "Exclude Instance Types:" ] ]
+                [ div [] [ text "Exclude Instance Types:" ] 
+                , div [] [ text "More settings here:" ]]
                 , hr [] []
                 , Util.viewColumnTitle
-                "Results"
+                "Live Results"
             , div []
                 [ span [ class "text-muted" ] [ text "No results yet. Create a configuration on the left." ]
                 ]
