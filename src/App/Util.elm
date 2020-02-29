@@ -10,4 +10,4 @@ viewColumnTitle title =
 
 icon : String -> Html msg
 icon name =
-    i [ class ("icon typcn-" ++ name), class "pr-2", class "text-secondary" ] []
+    i [ class ("typcn typcn-" ++ name), class "pr-2", class "icon" ] []

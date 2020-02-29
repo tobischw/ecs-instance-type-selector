@@ -14,11 +14,11 @@ view =
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Configuration"
             , ListGroup.ul
-                [ ListGroup.li [] [ Util.icon "wi-fi", text "Service A" ]
-                , ListGroup.li [ ListGroup.attrs [ class "pl-4" ] ] [ text "Task A" ]
-                , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-5" ] ] [ text "Container 1a" ]
-                , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ text "Container 2a" ]
-                , ListGroup.li [] [ text "Service B" ]
+                [ ListGroup.li [] [ Util.icon "weather-cloudy", text "Service A" ]
+                , ListGroup.li [ ListGroup.attrs [ class "pl-4" ] ] [ Util.icon "clipboard", text "Task A" ]
+                , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 1a" ]
+                , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 2a" ]
+                , ListGroup.li [] [ Util.icon "weather-cloudy", text "Service B" ]
                 ]
             ]
         ]
