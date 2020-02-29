@@ -70,14 +70,6 @@ viewContent model =
             ]
         ]
 
-viewResults : Model -> Html Msg
-viewResults model =
-    div [ class "px-3", class "pt-1" ]
-        [ Util.viewColumnTitle "Results"
-        , text "This is where the calculated changed results would appear in realtime"
-        ]
-
-
 viewNavbar : Model -> Html Msg
 viewNavbar model =
     Navbar.config NavbarMsg

@@ -15,8 +15,8 @@ view =
             [ Util.viewColumnTitle "Configuration"
             , ListGroup.ul
                 [ ListGroup.li [] [ text "Service A" ]
-                , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-4" ] ] [ text "Task A" ]
-                , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ text "Container 1a" ]
+                , ListGroup.li [ ListGroup.attrs [ class "pl-4" ] ] [ text "Task A" ]
+                , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-5" ] ] [ text "Container 1a" ]
                 , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ text "Container 2a" ]
                 , ListGroup.li [] [ text "Service B" ]
                 ]
