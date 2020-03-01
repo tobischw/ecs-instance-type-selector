@@ -1,18 +1,19 @@
 module App.Main exposing (..)
 
 import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
-import Browser exposing (Document)
+import Browser exposing (application, document)
+import Browser.Navigation as Nav
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
-import App.Util as Util
 import App.Configuration as Configuration
 import App.Detail as Detail
 import App.Results as Results
+
+import Url
 
 ---- MODEL ----
 
@@ -22,8 +23,8 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
     let
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
@@ -37,6 +38,8 @@ init =
 
 type Msg
     = NavbarMsg Navbar.State
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -44,13 +47,15 @@ update msg model =
     case msg of
         NavbarMsg state ->
             ( { model | navbarState = state }, Cmd.none )
+        _ ->
+            ( model, Cmd.none )
 
 
 
 ---- VIEW ----
 
 
-view : Model -> Document Msg
+view : Model -> Browser.Document Msg
 view model =
     { title = "ECS Instance Selector"
     , body =
@@ -93,9 +98,12 @@ subscriptions model =
 
 main : Program () Model Msg
 main =
-    Browser.document
-        { view = view
-        , init = \_ -> init
-        , update = update
-        , subscriptions = subscriptions
-        }
+  Browser.application
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    , onUrlChange = UrlChanged
+    , onUrlRequest = LinkClicked
+    }
+

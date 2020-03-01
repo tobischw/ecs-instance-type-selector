@@ -3,6 +3,7 @@ module App.Results exposing (view)
 import App.Util as Util
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
+import Bootstrap.Progress as Progress
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
@@ -19,7 +20,6 @@ view =
                 , Util.viewColumnTitle
                 "Live Results"
             , div []
-                [ span [ class "text-muted" ] [ text "No results yet. Create a configuration on the left." ]
-                ]
+                [ Progress.progress [ ] ]
             ]
         ]
