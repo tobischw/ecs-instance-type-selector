@@ -46,21 +46,17 @@ viewContainerDetail =
         |> Card.block []
             [ Block.custom <|
                 Form.form []
-                    [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "vCPUs" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range" ] [], Form.help [] [ text "Select desired number of vCPUs. May vary for optimal price." ] ]
-                        ]
-                    , Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range" ] [], Form.help [] [ text "Select desired memory (in GiB)." ] ]
-                        ]
-                    , Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Storage" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range" ] [], Form.help [] [ text "Select desired storage (in IOPS)." ] ]
-                        ]
-                    ]
+                   formRow
+                    
             ]
         |> Card.view
+
+formRow : List (Html msg)
+formRow =
+    List.repeat 3 (Form.row[]
+        [Form.colLabel [Col.sm3] [text "vPCUS"]
+        , Form.col [ Col.sm9 ]
+            [input [ type_ "range", class "form-control-range"] [], Form.help [] [text "sample text"]
+            ]
+        ]
+    )
