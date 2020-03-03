@@ -1,22 +1,20 @@
 module App.Main exposing (..)
 
+import App.Configuration as Configuration
+import App.Detail as Detail
+import App.Results as Results
 import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
 import Browser exposing (application, document)
 import Browser.Navigation as Nav
-
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid as Grid
-
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Url exposing (Url)
+import Url.Parser as Url exposing ((</>), Parser)
 
-import App.Configuration as Configuration
-import App.Detail as Detail
-import App.Results as Results
 
-import Url
 
 ---- MODEL ----
 
@@ -25,6 +23,7 @@ type alias Model =
     { navbarState : Navbar.State
     , currentDetail : Detail
     }
+
 
 type Detail
     = None
@@ -39,7 +38,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, currentDetail = Container }, navbarCmd )
+    ( { navbarState = navbarState, currentDetail = urlToDetail url }, navbarCmd )
 
 
 
@@ -57,8 +56,25 @@ update msg model =
     case msg of
         NavbarMsg state ->
             ( { model | navbarState = state }, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
+
+
+urlToDetail : Url -> Detail
+urlToDetail url =
+    url
+        |> Url.parse urlParser
+        |> Maybe.withDefault None
+
+
+urlParser : Parser (Detail -> a) a
+urlParser =
+    Url.oneOf
+        [ Url.map None Url.top
+        , Url.map Container (Url.s "container")
+        , Url.map Service (Url.s "service")
+        ]
 
 
 
@@ -78,17 +94,18 @@ view model =
 viewDetail : Detail -> Grid.Column Msg
 viewDetail detail =
     case detail of
-       Container ->
+        Container ->
             Detail.view
-       _ ->
+
+        _ ->
             viewNoneDetail
 
 
 viewNoneDetail : Grid.Column Msg
 viewNoneDetail =
     Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
-        [ div [ class "px-3", class "pt-1" ] 
-            [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring."]
+        [ div [ class "px-3", class "pt-1" ]
+            [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
         ]
 
 
@@ -101,6 +118,7 @@ viewContent model =
             , Results.view
             ]
         ]
+
 
 viewNavbar : Model -> Html Msg
 viewNavbar model =
@@ -125,12 +143,11 @@ subscriptions model =
 
 main : Program () Model Msg
 main =
-  Browser.application
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    , onUrlChange = UrlChanged
-    , onUrlRequest = LinkClicked
-    }
-
+    Browser.application
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
+        }
