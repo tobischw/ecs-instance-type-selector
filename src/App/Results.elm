@@ -15,6 +15,6 @@ view =
             [  Util.viewColumnTitle
                 "Live Results"
             , div []
-                [ Progress.progress [ ] ]
+                [ Progress.progress [ Progress.value 100, Progress.animated] ]
             ]
         ]

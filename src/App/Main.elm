@@ -23,6 +23,7 @@ import Url
 
 type alias Model =
     { navbarState : Navbar.State
+    , currentDetail : Detail
     }
 
 type Detail
@@ -38,7 +39,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState }, navbarCmd )
+    ( { navbarState = navbarState, currentDetail = Container }, navbarCmd )
 
 
 
@@ -77,8 +78,8 @@ view model =
 viewDetail : Detail -> Grid.Column Msg
 viewDetail detail =
     case detail of
-       None ->
-            viewNoneDetail
+       Container ->
+            Detail.view
        _ ->
             viewNoneDetail
 
@@ -96,7 +97,7 @@ viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
             [ Configuration.view
-            , viewDetail None
+            , viewDetail model.currentDetail
             , Results.view
             ]
         ]

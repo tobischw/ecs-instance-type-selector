@@ -3,6 +3,7 @@ module App.Configuration exposing (view)
 import App.Util as Util
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
+import Bootstrap.Button as Button
 import Bootstrap.ListGroup as ListGroup
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -13,6 +14,7 @@ view =
     Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Configuration"
+            , Button.button [Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2"]] [ text "Add Service"]
             , ListGroup.ul
                 [ ListGroup.li [] [ Util.icon "weather-cloudy", text "Service A" ]
                 , ListGroup.li [ ListGroup.attrs [ class "pl-4" ] ] [ Util.icon "clipboard", text "Task A" ]
