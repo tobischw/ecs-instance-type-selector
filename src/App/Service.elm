@@ -11,19 +11,8 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
-
-view : Grid.Column msg
+view : Html msg
 view =
-    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
-        [ div [ class "px-3", class "pt-1" ]
-            [ Util.viewColumnTitle "Detail"
-            , viewServiceDetail
-            ]
-        ]
-
-
-viewServiceDetail : Html msg
-viewServiceDetail =
     Card.config []
         |> Card.header [] [ text "Service A" ]
         |> Card.block []

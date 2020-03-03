@@ -11,24 +11,14 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
-view : Grid.Column msg
+view : Html msg
 view =
-    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
-        [ div [ class "px-3", class "pt-1" ]
-            [ Util.viewColumnTitle "Detail"
-            , viewContainerDetail
-            ]
-        ]
-
-viewContainerDetail : Html msg
-viewContainerDetail =
     Card.config []
         |> Card.header [] [ text "Container 1a" ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
-                   formRow
-                    
+                   formRow  
             ]
         |> Card.view
 

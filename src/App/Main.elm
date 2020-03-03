@@ -14,6 +14,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
+import App.Util as Util
 
 
 
@@ -106,8 +107,16 @@ view model =
         ]
     }
 
+viewDetailColumn : Detail -> Grid.Column Msg
+viewDetailColumn detail =
+    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+        [ div [ class "px-3", class "pt-1" ]
+            [ Util.viewColumnTitle "Detail"
+            , viewDetail detail
+            ]
+        ]
 
-viewDetail : Detail -> Grid.Column Msg
+viewDetail : Detail -> Html Msg
 viewDetail detail =
     case detail of
         Container ->
@@ -120,12 +129,10 @@ viewDetail detail =
             viewNoneDetail
 
 
-viewNoneDetail : Grid.Column Msg
+viewNoneDetail : Html Msg
 viewNoneDetail =
-    Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
-        [ div [ class "px-3", class "pt-1" ]
+     span [] 
             [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
-        ]
 
 
 viewContent : Model -> Html Msg
@@ -133,7 +140,7 @@ viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
             [ Configuration.view
-            , viewDetail model.currentDetail
+            , viewDetailColumn model.currentDetail
             , Results.view
             ]
         ]
