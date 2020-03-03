@@ -3,6 +3,7 @@ module App.Main exposing (..)
 import App.Configuration as Configuration
 import App.Service as Service
 import App.Container as Container
+import App.Task as Task
 import App.Results as Results
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
@@ -91,6 +92,7 @@ urlParser =
         [ Url.map None Url.top
         , Url.map Container (Url.s "container")
         , Url.map Service (Url.s "service")
+        , Url.map Task (Url.s "task")
         ]
 
 
@@ -124,6 +126,9 @@ viewDetail detail =
 
         Service ->
             Service.view
+
+        Task ->
+            Task.view
 
         _ ->
             viewNoneDetail
