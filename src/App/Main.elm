@@ -131,7 +131,7 @@ viewDetail detail =
 
 viewNoneDetail : Html Msg
 viewNoneDetail =
-     span [] 
+     span [ class "text-muted align-middle"] 
             [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
 
 
