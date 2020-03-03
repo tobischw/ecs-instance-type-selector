@@ -20,5 +20,30 @@ view =
                 , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 2a" ]
                 , ListGroup.li [] [ Util.icon "weather-cloudy", text "Service B" ]
                 ]
+            , hr[] []
+            , ListGroup.ul
+                [ ListGroup.li [] [ Util.icon "cog", text "Global Settings" ]
+                , ListGroup.li [] [ Util.icon "eject", text "Export as JSON" ]
+                , ListGroup.li [] [ Util.icon "download-outline", text "Load JSON" ]
+                ]
             ]
         ]
+
+
+
+{-
+   view : Grid.Column msg
+   view =
+       Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+           [ div [ class "px-3", class "pt-1" ]
+               [ Util.viewColumnTitle "Configuration"
+               , ListGroup.ul
+                   [ ListGroup.li [] [ Util.icon "weather-cloudy", text "Service A" ]
+                   , ListGroup.li [ ListGroup.attrs [ class "pl-4" ] ] [ Util.icon "clipboard", text "Task A" ]
+                   , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 1a" ]
+                   , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 2a" ]
+                   , ListGroup.li [] [ Util.icon "weather-cloudy", text "Service B" ]
+                   ]
+               ]
+           ]
+-}

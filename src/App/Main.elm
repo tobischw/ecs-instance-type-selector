@@ -6,6 +6,9 @@ import Bootstrap.Navbar as Navbar
 import Browser exposing (application, document)
 import Browser.Navigation as Nav
 
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid as Grid
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
@@ -21,6 +24,12 @@ import Url
 type alias Model =
     { navbarState : Navbar.State
     }
+
+type Detail
+    = None
+    | Service
+    | Task
+    | Container
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -65,12 +74,29 @@ view model =
     }
 
 
+viewDetail : Detail -> Grid.Column Msg
+viewDetail detail =
+    case detail of
+       None ->
+            viewNoneDetail
+       _ ->
+            viewNoneDetail
+
+
+viewNoneDetail : Grid.Column Msg
+viewNoneDetail =
+    Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+        [ div [ class "px-3", class "pt-1" ] 
+            [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring."]
+        ]
+
+
 viewContent : Model -> Html Msg
 viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
             [ Configuration.view
-            , Detail.view
+            , viewDetail None
             , Results.view
             ]
         ]

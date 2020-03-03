@@ -54,7 +54,7 @@ viewContainerDetail =
 formRow : List (Html msg)
 formRow =
     List.repeat 3 (Form.row[]
-        [Form.colLabel [Col.sm3] [text "vPCUS"]
+        [Form.colLabel [Col.sm3] [text "vCPUS"]
         , Form.col [ Col.sm9 ]
             [input [ type_ "range", class "form-control-range"] [], Form.help [] [text "sample text"]
             ]
