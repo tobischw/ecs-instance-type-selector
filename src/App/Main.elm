@@ -1,17 +1,18 @@
 module App.Main exposing (..)
 
 import App.Configuration as Configuration
-import App.Detail as Detail
+import App.Service as Service
+import App.Container as Container
 import App.Results as Results
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
-import Browser exposing (application, document)
+import Browser exposing (UrlRequest(..), application, document)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Url exposing (Url)
+import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
 
 
@@ -21,6 +22,7 @@ import Url.Parser as Url exposing ((</>), Parser)
 
 type alias Model =
     { navbarState : Navbar.State
+    , navKey : Nav.Key
     , currentDetail : Detail
     }
 
@@ -38,7 +40,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, currentDetail = urlToDetail url }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url }, navbarCmd )
 
 
 
@@ -57,8 +59,22 @@ update msg model =
         NavbarMsg state ->
             ( { model | navbarState = state }, Cmd.none )
 
-        _ ->
-            ( model, Cmd.none )
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Internal url ->
+                    ( model
+                    , Nav.pushUrl model.navKey (Url.toString url)
+                    )
+
+                External url ->
+                    ( model
+                    , Nav.load url
+                    )
+
+        UrlChanged url ->
+            ( { model | currentDetail = urlToDetail url }
+            , Cmd.none
+            )
 
 
 urlToDetail : Url -> Detail
@@ -95,7 +111,10 @@ viewDetail : Detail -> Grid.Column Msg
 viewDetail detail =
     case detail of
         Container ->
-            Detail.view
+            Container.view
+
+        Service ->
+            Service.view
 
         _ ->
             viewNoneDetail

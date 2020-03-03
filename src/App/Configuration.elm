@@ -15,18 +15,19 @@ view =
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Configuration"
             , Button.button [Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2"]] [ text "Add Service"]
-            , ListGroup.ul
-                [ ListGroup.li [] [ Util.icon "weather-cloudy", text "Service A" ]
-                , ListGroup.li [ ListGroup.attrs [ class "pl-4" ] ] [ Util.icon "clipboard", text "Task A" ]
-                , ListGroup.li [ ListGroup.active, ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 1a" ]
-                , ListGroup.li [ ListGroup.attrs [ class "pl-5" ] ] [ Util.icon "archive", text "Container 2a" ]
-                , ListGroup.li [] [ Util.icon "weather-cloudy", text "Service B" ]
+            , ListGroup.custom
+                {- These will have to be rendered from the model -}
+                [ ListGroup.anchor [] [ Util.icon "weather-cloudy", text "Service A" ]
+                , ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href "task" ] ] [ Util.icon "clipboard", text "Task A" ]
+                , ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href "container" ] ] [ Util.icon "archive", text "Container 1a" ]
+                , ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href "container" ] ] [ Util.icon "archive", text "Container 2a" ]
+                , ListGroup.anchor [] [ Util.icon "weather-cloudy", text "Service B" ]
                 ]
             , hr[] []
-            , ListGroup.ul
-                [ ListGroup.li [] [ Util.icon "cog", text "Global Settings" ]
-                , ListGroup.li [] [ Util.icon "eject", text "Export as JSON" ]
-                , ListGroup.li [] [ Util.icon "download-outline", text "Load JSON" ]
+            , ListGroup.custom
+                [ ListGroup.anchor [] [ Util.icon "cog", text "Global Settings" ]
+                , ListGroup.anchor [] [ Util.icon "eject", text "Export as JSON" ]
+                , ListGroup.anchor [] [ Util.icon "download-outline", text "Load JSON" ]
                 ]
             ]
         ]
