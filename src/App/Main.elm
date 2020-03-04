@@ -105,12 +105,23 @@ urlParser =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "ECS Instance Selector"
+    { title = "Cluster Prophet"
     , body =
         [ viewNavbar model
         , viewContent model
         ]
     }
+
+
+viewContent : Model -> Html Msg
+viewContent model =
+    Grid.containerFluid [ class "full-height" ]
+        [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
+            [ Configuration.view
+            , viewDetailColumn model.currentDetail
+            , Results.view
+            ]
+        ]
 
 
 viewDetailColumn : Detail -> Grid.Column Msg
@@ -146,17 +157,6 @@ viewNoneDetail : Html Msg
 viewNoneDetail =
     span [ class "text-muted align-middle" ]
         [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
-
-
-viewContent : Model -> Html Msg
-viewContent model =
-    Grid.containerFluid [ class "full-height" ]
-        [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
-            [ Configuration.view
-            , viewDetailColumn model.currentDetail
-            , Results.view
-            ]
-        ]
 
 
 viewNavbar : Model -> Html Msg
