@@ -1,34 +1,50 @@
 module App.Main exposing (..)
 
+import App.Configuration as Configuration
+import App.Container as Container
+import App.Results as Results
+import App.Service as Service
+import App.Settings as Settings
+import App.Task as Task
+import App.Util as Util
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
-import Browser exposing (Document)
-
+import Browser exposing (UrlRequest(..), application, document)
+import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Url exposing (..)
+import Url.Parser as Url exposing ((</>), Parser)
 
-import App.Util as Util
-import App.Configuration as Configuration
-import App.Detail as Detail
-import App.Results as Results
+
 
 ---- MODEL ----
 
 
 type alias Model =
     { navbarState : Navbar.State
+    , navKey : Nav.Key
+    , currentDetail : Detail
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+type Detail
+    = None
+    | Service
+    | Task
+    | Container
+    | Settings
+
+
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
     let
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url }, navbarCmd )
 
 
 
@@ -37,6 +53,8 @@ init =
 
 type Msg
     = NavbarMsg Navbar.State
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -45,14 +63,49 @@ update msg model =
         NavbarMsg state ->
             ( { model | navbarState = state }, Cmd.none )
 
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Internal url ->
+                    ( model
+                    , Nav.pushUrl model.navKey (Url.toString url)
+                    )
+
+                External url ->
+                    ( model
+                    , Nav.load url
+                    )
+
+        UrlChanged url ->
+            ( { model | currentDetail = urlToDetail url }
+            , Cmd.none
+            )
+
+
+urlToDetail : Url -> Detail
+urlToDetail url =
+    url
+        |> Url.parse urlParser
+        |> Maybe.withDefault None
+
+
+urlParser : Parser (Detail -> a) a
+urlParser =
+    Url.oneOf
+        [ Url.map None Url.top
+        , Url.map Container (Url.s "container")
+        , Url.map Service (Url.s "service")
+        , Url.map Task (Url.s "task")
+        , Url.map Settings (Url.s "settings")
+        ]
+
 
 
 ---- VIEW ----
 
 
-view : Model -> Document Msg
+view : Model -> Browser.Document Msg
 view model =
-    { title = "ECS Instance Selector"
+    { title = "Cluster Prophet"
     , body =
         [ viewNavbar model
         , viewContent model
@@ -65,10 +118,46 @@ viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
             [ Configuration.view
-            , Detail.view
+            , viewDetailColumn model.currentDetail
             , Results.view
             ]
         ]
+
+
+viewDetailColumn : Detail -> Grid.Column Msg
+viewDetailColumn detail =
+    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+        [ div [ class "px-3", class "pt-1" ]
+            [ Util.viewColumnTitle "Detail"
+            , viewDetail detail
+            ]
+        ]
+
+
+viewDetail : Detail -> Html Msg
+viewDetail detail =
+    case detail of
+        Container ->
+            Container.view
+
+        Service ->
+            Service.view
+
+        Task ->
+            Task.view True
+
+        Settings ->
+            Settings.view
+
+        _ ->
+            viewNoneDetail
+
+
+viewNoneDetail : Html Msg
+viewNoneDetail =
+    span [ class "text-muted align-middle" ]
+        [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
+
 
 viewNavbar : Model -> Html Msg
 viewNavbar model =
@@ -93,9 +182,11 @@ subscriptions model =
 
 main : Program () Model Msg
 main =
-    Browser.document
-        { view = view
-        , init = \_ -> init
+    Browser.application
+        { init = init
+        , view = view
         , update = update
         , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
         }
