@@ -19,7 +19,7 @@ view =
             [ Util.viewColumnTitle "Configuration"
             , Button.button [Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2"]] [ text "Add Service"]
             , ListGroup.custom
-                {- These will have to be rendered from the model -}
+                {- These will have to be rendered from the model AND replace with listItem func. -}
                 [ ListGroup.anchor [ ListGroup.attrs [ href "service" ] ] [ Util.icon "weather-cloudy", text "Service A" ]
                 , ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href "task" ] ] [ Util.icon "clipboard", text "Task A" ]
                 , ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href "container" ] ] [ Util.icon "archive", text "Container 1a" ]
@@ -28,9 +28,13 @@ view =
                 ]
             , hr[] []
             , ListGroup.custom
-                [ ListGroup.anchor [] [ Util.icon "cog", text "Global Settings" ]
-                , ListGroup.anchor [] [ Util.icon "eject", text "Export as JSON" ]
-                , ListGroup.anchor [] [ Util.icon "download-outline", text "Load JSON" ]
+                [ listItem "Global Settings" "cog" "settings"
+                , listItem "Export as JSON" "eject" "#"
+                , listItem "Load JSON" "download-outline" "settings"
                 ]
             ]
         ]
+
+listItem : String -> String -> String -> ListGroup.CustomItem msg
+listItem label icon link =
+    ListGroup.anchor [ ListGroup.attrs [ href link ] ] [ Util.icon icon, text label ]

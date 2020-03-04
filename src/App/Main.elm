@@ -1,10 +1,12 @@
 module App.Main exposing (..)
 
 import App.Configuration as Configuration
-import App.Service as Service
 import App.Container as Container
-import App.Task as Task
 import App.Results as Results
+import App.Service as Service
+import App.Settings as Settings
+import App.Task as Task
+import App.Util as Util
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -15,7 +17,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
-import App.Util as Util
 
 
 
@@ -34,6 +35,7 @@ type Detail
     | Service
     | Task
     | Container
+    | Settings
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -93,6 +95,7 @@ urlParser =
         , Url.map Container (Url.s "container")
         , Url.map Service (Url.s "service")
         , Url.map Task (Url.s "task")
+        , Url.map Settings (Url.s "settings")
         ]
 
 
@@ -109,6 +112,7 @@ view model =
         ]
     }
 
+
 viewDetailColumn : Detail -> Grid.Column Msg
 viewDetailColumn detail =
     Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
@@ -117,6 +121,7 @@ viewDetailColumn detail =
             , viewDetail detail
             ]
         ]
+
 
 viewDetail : Detail -> Html Msg
 viewDetail detail =
@@ -130,14 +135,17 @@ viewDetail detail =
         Task ->
             Task.view
 
+        Settings ->
+            Settings.view
+
         _ ->
             viewNoneDetail
 
 
 viewNoneDetail : Html Msg
 viewNoneDetail =
-     span [ class "text-muted align-middle"] 
-            [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
+    span [ class "text-muted align-middle" ]
+        [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
 
 
 viewContent : Model -> Html Msg
