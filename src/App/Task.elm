@@ -1,5 +1,6 @@
 module App.Task exposing (view)
 
+import App.Container as Container
 import App.Util as Util
 import Bootstrap.Button as Button
 import Bootstrap.Card as Card
@@ -11,12 +12,24 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
-view : Html msg
-view =
-    Card.config []
-        |> Card.header [] [ text "Task A" ]
-        |> Card.block []
-            [ Block.text [] [ text "This is some text within a card block." ] ]
-        |> Card.view
 
-    
+view : Bool -> Html msg
+view withContainers =
+    div []
+        [ Card.config []
+            |> Card.header [] [ text "Task A" ]
+            |> Card.block []
+                [ Block.custom <|
+                    div [] [ text "whnat" ]
+                ]
+            |> Card.view
+        , if withContainers then
+            div []
+                [ hr [] []
+                , Util.viewColumnTitle "Containers"
+                , div [] (List.repeat 2 (div [ class "pt-2" ] [ Container.view ]))
+                ]
+
+          else
+            div [] []
+        ]

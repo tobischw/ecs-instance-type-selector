@@ -18,7 +18,7 @@ view =
         |> Card.block []
             [ Block.custom <|
                 Form.form []
-                   formRow  
+                   formRow
             ]
         |> Card.view
 
