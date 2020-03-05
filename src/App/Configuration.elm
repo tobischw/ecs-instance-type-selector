@@ -29,6 +29,11 @@ type alias Service =
     , tasks: List Task
     }
 
+
+viewServices: List Service -> List (ListGroup.CustomItem msg)
+viewServices services =
+    List.concatMap viewService services
+
 viewService: Service -> List (ListGroup.CustomItem msg)
 viewService service =
     List.concat [
