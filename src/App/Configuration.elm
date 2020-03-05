@@ -1,4 +1,4 @@
-module App.Configuration exposing (view)
+module App.Configuration exposing (view, Container, Task, Service)
 
 import App.Util as Util
 import Bootstrap.Grid as Grid
@@ -12,8 +12,37 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
-view : Grid.Column msg
-view =
+type alias Container =
+    { id: Int
+    , name: String
+    }
+
+type alias Task =
+    { id: Int
+    , name: String
+    , containers: List Container
+    }
+
+type alias Service =
+    { id: Int
+    , name: String
+    , tasks: List Task
+    }
+
+
+buildTaskHtml: Task -> List ListGroup.anchor
+buildTaskHtml task = 
+    [
+        ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href "task" ] ] [ Util.icon "clipboard", text task.name ]
+        , (List.map buildContainerHtml task.containers)
+    ]
+
+buildContainerHtml: Container -> ListGroup.anchor msg
+buildContainerHtml container = 
+    ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href "container" ] ] [ Util.icon "archive", text container.name ]
+
+view : List Service ->  Grid.Column msg
+view services =
     Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Configuration"
