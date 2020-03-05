@@ -33,9 +33,9 @@ type alias Model =
 
 type Detail
     = None
-    | Service
-    | Task
-    | Container
+    | Service Int
+    | Task Int
+    | Container Int
     | Settings
 
 
@@ -93,9 +93,9 @@ urlParser : Parser (Detail -> a) a
 urlParser =
     Url.oneOf
         [ Url.map None Url.top
-        , Url.map Container (Url.s "container")
-        , Url.map Service (Url.s "service")
-        , Url.map Task (Url.s "task")
+        , Url.map Container (Url.s "container" </> Url.int )
+        , Url.map Service (Url.s "service" </> Url.int )
+        , Url.map Task (Url.s "task" </> Url.int )
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -138,13 +138,13 @@ viewDetailColumn detail =
 viewDetail : Detail -> Html Msg
 viewDetail detail =
     case detail of
-        Container ->
+        Container id ->
             Container.view
 
-        Service ->
+        Service id ->
             Service.view
 
-        Task ->
+        Task id ->
             Task.view True
 
         Settings ->

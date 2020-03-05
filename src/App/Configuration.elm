@@ -38,19 +38,19 @@ viewService: Service -> List (ListGroup.CustomItem msg)
 viewService service =
     List.concat [
             [
-                ListGroup.anchor [ ListGroup.attrs [ href "service" ] ] [ Util.icon "weather-cloudy", text "Service A" ]
+                ListGroup.anchor [ ListGroup.attrs [ href ("/service/" ++ String.fromInt service.id)] ] [ Util.icon "weather-cloudy", text "Service A" ]
              ], List.concat (List.map viewTask service.tasks)
     ]
 
 viewTask: Task -> List (ListGroup.CustomItem msg)
 viewTask task = 
     List.concat [[
-        ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href "task" ] ] [ Util.icon "clipboard", text task.name ]
+        ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href ("/task/" ++ String.fromInt task.id) ] ] [ Util.icon "clipboard", text task.name ]
     ], List.map viewContainer task.containers]
 
 viewContainer: Container -> ListGroup.CustomItem msg
 viewContainer container = 
-    ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href "container" ] ] [ Util.icon "archive", text container.name ]
+    ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href ("/container/" ++ String.fromInt container.id) ] ] [ Util.icon "archive", text container.name ]
 
 view : List Service ->  Grid.Column msg
 view services =
