@@ -29,16 +29,22 @@ type alias Service =
     , tasks: List Task
     }
 
-
-buildTaskHtml: Task -> List ListGroup.anchor
-buildTaskHtml task = 
-    [
-        ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href "task" ] ] [ Util.icon "clipboard", text task.name ]
-        , (List.map buildContainerHtml task.containers)
+viewService: Service -> List (ListGroup.CustomItem msg)
+viewService service =
+    List.concat [
+            [
+                ListGroup.anchor [ ListGroup.attrs [ href "service" ] ] [ Util.icon "weather-cloudy", text "Service A" ]
+             ], List.concat (List.map viewTask service.tasks)
     ]
 
-buildContainerHtml: Container -> ListGroup.anchor msg
-buildContainerHtml container = 
+viewTask: Task -> List (ListGroup.CustomItem msg)
+viewTask task = 
+    List.concat [[
+        ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href "task" ] ] [ Util.icon "clipboard", text task.name ]
+    ], List.map viewContainer task.containers]
+
+viewContainer: Container -> ListGroup.CustomItem msg
+viewContainer container = 
     ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href "container" ] ] [ Util.icon "archive", text container.name ]
 
 view : List Service ->  Grid.Column msg
