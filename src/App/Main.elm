@@ -27,6 +27,7 @@ type alias Model =
     { navbarState : Navbar.State
     , navKey : Nav.Key
     , currentDetail : Detail
+    , services: List (Configuration.Service)
     }
 
 
@@ -44,7 +45,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, services = [Configuration.Service 0 "Service a" [ Configuration.Task 0 "Task a1" [ Configuration.Container 0 "Container a11"]]] }, navbarCmd )
 
 
 
@@ -117,7 +118,7 @@ viewContent : Model -> Html Msg
 viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
-            [ Configuration.view
+            [ Configuration.view model.services
             , viewDetailColumn model.currentDetail
             , Results.view
             ]
