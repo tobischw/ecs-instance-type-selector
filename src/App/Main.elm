@@ -27,14 +27,15 @@ type alias Model =
     { navbarState : Navbar.State
     , navKey : Nav.Key
     , currentDetail : Detail
+    , services: List (Configuration.Service)
     }
 
 
 type Detail
     = None
-    | Service
-    | Task
-    | Container
+    | Service Int
+    | Task Int
+    | Container Int
     | Settings
 
 
@@ -44,7 +45,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, services = [Configuration.Service 0 "Service a" [ Configuration.Task 0 "Task a1" [ Configuration.Container 0 "Container a11"]]] }, navbarCmd )
 
 
 
@@ -92,9 +93,9 @@ urlParser : Parser (Detail -> a) a
 urlParser =
     Url.oneOf
         [ Url.map None Url.top
-        , Url.map Container (Url.s "container")
-        , Url.map Service (Url.s "service")
-        , Url.map Task (Url.s "task")
+        , Url.map Container (Url.s "container" </> Url.int )
+        , Url.map Service (Url.s "service" </> Url.int )
+        , Url.map Task (Url.s "task" </> Url.int )
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -117,7 +118,7 @@ viewContent : Model -> Html Msg
 viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
-            [ Configuration.view
+            [ Configuration.view model.services
             , viewDetailColumn model.currentDetail
             , Results.view
             ]
@@ -137,13 +138,13 @@ viewDetailColumn detail =
 viewDetail : Detail -> Html Msg
 viewDetail detail =
     case detail of
-        Container ->
+        Container id ->
             Container.view
 
-        Service ->
+        Service id ->
             Service.view
 
-        Task ->
+        Task id ->
             Task.view True
 
         Settings ->

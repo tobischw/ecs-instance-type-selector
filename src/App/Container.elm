@@ -11,6 +11,7 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
+
 view : Html msg
 view =
     Card.config []
@@ -18,17 +19,29 @@ view =
         |> Card.block []
             [ Block.custom <|
                 Form.form []
-                   formRow
+                    [ Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "vCPU Units" ]
+                        , Form.col [ Col.sm9 ]
+                            [ input [ type_ "range", class "form-control-range" ] []
+                            , Form.help [] [ text "XXXX Units" ]
+                            ]
+                        ]
+                        ,
+                        Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
+                        , Form.col [ Col.sm9 ]
+                            [ input [ type_ "range", class "form-control-range" ] []
+                            , Form.help [] [ text "XXXXX Mb" ]
+                            ]
+                        ]
+                        ,
+                        Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "IOOPS" ]
+                        , Form.col [ Col.sm9 ]
+                            [ input [ type_ "range", class "form-control-range" ] []
+                            , Form.help [] [ text "XXXXX Mbits/sec" ]
+                            ]
+                        ]
+                    ]
             ]
         |> Card.view
-
-
-formRow : List (Html msg)
-formRow =
-    List.repeat 3 (Form.row[]
-        [Form.colLabel [Col.sm3] [text "vCPUS"]
-        , Form.col [ Col.sm9 ]
-            [input [ type_ "range", class "form-control-range"] [], Form.help [] [text "sample text"]
-            ]
-        ]
-    )
