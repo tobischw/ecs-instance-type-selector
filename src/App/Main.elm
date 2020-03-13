@@ -168,7 +168,7 @@ viewNavbar model =
         |> Navbar.withAnimation
         |> Navbar.dark
         |> Navbar.brand [ href "#", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
-            [ img [ src "logo.png", class "logo" ] [], text "Cluster Prophet" ]
+            [ img [ src "../logo.png", class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.view model.navbarState
 
 

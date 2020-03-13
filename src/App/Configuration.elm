@@ -58,14 +58,12 @@ view services =
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Configuration"
             , Button.button [Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2"]] [ text "Add Service"]
-            , ListGroup.custom
-                {- These will have to be rendered from the model AND replace with listItem func. -}
-                (viewServices services)
+            , ListGroup.custom (viewServices services)
             , hr[] []
             , ListGroup.custom
-                [ listItem "Global Settings" "cog" "settings"
+                [ listItem "Global Settings" "cog" "../settings"
                 , listItem "Export as JSON" "eject" "#"
-                , listItem "Load JSON" "download-outline" "settings"
+                , listItem "Load JSON" "download-outline" "#"
                 ]
             ]
         ]
