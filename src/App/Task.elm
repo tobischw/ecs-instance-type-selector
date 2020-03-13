@@ -10,8 +10,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
-view : Bool -> Html msg
-view withContainers =
+view : Html msg
+view =
     div []
         [ Card.config []
             |> Card.header [] [ text "Task A" ]
@@ -26,13 +26,4 @@ view withContainers =
                         ]
                 ]
             |> Card.view
-        , if withContainers then
-            div []
-                [ hr [] []
-                , Util.viewColumnTitle "Containers"
-                , div [] (List.repeat 2 (div [ class "pt-2" ] [ Container.view ]))
-                ]
-
-          else
-            div [] []
         ]

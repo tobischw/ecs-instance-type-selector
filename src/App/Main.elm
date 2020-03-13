@@ -145,7 +145,7 @@ viewDetail detail =
             Service.view
 
         Task id ->
-            Task.view True
+            Task.view
 
         Settings ->
             Settings.view
