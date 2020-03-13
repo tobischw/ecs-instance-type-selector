@@ -40,7 +40,7 @@ viewServices services =
 viewService : Service -> List (ListGroup.CustomItem msg)
 viewService service =
     List.concat
-        [ [ ListGroup.anchor [ ListGroup.attrs [ href ("/service/" ++ String.fromInt service.id) ] ] [ Util.icon "weather-cloudy", text "Service A" ]
+        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt service.id) ]
           ]
         , List.concat (List.map viewTask service.tasks)
         ]
@@ -49,7 +49,7 @@ viewService service =
 viewTask : Task -> List (ListGroup.CustomItem msg)
 viewTask task =
     List.concat
-        [ [ ListGroup.anchor [ ListGroup.attrs [ class "pl-4", href ("/task/" ++ String.fromInt task.id) ] ] [ Util.icon "clipboard", text task.name ]
+        [ [ listItem task.name "clipboard" [ href ("/task/" ++ String.fromInt task.id), class "pl-4" ]
           ]
         , List.map viewContainer task.containers
         ]
@@ -57,7 +57,12 @@ viewTask task =
 
 viewContainer : Container -> ListGroup.CustomItem msg
 viewContainer container =
-    ListGroup.anchor [ ListGroup.attrs [ class "pl-5", href ("/container/" ++ String.fromInt container.id) ] ] [ Util.icon "archive", text container.name ]
+    listItem container.name "archive" [ href ("/container/" ++ String.fromInt container.id), class "pl-5" ]
+
+
+listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
+listItem label icon attrs =
+    ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
 
 
 view : List Service -> Grid.Column msg
@@ -69,14 +74,9 @@ view services =
             , ListGroup.custom (viewServices services)
             , hr [] []
             , ListGroup.custom
-                [ listItem "Global Settings" "cog" "../settings"
-                , listItem "Export as JSON" "eject" "#"
-                , listItem "Load JSON" "download-outline" "#"
+                [ listItem "Global Settings" "cog" [ href "../settings" ]
+                , listItem "Export as JSON" "eject" [ href "#" ]
+                , listItem "Load JSON" "download-outline" [ href "#" ]
                 ]
             ]
         ]
-
-
-listItem : String -> String -> String -> ListGroup.CustomItem msg
-listItem label icon link =
-    ListGroup.anchor [ ListGroup.attrs [ href link ] ] [ Util.icon icon, text label ]
