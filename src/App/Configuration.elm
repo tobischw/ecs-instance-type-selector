@@ -5,9 +5,6 @@ import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.ListGroup as ListGroup
-import Bootstrap.Utilities.Flex as Flex
-import Bootstrap.Utilities.Size as Size
-import Bootstrap.Utilities.Spacing as Spacing
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
@@ -62,7 +59,8 @@ viewContainer container =
 
 listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
 listItem label icon attrs =
-    ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
+-- to highlight active, use currentDetail (I guess?)
+    ListGroup.anchor [ ListGroup.active, ListGroup.attrs attrs ] [ Util.icon icon, text label ]
 
 
 view : List Service -> Grid.Column msg
