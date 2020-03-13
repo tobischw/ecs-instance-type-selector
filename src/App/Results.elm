@@ -10,7 +10,7 @@ import Html.Attributes exposing (..)
 
 view : Grid.Column msg
 view =
-    Grid.col [ Col.md5, Col.attrs [ class "p-0" ] ]
+    Grid.col [ Col.md4, Col.attrs [ class "p-0" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [  Util.viewColumnTitle
                 "Live Results"

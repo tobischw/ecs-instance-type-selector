@@ -127,7 +127,7 @@ viewContent model =
 
 viewDetailColumn : Detail -> Grid.Column Msg
 viewDetailColumn detail =
-    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+    Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Detail"
             , viewDetail detail
