@@ -60,7 +60,7 @@ viewContainer container =
 listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
 listItem label icon attrs =
 -- to highlight active, use currentDetail (I guess?)
-    ListGroup.anchor [ ListGroup.active, ListGroup.attrs attrs ] [ Util.icon icon, text label ]
+    ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
 
 
 view : List Service -> Grid.Column msg
