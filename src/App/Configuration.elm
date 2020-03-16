@@ -9,6 +9,12 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
+type alias Service =
+    { id : Int
+    , name : String
+    , tasks : List Task
+    }
+
 type alias Container =
     { id : Int
     , name : String
@@ -19,13 +25,6 @@ type alias Task =
     { id : Int
     , name : String
     , containers : List Container
-    }
-
-
-type alias Service =
-    { id : Int
-    , name : String
-    , tasks : List Task
     }
 
 

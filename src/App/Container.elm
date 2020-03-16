@@ -10,6 +10,7 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (on, onInput)
 
 
 view : Html msg

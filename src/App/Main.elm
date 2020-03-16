@@ -27,7 +27,7 @@ type alias Model =
     { navbarState : Navbar.State
     , navKey : Nav.Key
     , currentDetail : Detail
-    , services: List (Configuration.Service)
+    , services: List (Configuration.Service) -- look into if localStorage works?
     }
 
 
@@ -45,7 +45,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, services = [Configuration.Service 0 "Service a" [ Configuration.Task 0 "Task a1" [ Configuration.Container 0 "Container a11"]]] }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, services = [Configuration.Service 0 "Service a" [ Configuration.Task 0 "Task a1" [ Configuration.Container 0 "Container a11"]], Configuration.Service 1 "Tobi's Cool Service" [], Configuration.Service 2 "Will's Garbage Service" [] ] }, navbarCmd )
 
 
 
@@ -119,31 +119,53 @@ viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
             [ Configuration.view model.services
-            , viewDetailColumn model.currentDetail
+            , viewDetailColumn model
             , Results.view
             ]
         ]
 
 
-viewDetailColumn : Detail -> Grid.Column Msg
-viewDetailColumn detail =
+viewDetailColumn : Model -> Grid.Column Msg
+viewDetailColumn model =
     Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Detail"
-            , viewDetail detail
+            , viewDetail model
             ]
         ]
 
 
-viewDetail : Detail -> Html Msg
-viewDetail detail =
-    case detail of
+{--
+updateServiceById : (Photo -> Photo) -> Id -> Feed -> Feed
+updateServiceById updatePhoto id feed =
+    List.map
+        (\photo ->
+            if photo.id == id then
+                updatePhoto photo
+
+            else
+                photo
+        )
+        feed
+--}
+
+findServiceById : Model -> Int -> Maybe Configuration.Service
+findServiceById model id =
+   List.head (List.filter (\i -> i.id == id) model.services)
+
+viewDetail : Model -> Html Msg
+viewDetail model =
+    case model.currentDetail of
+        Service id ->
+            case findServiceById model id of
+               Just service ->
+                    Service.view service
+               Nothing ->
+                    viewNotFoundDetail
+
         Container id ->
             Container.view
-
-        Service id ->
-            Service.view
-
+            
         Task id ->
             Task.view
 
@@ -159,6 +181,10 @@ viewNoneDetail =
     span [ class "text-muted align-middle" ]
         [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
 
+viewNotFoundDetail : Html Msg
+viewNotFoundDetail =
+    span [ class "text-muted align-middle" ]
+        [ text "Whatever you are looking for does not exist." ]
 
 viewNavbar : Model -> Html Msg
 viewNavbar model =
