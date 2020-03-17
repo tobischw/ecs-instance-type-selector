@@ -40,7 +40,7 @@ view =
             [ Block.custom <|
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm12 ] [ text "Exclude Instance Types", Form.help [] [ text "Exclude certain instance types from being considered in the calculations." ] ]
+                        [ Form.colLabel [ Col.sm12 ] [ text "Included Instance Types", Form.help [] [ text "Only checked instance types will be included during the calculation." ] ]
                         ]
                     , div [] (List.map viewInstanceCheckbox (List.sort instanceTypes))
                     , hr [] []
@@ -53,5 +53,5 @@ viewInstanceCheckbox : String -> Html msg
 viewInstanceCheckbox name =
     Form.row []
         [ Form.col [ Col.sm12 ]
-            [ Checkbox.checkbox [ Checkbox.id name ] name ]
+            [ Checkbox.checkbox [ Checkbox.id name, Checkbox.checked True ] name ]
         ]
