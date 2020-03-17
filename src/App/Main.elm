@@ -34,7 +34,7 @@ type alias Model =
 type Detail
     = None
     | Service Int
-    | Task Int
+    | Task Int Int
     | Container Int
     | Settings
 
@@ -95,7 +95,7 @@ urlParser =
         [ Url.map None Url.top
         , Url.map Container (Url.s "container" </> Url.int )
         , Url.map Service (Url.s "service" </> Url.int )
-        , Url.map Task (Url.s "task" </> Url.int )
+        , Url.map Task (Url.s "task" </> Url.int </> Url.int )
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -147,10 +147,29 @@ updateServiceById updatePhoto id feed =
                 photo
         )
         feed
+
+-- Or maybe we want to just flatten it?
+flattenList : NestedList a -> List a
+flattenList nested =
+    let
+        recur node acc =
+            case node of
+                Element a ->
+                    a :: acc
+
+                Nested list ->
+                    List.foldr recur acc list
+    in
+        recur nested []
+
 --}
 
 findServiceById : Model -> Int -> Maybe Configuration.Service
 findServiceById model id =
+   List.head (List.filter (\i -> i.id == id) model.services)
+
+findTaskById : Model -> Int -> Maybe Configuration.Task
+findTaskById model id =
    List.head (List.filter (\i -> i.id == id) model.services)
 
 viewDetail : Model -> Html Msg
@@ -162,12 +181,12 @@ viewDetail model =
                     Service.view service
                Nothing ->
                     viewNotFoundDetail
+            
+        Task serviceId id ->
+            Task.view
 
         Container id ->
             Container.view
-            
-        Task id ->
-            Task.view
 
         Settings ->
             Settings.view
