@@ -15,14 +15,14 @@ view service =
         |> Card.header [] [ text service.name ]
         |> Card.block []
             [ Block.custom <|
-                div [] [ text "Configuration pending"]
-            {-
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm8 ] [ text "EC2 Instance Scaling", Form.help [] [ text "when each EC2 instance reaches 80% or something, then scal eor something ask WILL" ] ]
-                        , Form.col [ Col.sm4 ]
-                            [ Input.number [ Input.value "1" ] ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Scaling Target" ]
+                        , Form.col [ Col.sm9 ]
+                            [ input [ type_ "range", class "form-control-range" ] []
+                            , Form.help [] [ text "% utilization" ]
+                            ]
                         ]
-                    ]-}
+                    ]
             ]
         |> Card.view

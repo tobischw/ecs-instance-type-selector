@@ -24,7 +24,7 @@ view =
                         [ Form.colLabel [ Col.sm3 ] [ text "vCPU Units" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text "XXXX Units" ]
+                            , Form.help [] [ text " Units" ]
                             ]
                         ]
                         ,
@@ -32,7 +32,7 @@ view =
                         [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text "XXXXX Mb" ]
+                            , Form.help [] [ text " MiB" ]
                             ]
                         ]
                         ,
@@ -40,7 +40,7 @@ view =
                         [ Form.colLabel [ Col.sm3 ] [ text "IOOPS" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text "XXXXX Mbits/sec" ]
+                            , Form.help [] [ text " Mbits/sec" ]
                             ]
                         ]
                     ]
