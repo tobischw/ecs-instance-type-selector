@@ -38,14 +38,14 @@ viewService service =
     List.concat
         [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt service.id) ]
           ]
-        , List.concat (List.map (viewTask service.id) service.tasks)
+        , List.concat (List.map viewTask service.tasks)
         ]
 
 
-viewTask : Int -> Task -> List (ListGroup.CustomItem msg)
-viewTask serviceId task =
+viewTask : Task -> List (ListGroup.CustomItem msg)
+viewTask task =
     List.concat
-        [ [ listItem task.name "clipboard" [ href ("/task/" ++ String.fromInt task.id ++ "/" ++ String.fromInt serviceId), class "pl-4" ]
+        [ [ listItem task.name "clipboard" [ href ("/task/" ++ String.fromInt task.id), class "pl-4" ]
           ]
         , List.map viewContainer task.containers
         ]

@@ -34,7 +34,7 @@ type alias Model =
 type Detail
     = None
     | Service Int
-    | Task Int Int
+    | Task Int
     | Container Int
     | Settings
 
@@ -95,7 +95,7 @@ urlParser =
         [ Url.map None Url.top
         , Url.map Container (Url.s "container" </> Url.int )
         , Url.map Service (Url.s "service" </> Url.int )
-        , Url.map Task (Url.s "task" </> Url.int </> Url.int )
+        , Url.map Task (Url.s "task" </> Url.int )
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -168,9 +168,9 @@ findServiceById : Model -> Int -> Maybe Configuration.Service
 findServiceById model id =
    List.head (List.filter (\i -> i.id == id) model.services)
 
-findTaskById : Model -> Int -> Maybe Configuration.Task
+{--findTaskById : Model -> Int -> Maybe Configuration.Task
 findTaskById model id =
-   List.head (List.filter (\i -> i.id == id) model.services)
+   List.head (List.filter (\i -> i.id == id) model.services)--}
 
 viewDetail : Model -> Html Msg
 viewDetail model =
@@ -182,7 +182,7 @@ viewDetail model =
                Nothing ->
                     viewNotFoundDetail
             
-        Task serviceId id ->
+        Task id ->
             Task.view
 
         Container id ->
