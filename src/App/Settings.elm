@@ -55,3 +55,4 @@ viewInstanceCheckbox name =
         [ Form.col [ Col.sm12 ]
             [ Checkbox.checkbox [ Checkbox.id name, Checkbox.checked True ] name ]
         ]
+ 

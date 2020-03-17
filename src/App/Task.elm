@@ -21,7 +21,7 @@ view =
                         [ Form.colLabel [ Col.sm3 ] [ text "Total Memory" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range disabled", disabled True ] []
-                            , Form.help [] [ text "XXXX Mb" ]
+                            , Form.help [] [ text "-- MiB · Memory limit of all containers in this task for scaling purposes" ]
                             ]
                         ]
                 ]

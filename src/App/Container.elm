@@ -21,10 +21,10 @@ view =
             [ Block.custom <|
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "vCPU Units" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "vCPUs" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text " Units" ]
+                            , Form.help [] [ text "-- Units" ]
                             ]
                         ]
                         ,
@@ -32,7 +32,7 @@ view =
                         [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text " MiB" ]
+                            , Form.help [] [ text "-- MiB" ]
                             ]
                         ]
                         ,
@@ -40,7 +40,7 @@ view =
                         [ Form.colLabel [ Col.sm3 ] [ text "IOOPS" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text " Mbits/sec" ]
+                            , Form.help [] [ text "-- Mbits/sec" ]
                             ]
                         ]
                     ]
