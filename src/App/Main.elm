@@ -27,7 +27,7 @@ type alias Model =
     { navbarState : Navbar.State
     , navKey : Nav.Key
     , currentDetail : Detail
-    , services: List (Configuration.Service) -- look into if localStorage works?
+    , services: List (Configuration.Service) 
     }
 
 
