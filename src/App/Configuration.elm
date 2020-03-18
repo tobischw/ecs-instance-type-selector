@@ -9,6 +9,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
+type Msg = 
+    AddService
+
 type alias Service =
     { id : Int
     , name : String
@@ -67,7 +70,7 @@ view services =
     Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Configuration"
-            , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ] ] [ text "Add Service" ]
+            , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ]{-, Button.onClick AddService -}] [ text "Add Service" ]
             , ListGroup.custom (viewServices services)
             , hr [] []
             , ListGroup.custom
