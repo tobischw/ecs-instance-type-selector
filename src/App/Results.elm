@@ -9,7 +9,7 @@ import Canvas.Settings exposing (..)
 import Canvas.Settings.Text exposing (TextAlign(..), align, font)
 import Color
 import Html exposing (Html, canvas, div)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, style)
 
 
 view : Grid.Column msg
@@ -18,8 +18,11 @@ view =
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle
                 "Live Results"
-            , div []
+            , div [ class "pb-2"]
                 [ Progress.progress [ Progress.value 0, Progress.animated ] ]
+                ,
+            Util.viewColumnTitle
+                "Packing"
             , viewBrownieGraph
             ]
         ]
@@ -40,14 +43,13 @@ viewBrownieGraph =
     in
     Canvas.toHtml ( width, height )
         [ style "border" "none" ]
-        [ shapes [ fill Color.white ] [ rect ( 0, 0 ) width height ]
-        , renderSlice "Service A" 0 0 50 30
-        ]
+        (shapes [ fill (Color.rgb 0.85 0.92 1) ] [ rect ( 0, 0 ) width height ]
+        :: renderSlice "Service A" 0 0 100 150 )
 
 
 renderSlice : String -> Float -> Float -> Float -> Float -> List Renderable
 renderSlice disp x y width height =
         [ shapes [ fill Color.blue ]
             [ rect ( x, y ) width height ]
-        , text [ font { size = 20, family = "sans-serif" } ] ( 20, 20 ) "Hello world"
+        , text [ font { size = 20, family = "sans-serif" }, align Center, fill Color.white ] ( 20, 20 ) disp
         ]
