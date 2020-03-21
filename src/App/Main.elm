@@ -3,7 +3,7 @@ module App.Main exposing (..)
 import App.Configuration as Configuration
 import App.Container as Container
 import App.Results as Results
-import App.Service as Service
+import App.Service as Service exposing (..)
 import App.Settings as Settings
 import App.Task as Task
 import App.Util as Util
@@ -48,6 +48,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | ConfigurationMsg Configuration.Msg
+    | ServiceMsg Service.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -136,12 +137,13 @@ viewDetail : Model -> Html Msg
 viewDetail model =
     case model.currentDetail of
         Service id ->
-            case findServiceById model id of
-                Just service ->
-                    Service.view service
+            -- case findServiceById model id of
+            --     Just service ->
+            --         Service.view service
 
-                Nothing ->
-                    viewNotFoundDetail
+            --     Nothing ->
+            --         viewNotFoundDetail
+            Html.map ServiceMsg (Service.view NEED_TO_FIGURE_THIS_OUT_HERE)
 
         Task id ->
             Task.view
