@@ -27,7 +27,7 @@ type alias Model =
     { navbarState : Navbar.State
     , navKey : Nav.Key
     , currentDetail : Detail
-    , services: List (Configuration.Service) 
+    , configuration : Configuration.Model
     }
 
 
@@ -39,15 +39,6 @@ type Detail
     | Settings
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
-    let
-        ( navbarState, navbarCmd ) =
-            Navbar.initialState NavbarMsg
-    in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, services = [Configuration.Service 0 "Service a" [ Configuration.Task 0 "Task a1" [ Configuration.Container 0 "Container a11"]], Configuration.Service 1 "Tobi's Cool Service" [], Configuration.Service 2 "Will's Garbage Service" [] ] }, navbarCmd )
-
-
 
 ---- UPDATE ----
 
@@ -56,6 +47,7 @@ type Msg
     = NavbarMsg Navbar.State
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | ConfigurationMsg Configuration.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -81,6 +73,9 @@ update msg model =
             , Cmd.none
             )
 
+        ConfigurationMsg configurationMsg ->
+            ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
+
 
 urlToDetail : Url -> Detail
 urlToDetail url =
@@ -93,9 +88,9 @@ urlParser : Parser (Detail -> a) a
 urlParser =
     Url.oneOf
         [ Url.map None Url.top
-        , Url.map Container (Url.s "container" </> Url.int )
-        , Url.map Service (Url.s "service" </> Url.int )
-        , Url.map Task (Url.s "task" </> Url.int )
+        , Url.map Container (Url.s "container" </> Url.int)
+        , Url.map Service (Url.s "service" </> Url.int)
+        , Url.map Task (Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -118,9 +113,11 @@ viewContent : Model -> Html Msg
 viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
-            [ Configuration.view model.services
+            [ Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+                [ Html.map ConfigurationMsg (Configuration.view model.configuration)
+                ]
             , viewDetailColumn model
-            , Results.view
+            {--, Results.view--}
             ]
         ]
 
@@ -135,53 +132,17 @@ viewDetailColumn model =
         ]
 
 
-{--
-updateServiceById : (Photo -> Photo) -> Id -> Feed -> Feed
-updateServiceById updatePhoto id feed =
-    List.map
-        (\photo ->
-            if photo.id == id then
-                updatePhoto photo
-
-            else
-                photo
-        )
-        feed
-
--- Or maybe we want to just flatten it?
-flattenList : NestedList a -> List a
-flattenList nested =
-    let
-        recur node acc =
-            case node of
-                Element a ->
-                    a :: acc
-
-                Nested list ->
-                    List.foldr recur acc list
-    in
-        recur nested []
-
---}
-
-findServiceById : Model -> Int -> Maybe Configuration.Service
-findServiceById model id =
-   List.head (List.filter (\i -> i.id == id) model.services)
-
-{--findTaskById : Model -> Int -> Maybe Configuration.Task
-findTaskById model id =
-   List.head (List.filter (\i -> i.id == id) model.services)--}
-
 viewDetail : Model -> Html Msg
 viewDetail model =
     case model.currentDetail of
         Service id ->
             case findServiceById model id of
-               Just service ->
+                Just service ->
                     Service.view service
-               Nothing ->
+
+                Nothing ->
                     viewNotFoundDetail
-            
+
         Task id ->
             Task.view
 
@@ -200,10 +161,12 @@ viewNoneDetail =
     span [ class "text-muted align-middle" ]
         [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
 
+
 viewNotFoundDetail : Html Msg
 viewNotFoundDetail =
     span [ class "text-muted align-middle" ]
         [ text "Whatever you are looking for does not exist." ]
+
 
 viewNavbar : Model -> Html Msg
 viewNavbar model =
@@ -217,6 +180,19 @@ viewNavbar model =
         |> Navbar.view model.navbarState
 
 
+
+---- HELPERS ----
+
+
+findServiceById : Model -> Int -> Maybe Configuration.Service
+findServiceById model id =
+    List.head (List.filter (\i -> i.id == id) model.configuration.services)
+
+
+
+---- SUBSCRIPTIONS ----
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Navbar.subscriptions model.navbarState NavbarMsg
@@ -224,6 +200,15 @@ subscriptions model =
 
 
 ---- PROGRAM ----
+
+
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+    let
+        ( navbarState, navbarCmd ) =
+            Navbar.initialState NavbarMsg
+    in
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init }, navbarCmd )
 
 
 main : Program () Model Msg
