@@ -1,17 +1,21 @@
-module App.Configuration exposing (Container, Msg(..), Service, Task, view, init, update, Model)
+module App.Configuration exposing (Container, Model, Msg(..), Service, Task, init, update, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
+import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
 import Bootstrap.ListGroup as ListGroup
+import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
 
 init : Model
 init =
-    { services = [ Service 0 "Service a" [ Task 0 "Task a1" [ Container 0 "Container a11" ] ], Service 1 "Tobi's Cool Service" [], Service 2 "Will's Garbage Service" [] ] }
+    { services = [ Service 0 "Service a" [ Task 0 "Task a1" [ Container 0 "Container a11" ] ], Service 1 "Tobi's Cool Service" [], Service 2 "Will's Garbage Service" [] ]
+    , newServiceModal = Modal.hidden
+    , newServiceName = ""
+    }
 
 
 type alias Services =
@@ -20,11 +24,16 @@ type alias Services =
 
 type alias Model =
     { services : Services
+    , newServiceModal : Modal.Visibility
+    , newServiceName : String
     }
 
 
 type Msg
     = AddService
+    | CloseModal
+    | ShowModal
+    | ChangeNewServiceName String
 
 
 type alias Service =
@@ -44,14 +53,30 @@ type alias Task =
     { id : Int
     , name : String
     , containers : List Container
-    }   
+    }
 
+
+validateServiceName : String -> String
+validateServiceName name =
+    if String.isEmpty name then
+        "Unnamed Service"
+    else
+        name
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddService ->
-            { model | services = model.services ++ [ Service 5 "Test Service" [] ] }
+            { model | services = model.services ++ [ Service 5 (validateServiceName model.newServiceName) [] ], newServiceName = "", newServiceModal = Modal.hidden }
+
+        CloseModal ->
+            { model | newServiceModal = Modal.hidden, newServiceName = "" }
+
+        ShowModal ->
+            { model | newServiceModal = Modal.shown }
+
+        ChangeNewServiceName newName ->
+            { model | newServiceName = newName }
 
 
 viewServices : List Service -> List (ListGroup.CustomItem msg)
@@ -82,6 +107,35 @@ viewContainer container =
     listItem container.name "archive" [ href ("/container/" ++ String.fromInt container.id), class "pl-5" ]
 
 
+viewNewServiceModal : Model -> Html Msg
+viewNewServiceModal model =
+    Modal.config CloseModal
+        |> Modal.small
+        |> Modal.hideOnBackdropClick True
+        |> Modal.h3 [] [ text "New Service" ]
+        |> Modal.body []
+            [ Form.form []
+                [ Form.group []
+                    [ Form.label [] [ text "Name:" ]
+                    , Input.text [ Input.value model.newServiceName, Input.onInput ChangeNewServiceName, Input.attrs [ placeholder "Service Name" ] ]
+                    ]
+                ]
+            ]
+        |> Modal.footer []
+            [ Button.button
+                [ Button.outlinePrimary
+                , Button.onClick CloseModal
+                ]
+                [ text "Cancel" ]
+            , Button.button
+                [ Button.success
+                , Button.onClick AddService
+                ]
+                [ text "Add" ]
+            ]
+        |> Modal.view model.newServiceModal
+
+
 listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
 listItem label icon attrs =
     ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
@@ -91,7 +145,7 @@ view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
         [ Util.viewColumnTitle "Configuration"
-        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick AddService ] [ text "Add Service" ]
+        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ text "Add Service" ]
         , ListGroup.custom (viewServices model.services)
         , hr [] []
         , ListGroup.custom
@@ -99,4 +153,5 @@ view model =
             , listItem "Export as JSON" "eject" [ href "#" ]
             , listItem "Load JSON" "download-outline" [ href "#" ]
             ]
+        , viewNewServiceModal model
         ]
