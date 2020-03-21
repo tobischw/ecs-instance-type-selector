@@ -190,7 +190,7 @@ findServiceById model id =
 
 
 
----- SUBSCRIPTIONS ----
+---- SUBSCRIPTION ----
 
 
 subscriptions : Model -> Sub Msg
