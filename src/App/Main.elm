@@ -117,7 +117,7 @@ viewContent model =
                 [ Html.map ConfigurationMsg (Configuration.view model.configuration)
                 ]
             , viewDetailColumn model
-            {--, Results.view--}
+            , Results.view
             ]
         ]
 
