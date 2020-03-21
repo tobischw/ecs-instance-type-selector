@@ -16,7 +16,7 @@ import Html.Events exposing (on, onInput)
 view : Html msg
 view =
     Card.config []
-        |> Card.header [] [ text "Container 1a" ]
+        |> Card.header [] [ text "Container 1a", i [ class ("typcn typcn-pencil cursor-pointer ml-1"), class "pr-2", class "icon" ] [] ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
