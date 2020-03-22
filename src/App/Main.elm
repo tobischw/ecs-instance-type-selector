@@ -33,7 +33,7 @@ type alias Model =
 type Detail
     = None
     | Service Int
-    | Task Int Int
+    | Task Int
     | Container Int
     | Settings
 
@@ -97,7 +97,7 @@ urlParser =
         [ Url.map None Url.top
         , Url.map Container (Url.s "container" </> Url.int)
         , Url.map Service (Url.s "service" </> Url.int)
-        , Url.map Task (Url.s "service" </> Url.int </> Url.s "task" </> Url.int)
+        , Url.map Task (Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -152,20 +152,13 @@ viewDetail model =
                    Nothing -> 
                         viewNotFoundDetail
 
-        Task serviceId id ->
+        Task serviceId ->
             let
                 maybeService = Dict.get serviceId model.configuration.services
             in
                 case maybeService of
-                   Just service ->
-                        let 
-                            maybeTask = Dict.get id service.tasks
-                        in
-                            case maybeTask of
-                               Just task ->
-                                    Html.map TaskMsg (Task.view serviceId id task)
-                               Nothing -> 
-                                    viewNotFoundDetail
+                   Just service -> 
+                        Html.map TaskMsg (Task.view serviceId service.task)
                    Nothing -> 
                         viewNotFoundDetail
 

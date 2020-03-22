@@ -15,7 +15,7 @@ import Html.Events.Extra exposing (onChange, onEnter)
 
 init : Model
 init =
-    { services = Dict.fromList [ ( 0, Service "Service A" 50 (Dict.fromList [ (0, Task "Task A" 20 Dict.empty) ]) ) ]
+    { services = Dict.fromList [ ( 0, Service "Service A" 50 (Task 50) Dict.empty ) ]
     , newServiceModal = Modal.hidden
     , newServiceName = ""
     }
@@ -42,14 +42,13 @@ type Msg
 type alias Service =
     { name : String
     , scalingTarget : Int
-    , tasks : Dict Int Task
+    , task : Task
+    , containers : Dict Int Container
     }
 
 
 type alias Task =
-    { name : String
-    , totalMemory : Int
-    , containers : Dict Int Container
+    { totalMemory : Int
     }
 
 type alias Container =
@@ -70,7 +69,7 @@ update msg model =
 
                 id = Dict.size model.services
             in
-            { model | services = model.services |> Dict.insert id (Service name 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            { model | services = model.services |> Dict.insert id (Service name 50 (Task 50) Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }
@@ -96,24 +95,29 @@ viewService serviceWithId =
     let
         service =
             second serviceWithId
+        serviceId =
+            first serviceWithId
     in
     List.concat
-        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt (first serviceWithId)) ]
+        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt serviceId) ]
           ]
-        , List.concat (List.map (viewTask (first serviceWithId)) (Dict.toList service.tasks))
+        , viewTask serviceWithId
         ]
 
 
-viewTask : Int -> (Int, Task) -> List (ListGroup.CustomItem msg)
-viewTask serviceId taskWithId =
+viewTask : ( Int, Service ) -> List (ListGroup.CustomItem msg)
+viewTask serviceWithId =
     let
-        task =
-            second taskWithId
+        service =
+            second serviceWithId
+
+        serviceId =
+            first serviceWithId
     in
     List.concat
-        [ [ listItem task.name "clipboard" [ href ("/service/" ++ String.fromInt serviceId ++ "/task/" ++ String.fromInt (first taskWithId)), class "pl-4" ]
+        [ [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
           ]
-        , List.map viewContainer (Dict.toList task.containers)
+        , List.map viewContainer (Dict.toList service.containers)
         ]
 
 
