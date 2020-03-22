@@ -5,10 +5,11 @@ import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
 import Bootstrap.Grid.Col as Col
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import Dict exposing (Dict)
+
 
 type alias Model =
     Configuration.Model
@@ -17,21 +18,34 @@ type alias Model =
 type Msg
     = UpdateTotalMemory Int String
 
+
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateTotalMemory id value ->
             case String.toInt value of
                 Just i ->
+                    -- This is a mess, someone help please!
                     { model | services = Dict.update id (Maybe.map (\task -> { task | task = Configuration.Task i })) model.services }
+
                 Nothing ->
                     model
+
 
 view : Int -> Configuration.Service -> Html Msg
 view serviceId service =
     div []
         [ Card.config []
-            |> Card.header [] [ text (service.name ++ " · Tasks") ]
+            |> Card.header [] [ text (service.name ++ " · Task Setup") ]
+            |> Card.block []
+                [ Block.custom <|
+                    div [] [
+                        span [] [ text "This is where you would select how many tasks + what region they are in"]
+                    ]
+                ]
+            |> Card.view
+        , Card.config [ Card.attrs [ class "mt-3" ] ]
+            |> Card.header [] [ text (service.name ++ " · Task Configuration") ]
             |> Card.block []
                 [ Block.custom <|
                     Form.row []

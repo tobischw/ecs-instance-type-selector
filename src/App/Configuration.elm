@@ -9,13 +9,18 @@ import Bootstrap.Modal as Modal
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Tuple exposing (first, second)
 import Html.Events.Extra exposing (onChange, onEnter)
+import Tuple exposing (first, second)
+
+
+testServices : Dict Int Service
+testServices =
+    Dict.fromList [ ( 0, Service "Service A" 50 (Task 50) (Dict.fromList [ ( 0, Container "Container 1a" ), ( 1, Container "Container 2a" ) ]) ) ]
 
 
 init : Model
 init =
-    { services = Dict.fromList [ ( 0, Service "Service A" 50 (Task 50) Dict.empty ) ]
+    { services = testServices
     , newServiceModal = Modal.hidden
     , newServiceName = ""
     }
@@ -51,9 +56,11 @@ type alias Task =
     { totalMemory : Int
     }
 
+
 type alias Container =
     { name : String
     }
+
 
 update : Msg -> Model -> Model
 update msg model =
@@ -67,7 +74,8 @@ update msg model =
                     else
                         model.newServiceName
 
-                id = Dict.size model.services
+                id =
+                    Dict.size model.services
             in
             { model | services = model.services |> Dict.insert id (Service name 50 (Task 50) Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
@@ -93,41 +101,28 @@ viewServices services =
 viewService : ( Int, Service ) -> List (ListGroup.CustomItem msg)
 viewService serviceWithId =
     let
-        service =
-            second serviceWithId
         serviceId =
             first serviceWithId
+
+        service =
+            second serviceWithId
     in
     List.concat
         [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt serviceId) ]
           ]
-        , viewTask serviceWithId
-        ]
-
-
-viewTask : ( Int, Service ) -> List (ListGroup.CustomItem msg)
-viewTask serviceWithId =
-    let
-        service =
-            second serviceWithId
-
-        serviceId =
-            first serviceWithId
-    in
-    List.concat
-        [ [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
+        , [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
           ]
         , List.map viewContainer (Dict.toList service.containers)
         ]
 
 
-viewContainer : (Int, Container) -> ListGroup.CustomItem msg
+viewContainer : ( Int, Container ) -> ListGroup.CustomItem msg
 viewContainer containerWithId =
     let
         container =
             second containerWithId
     in
-    listItem container.name "archive" [ href ("/container/" ++ String.fromInt (first containerWithId)), class "pl-5" ]
+    listItem container.name "archive" [ href ("/container/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
 
 
 viewNewServiceModal : Model -> Html Msg
@@ -140,7 +135,13 @@ viewNewServiceModal model =
             [ Form.form []
                 [ Form.group []
                     [ Form.label [] [ text "Name:" ]
-                    , Input.text [ Input.value model.newServiceName, Input.onInput ChangeNewServiceName, Input.attrs [ placeholder "Service Name"{-, onEnter ChangeNewServiceName-} ] ]
+                    , Input.text
+                        [ Input.value model.newServiceName
+                        , Input.onInput ChangeNewServiceName
+                        , Input.attrs
+                            [ placeholder "Service Name"
+                            ]
+                        ]
                     ]
                 ]
             ]
@@ -162,7 +163,7 @@ viewNewServiceModal model =
 listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
 listItem label icon attrs =
     ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
-    
+
 
 view : Model -> Html Msg
 view model =
