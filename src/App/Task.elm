@@ -35,7 +35,7 @@ view serviceId task =
             |> Card.block []
                 [ Block.custom <|
                     Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Total Memory" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Test Field Task" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range", value <| String.fromInt task.totalMemory, onInput (UpdateTotalMemory serviceId) ] []
                             , Form.help [] [ text (String.fromInt task.totalMemory ++ " MiB · Memory limit of all containers in this task for scaling purposes") ]

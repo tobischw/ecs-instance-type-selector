@@ -45,7 +45,7 @@ view id service =
             [ Block.custom <|
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Scaling Target" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Test Field" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.scalingTarget, onInput (UpdateScalingTarget id) ] []
                             , Form.help [] [ text (String.fromInt service.scalingTarget ++ "% utilization") ]
