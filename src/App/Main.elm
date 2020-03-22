@@ -3,7 +3,7 @@ module App.Main exposing (..)
 import App.Configuration as Configuration
 import App.Container as Container
 import App.Results as Results
-import App.Service as Service exposing (..)
+import App.Service as Service
 import App.Settings as Settings
 import App.Task as Task
 import App.Util as Util
@@ -17,7 +17,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
-
+import Dict exposing (Dict)
 
 
 ---- MODEL ----
@@ -29,7 +29,6 @@ type alias Model =
     , currentDetail : Detail
     , configuration : Configuration.Model
     }
-
 
 type Detail
     = None
@@ -76,6 +75,9 @@ update msg model =
 
         ConfigurationMsg configurationMsg ->
             ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
+
+        ServiceMsg serviceMsg ->
+            ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
 
 
 urlToDetail : Url -> Detail
@@ -137,13 +139,14 @@ viewDetail : Model -> Html Msg
 viewDetail model =
     case model.currentDetail of
         Service id ->
-            -- case findServiceById model id of
-            --     Just service ->
-            --         Service.view service
-
-            --     Nothing ->
-            --         viewNotFoundDetail
-            Html.map ServiceMsg (Service.view NEED_TO_FIGURE_THIS_OUT_HERE)
+            let
+                maybeService = Dict.get id model.configuration.services
+            in
+                case maybeService of
+                   Just service -> 
+                        Html.map ServiceMsg (Service.view id service)
+                   Nothing -> 
+                        viewNotFoundDetail
 
         Task id ->
             Task.view
@@ -184,11 +187,6 @@ viewNavbar model =
 
 
 ---- HELPERS ----
-
-
-findServiceById : Model -> Int -> Maybe Configuration.Service
-findServiceById model id =
-    List.head (List.filter (\i -> i.id == id) model.configuration.services)
 
 
 

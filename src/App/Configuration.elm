@@ -6,20 +6,22 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Tuple exposing (first, second)
 
 
 init : Model
 init =
-    { services = [ Service 0 "Service a" [ Task 0 "Task a1" [ Container 0 "Container a11" ] ], Service 1 "Tobi's Cool Service" [], Service 2 "Will's Garbage Service" [] ]
+    { services = Dict.fromList [ ( 0, Service "Service A" 50 [] ) ]
     , newServiceModal = Modal.hidden
     , newServiceName = ""
     }
 
 
 type alias Services =
-    List Service
+    Dict Int Service
 
 
 type alias Model =
@@ -37,8 +39,8 @@ type Msg
 
 
 type alias Service =
-    { id : Int
-    , name : String
+    { name : String
+    , scalingTarget : Int
     , tasks : List Task
     }
 
@@ -56,18 +58,21 @@ type alias Task =
     }
 
 
-validateServiceName : String -> String
-validateServiceName name =
-    if String.isEmpty name then
-        "Unnamed Service"
-    else
-        name
-
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddService ->
-            { model | services = model.services ++ [ Service 5 (validateServiceName model.newServiceName) [] ], newServiceName = "", newServiceModal = Modal.hidden }
+            let
+                name =
+                    if String.isEmpty model.newServiceName then
+                        "Unnamed Service"
+
+                    else
+                        model.newServiceName
+                
+                id = 5
+            in
+            { model | services = model.services |> Dict.insert id (Service name 50 []), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }
@@ -79,15 +84,27 @@ update msg model =
             { model | newServiceName = newName }
 
 
-viewServices : List Service -> List (ListGroup.CustomItem msg)
+
+-- rewrite these view functions
+
+
+viewServices : Services -> List (ListGroup.CustomItem msg)
 viewServices services =
-    List.concatMap viewService services
+    List.concatMap viewService (Dict.toList services)
 
 
-viewService : Service -> List (ListGroup.CustomItem msg)
-viewService service =
+
+-- there's gotta be a better way to do this
+
+
+viewService : ( Int, Service ) -> List (ListGroup.CustomItem msg)
+viewService serviceWithId =
+    let
+        service =
+            second serviceWithId
+    in
     List.concat
-        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt service.id) ]
+        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt (first serviceWithId)) ]
           ]
         , List.concat (List.map viewTask service.tasks)
         ]

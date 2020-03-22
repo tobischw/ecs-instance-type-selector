@@ -1,40 +1,42 @@
-module App.Service exposing (view, init, Model, Msg(..), update)
+module App.Service exposing (Model, Msg(..), update, view)
 
 import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
 import Bootstrap.Grid.Col as Col
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (on, onInput)
 
-init : Model
-init =
-    { scalingTarget = 50
-    }
+
+
+-- This seems a bit messy, but technically allowed since we end up w/ "global" state
 
 
 type alias Model =
-    { scalingTarget : Int
-    }
+    Configuration.Model
 
 
 type Msg
-    = UpdateScalingTarget String
+    = UpdateScalingTarget Int String
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateScalingTarget value ->
+        UpdateScalingTarget id value ->
             case String.toInt value of
-               Just i -> { model | scalingTarget = i }
-               Nothing -> model
+                Just i ->
+                    { model | services = Dict.update id (Maybe.map (\scalingTarget -> { scalingTarget | scalingTarget = i })) model.services }
+
+                Nothing ->
+                    model
 
 
-view : Model -> Configuration.Service -> Html Msg
-view model service =
+view : Int -> Configuration.Service -> Html Msg
+view id service =
     Card.config []
         |> Card.header [] [ text service.name ]
         |> Card.block []
@@ -43,7 +45,7 @@ view model service =
                     [ Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Scaling Target" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt model.scalingTarget, onInput UpdateScalingTarget ] []
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.scalingTarget, onInput (UpdateScalingTarget id) ] []
                             , Form.help [] [ text "% utilization" ]
                             ]
                         ]
