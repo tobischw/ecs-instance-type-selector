@@ -1,4 +1,4 @@
-module App.Util exposing (viewColumnTitle, icon)
+module App.Util exposing (icon, viewColumnTitle)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

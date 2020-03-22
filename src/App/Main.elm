@@ -17,7 +17,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
-
+import Dict exposing (Dict)
 
 
 ---- MODEL ----
@@ -29,7 +29,6 @@ type alias Model =
     , currentDetail : Detail
     , configuration : Configuration.Model
     }
-
 
 type Detail
     = None
@@ -48,6 +47,8 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | ConfigurationMsg Configuration.Msg
+    | ServiceMsg Service.Msg
+    | TaskMsg Task.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -75,6 +76,12 @@ update msg model =
 
         ConfigurationMsg configurationMsg ->
             ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
+
+        ServiceMsg serviceMsg ->
+            ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
+
+        TaskMsg taskMsg ->
+            ( { model | configuration = Task.update taskMsg model.configuration }, Cmd.none )
 
 
 urlToDetail : Url -> Detail
@@ -131,20 +138,29 @@ viewDetailColumn model =
             ]
         ]
 
-
+-- Simplify viewDetail somehow, it looks a bit messy
 viewDetail : Model -> Html Msg
 viewDetail model =
     case model.currentDetail of
         Service id ->
-            case findServiceById model id of
-                Just service ->
-                    Service.view service
+            let
+                maybeService = Dict.get id model.configuration.services
+            in
+                case maybeService of
+                   Just service -> 
+                        Html.map ServiceMsg (Service.view id service)
+                   Nothing -> 
+                        viewNotFoundDetail
 
-                Nothing ->
-                    viewNotFoundDetail
-
-        Task id ->
-            Task.view
+        Task serviceId ->
+            let
+                maybeService = Dict.get serviceId model.configuration.services
+            in
+                case maybeService of
+                   Just service -> 
+                        Html.map TaskMsg (Task.view serviceId service)
+                   Nothing -> 
+                        viewNotFoundDetail
 
         Container id ->
             Container.view
@@ -184,13 +200,8 @@ viewNavbar model =
 ---- HELPERS ----
 
 
-findServiceById : Model -> Int -> Maybe Configuration.Service
-findServiceById model id =
-    List.head (List.filter (\i -> i.id == id) model.configuration.services)
 
-
-
----- SUBSCRIPTIONS ----
+---- SUBSCRIPTION ----
 
 
 subscriptions : Model -> Sub Msg

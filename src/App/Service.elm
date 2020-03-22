@@ -1,26 +1,54 @@
-module App.Service exposing (view)
+module App.Service exposing (Model, Msg(..), update, view)
 
 import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
-import Bootstrap.Form.Input as Input
 import Bootstrap.Grid.Col as Col
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onInput)
+import Html.Events.Extra exposing (onChange)
 
-view : Configuration.Service -> Html msg
-view service =
+
+
+-- This seems a bit messy, but technically allowed since we end up w/ "global" state
+
+
+type alias Model =
+    Configuration.Model
+
+
+type Msg
+    = UpdateScalingTarget Int String
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        UpdateScalingTarget id value ->
+            case String.toInt value of
+                Just i ->
+                    -- This needs to be either cleaned up or split into different function for easier re-use
+                    { model | services = Dict.update id (Maybe.map (\scalingTarget -> { scalingTarget | scalingTarget = i })) model.services }
+
+                Nothing ->
+                    model
+
+
+view : Int -> Configuration.Service -> Html Msg
+view id service =
     Card.config []
         |> Card.header [] [ text service.name ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Scaling Target" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Test Field" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range" ] []
-                            , Form.help [] [ text "% utilization" ]
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.scalingTarget, onInput (UpdateScalingTarget id) ] []
+                            , Form.help [] [ text (String.fromInt service.scalingTarget ++ "% utilization") ]
                             ]
                         ]
                     ]

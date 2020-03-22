@@ -1,16 +1,19 @@
-module App.Task exposing (view)
+module App.Task exposing (Model, Msg(..), update, view)
 
 import App.Container as Container
 import App.Util as Util
 import Bootstrap.Button as Button
+import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Form.Select as Select
 import Bootstrap.Form as Form
 import Bootstrap.Grid.Col as Col
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onInput)
 
 
 type alias RegionRecord =
@@ -49,29 +52,48 @@ allRegions =
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
 
+type alias Model =
+    Configuration.Model
 
 
-view : Html msg
-view =
+type Msg
+    = UpdateTotalMemory Int String
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        UpdateTotalMemory id value ->
+            case String.toInt value of
+                Just i ->
+                    -- This is a mess, someone help please!
+                    { model | services = Dict.update id (Maybe.map (\task -> { task | task = Configuration.Task i })) model.services }
+
+                Nothing ->
+                    model
+
+
+view : Int -> Configuration.Service -> Html Msg
+view serviceId service =
     div []
         [ Card.config []
-            |> Card.header [] [ text "Task A" ]
+            |> Card.header [] [ text (service.name ++ " · Task Setup") ]
             |> Card.block []
                 [ Block.custom <|
-                    div []
-                        [ Form.row []
-                            [ Form.col []
-                                [ 
-                                    Select.select []
-                                        (List.map (\ c -> Select.item [] [text c.displayName]) allRegions)
-                                ]
-                            ]
-                        , Form.row []
-                            [ Form.colLabel [ Col.sm3 ] [ text "Total Memory" ]
-                            , Form.col [ Col.sm9 ]
-                                [ input [ type_ "range", class "form-control-range disabled", disabled True ] []
-                                , Form.help [] [ text "-- MiB · Memory limit of all containers in this task for scaling purposes" ]
-                                ]
+                    div [] [
+                        span [] [ text "This is where you would select how many tasks + what region they are in"]
+                    ]
+                ]
+            |> Card.view
+        , Card.config [ Card.attrs [ class "mt-3" ] ]
+            |> Card.header [] [ text (service.name ++ " · Task Configuration") ]
+            |> Card.block []
+                [ Block.custom <|
+                    Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Test Field Task" ]
+                        , Form.col [ Col.sm9 ]
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.task.totalMemory, onInput (UpdateTotalMemory serviceId) ] []
+                            , Form.help [] [ text (String.fromInt service.task.totalMemory ++ " MiB · Memory limit of all containers in this task for scaling purposes") ]
                             ]
                         ]
                 ]
