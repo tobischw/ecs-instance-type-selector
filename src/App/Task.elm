@@ -27,18 +27,18 @@ update msg model =
                 Nothing ->
                     model
 
-view : Int -> Configuration.Task -> Html Msg
-view serviceId task =
+view : Int -> Configuration.Service -> Html Msg
+view serviceId service =
     div []
         [ Card.config []
-            |> Card.header [] [ text "Tasks" ]
+            |> Card.header [] [ text (service.name ++ " · Tasks") ]
             |> Card.block []
                 [ Block.custom <|
                     Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Test Field Task" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt task.totalMemory, onInput (UpdateTotalMemory serviceId) ] []
-                            , Form.help [] [ text (String.fromInt task.totalMemory ++ " MiB · Memory limit of all containers in this task for scaling purposes") ]
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.task.totalMemory, onInput (UpdateTotalMemory serviceId) ] []
+                            , Form.help [] [ text (String.fromInt service.task.totalMemory ++ " MiB · Memory limit of all containers in this task for scaling purposes") ]
                             ]
                         ]
                 ]

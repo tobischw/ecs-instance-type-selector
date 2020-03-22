@@ -158,7 +158,7 @@ viewDetail model =
             in
                 case maybeService of
                    Just service -> 
-                        Html.map TaskMsg (Task.view serviceId service.task)
+                        Html.map TaskMsg (Task.view serviceId service)
                    Nothing -> 
                         viewNotFoundDetail
 
