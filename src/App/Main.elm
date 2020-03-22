@@ -33,7 +33,7 @@ type alias Model =
 type Detail
     = None
     | Service Int
-    | Task Int
+    | Task Int Int
     | Container Int
     | Settings
 
@@ -48,6 +48,7 @@ type Msg
     | UrlChanged Url.Url
     | ConfigurationMsg Configuration.Msg
     | ServiceMsg Service.Msg
+    | TaskMsg Task.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -79,6 +80,9 @@ update msg model =
         ServiceMsg serviceMsg ->
             ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
 
+        TaskMsg taskMsg ->
+            ( { model | configuration = Task.update taskMsg model.configuration }, Cmd.none )
+
 
 urlToDetail : Url -> Detail
 urlToDetail url =
@@ -93,7 +97,7 @@ urlParser =
         [ Url.map None Url.top
         , Url.map Container (Url.s "container" </> Url.int)
         , Url.map Service (Url.s "service" </> Url.int)
-        , Url.map Task (Url.s "task" </> Url.int)
+        , Url.map Task (Url.s "service" </> Url.int </> Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -134,7 +138,7 @@ viewDetailColumn model =
             ]
         ]
 
-
+-- Simplify viewDetail somehow, it looks a bit messy
 viewDetail : Model -> Html Msg
 viewDetail model =
     case model.currentDetail of
@@ -148,8 +152,22 @@ viewDetail model =
                    Nothing -> 
                         viewNotFoundDetail
 
-        Task id ->
-            Task.view
+        Task serviceId id ->
+            let
+                maybeService = Dict.get serviceId model.configuration.services
+            in
+                case maybeService of
+                   Just service ->
+                        let 
+                            maybeTask = Dict.get id service.tasks
+                        in
+                            case maybeTask of
+                               Just task ->
+                                    Html.map TaskMsg (Task.view serviceId id task)
+                               Nothing -> 
+                                    viewNotFoundDetail
+                   Nothing -> 
+                        viewNotFoundDetail
 
         Container id ->
             Container.view

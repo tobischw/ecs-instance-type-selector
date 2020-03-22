@@ -8,7 +8,7 @@ import Bootstrap.Grid.Col as Col
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-
+import Html.Events exposing (onInput)
 import Html.Events.Extra exposing (onChange)
 
 
@@ -47,8 +47,8 @@ view id service =
                     [ Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Scaling Target" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.scalingTarget, onChange (UpdateScalingTarget id) ] []
-                            , Form.help [] [ text "% utilization" ]
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.scalingTarget, onInput (UpdateScalingTarget id) ] []
+                            , Form.help [] [ text (String.fromInt service.scalingTarget ++ "% utilization") ]
                             ]
                         ]
                     ]
