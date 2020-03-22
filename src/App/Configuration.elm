@@ -69,8 +69,8 @@ update msg model =
 
                     else
                         model.newServiceName
-                
-                id = 5
+
+                id = Dict.size model.services
             in
             { model | services = model.services |> Dict.insert id (Service name 50 []), newServiceName = "", newServiceModal = Modal.hidden }
 
@@ -85,16 +85,12 @@ update msg model =
 
 
 
--- rewrite these view functions
+-- rewrite these view functions, use Dict.map?
 
 
 viewServices : Services -> List (ListGroup.CustomItem msg)
 viewServices services =
     List.concatMap viewService (Dict.toList services)
-
-
-
--- there's gotta be a better way to do this
 
 
 viewService : ( Int, Service ) -> List (ListGroup.CustomItem msg)

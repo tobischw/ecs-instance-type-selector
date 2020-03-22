@@ -30,6 +30,7 @@ update msg model =
         UpdateScalingTarget id value ->
             case String.toInt value of
                 Just i ->
+                    -- This needs to be either cleaned up or split into different function for easier re-use
                     { model | services = Dict.update id (Maybe.map (\scalingTarget -> { scalingTarget | scalingTarget = i })) model.services }
 
                 Nothing ->
