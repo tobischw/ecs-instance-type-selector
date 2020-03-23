@@ -40,21 +40,21 @@ update msg model =
                 Nothing ->
                     model
 
-        UpdateRegions id regs ->
+        UpdateRegions id regionChangeMessage ->
             let 
-                (regsModel, _, _) =
+                (newRegionModel, _, _) =
                      let
                         maybeService = Dict.get id model.services
                      in
                         case maybeService of
                             Just service -> 
-                                Multiselect.update regs service.regions
+                                Multiselect.update regionChangeMessage service.regions
                         
                             Nothing ->
-                                Multiselect.update regs (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A")
+                                Multiselect.update regionChangeMessage (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A")
                                  
             in
-                { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = regsModel })) model.services }
+                { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = newRegionModel })) model.services }
 
 view : Int -> Configuration.Service -> Html Msg
 view serviceId service =
