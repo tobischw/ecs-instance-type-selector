@@ -1,12 +1,13 @@
-module App.Task exposing (Model, Msg(..), update, view, subscriptions)
+module App.Task exposing (Model, Msg(..), update, view)
 
 import App.Container as Container
+import App.Configuration as Configuration exposing (RegionRecord)
 import App.Util as Util
 import Bootstrap.Button as Button
 import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
-import Multiselect as Multiselect
+import Multiselect
 import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Form.Select as Select
 import Bootstrap.Form as Form
@@ -18,41 +19,7 @@ import Html.Events exposing (onInput)
 import Tuple exposing (first, second)
 
 
-type alias RegionRecord =
-    { regionCode : String
-    , displayName : String
-    , regionName : String
-    }
-
-
-
 -- https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.partial.html
-
-
-allRegions : List RegionRecord
-allRegions =
-    [ RegionRecord "us" "US East (Ohio)" "us-east-2"
-    , RegionRecord "us" "US East (N. Virginia)" "us-east-1"
-    , RegionRecord "us" "US West (N. California)" "us-west-1"
-    , RegionRecord "us" "US West (Oregon)" "us-west-2"
-    , RegionRecord "ap" "Asia Pacific (Hong Kong)" "ap-east-1"
-    , RegionRecord "ap" "Asia Pacific (Mumbai)" "ap-south-1"
-    , RegionRecord "ap" "Asia Pacific (Osaka-Local)" "ap-northeast-3"
-    , RegionRecord "ap" "Asia Pacific (Seoul)" "ap-northeast-2"
-    , RegionRecord "ap" "Asia Pacific (Singapore)" "ap-southeast-1"
-    , RegionRecord "ap" "Asia Pacific (Sydney)" "ap-southeast-2"
-    , RegionRecord "ap" "Asia Pacific (Tokyo)" "ap-northeast-1"
-    , RegionRecord "ca" "Canada (Central)" "ca-central-1"
-    , RegionRecord "cn" "China (Beijing)" "cn-north-1"
-    , RegionRecord "cn" "China (Ningxia)" "cn-northwest-1"
-    , RegionRecord "eu" "Europe (Frankfurt)" "eu-central-1"
-    , RegionRecord "eu" "Europe (Ireland)" "eu-west-1"
-    , RegionRecord "eu" "Europe (London)" "eu-west-2"
-    , RegionRecord "eu" "Europe (Paris)" "eu-west-3"
-    , RegionRecord "eu" "Europe (Stockholm)" "eu-north-1"
-    , RegionRecord "me" "Middle East (Bahrain)" "me-south-1"
-    , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
-    ]
 
 type alias Model =
     Configuration.Model
@@ -62,6 +29,7 @@ type Msg
     = UpdateTotalMemory Int String
     | UpdateRegions Int Multiselect.Msg
 
+
 -- https://elmseeds.thaterikperson.com/elm-multiselect
 update : Msg -> Model -> Model
 update msg model =
@@ -69,18 +37,26 @@ update msg model =
         UpdateTotalMemory id value ->
             case String.toInt value of
                 Just i ->
-                    -- This is a mess, someone help please!
-                    { model | services = Dict.update id (Maybe.map (\task -> { task | task = Configuration.Task i (Multiselect.initModel [("yeetID", "YEET bb")] "A")})) model.services }
+                    { model | services = Dict.update id (Maybe.map (\taskTotalMemory -> { taskTotalMemory | taskTotalMemory = i })) model.services }
 
                 Nothing ->
                     model
-        UpdateRegions id regions ->
-            Multiselect.update
-                msg
 
-                
-
-
+        UpdateRegions id regs ->
+            let 
+                (regsModel, _, _) =
+                     let
+                        maybeService = Dict.get id model.services
+                     in
+                        case maybeService of
+                            Just service -> 
+                                Multiselect.update regs service.regions
+                        
+                            Nothing ->
+                                Multiselect.update regs (Multiselect.initModel [("yeetID", "YEET bb")] "A")
+                                 
+            in
+                { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = regsModel })) model.services }
 
 view : Int -> Configuration.Service -> Html Msg
 view serviceId service =
@@ -91,7 +67,7 @@ view serviceId service =
                 [ Block.custom <|
                     div [] 
                     [ span [] [ text "This is where you would select how many tasks + what region they are in"]
-                    , Html.map UpdateRegions serviceId <| Multiselect.view service.task.regions
+                    , Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
                     ]
                 ]
             |> Card.view
@@ -102,8 +78,8 @@ view serviceId service =
                     Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Test Field Task" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.task.totalMemory, onInput (UpdateTotalMemory serviceId) ] []
-                            , Form.help [] [ text (String.fromInt service.task.totalMemory ++ " MiB · Memory limit of all containers in this task for scaling purposes") ]
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt service.taskTotalMemory, onInput (UpdateTotalMemory serviceId) ] []
+                            , Form.help [] [ text (String.fromInt service.taskTotalMemory ++ " MiB · Memory limit of all containers in this task for scaling purposes") ]
                             ]
                         ]
                 ]
