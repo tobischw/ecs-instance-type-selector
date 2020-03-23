@@ -1,4 +1,4 @@
-module App.Task exposing (Model, Msg(..), update, view)
+module App.Task exposing (Model, Msg(..), update, view, subscriptions)
 
 import App.Container as Container
 import App.Util as Util
@@ -6,6 +6,7 @@ import Bootstrap.Button as Button
 import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
+import Multiselect as Multiselect
 import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Form.Select as Select
 import Bootstrap.Form as Form
@@ -14,6 +15,7 @@ import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
+import Tuple exposing (first, second)
 
 
 type alias RegionRecord =
@@ -58,8 +60,9 @@ type alias Model =
 
 type Msg
     = UpdateTotalMemory Int String
+    | UpdateRegions Int Multiselect.Msg
 
-
+-- https://elmseeds.thaterikperson.com/elm-multiselect
 update : Msg -> Model -> Model
 update msg model =
     case msg of
@@ -67,10 +70,16 @@ update msg model =
             case String.toInt value of
                 Just i ->
                     -- This is a mess, someone help please!
-                    { model | services = Dict.update id (Maybe.map (\task -> { task | task = Configuration.Task i })) model.services }
+                    { model | services = Dict.update id (Maybe.map (\task -> { task | task = Configuration.Task i (Multiselect.initModel [("yeetID", "YEET bb")] "A")})) model.services }
 
                 Nothing ->
                     model
+        UpdateRegions id regions ->
+            Multiselect.update
+                msg
+
+                
+
 
 
 view : Int -> Configuration.Service -> Html Msg
@@ -80,8 +89,9 @@ view serviceId service =
             |> Card.header [] [ text (service.name ++ " · Task Setup") ]
             |> Card.block []
                 [ Block.custom <|
-                    div [] [
-                        span [] [ text "This is where you would select how many tasks + what region they are in"]
+                    div [] 
+                    [ span [] [ text "This is where you would select how many tasks + what region they are in"]
+                    , Html.map UpdateRegions serviceId <| Multiselect.view service.task.regions
                     ]
                 ]
             |> Card.view

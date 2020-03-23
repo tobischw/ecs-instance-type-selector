@@ -8,6 +8,7 @@ import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
 import Dict exposing (Dict)
 import Html exposing (..)
+import Multiselect as Multiselect
 import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
 import Tuple exposing (first, second)
@@ -15,7 +16,7 @@ import Tuple exposing (first, second)
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Task 50) (Dict.fromList [ ( 0, Container "Container 1a" ), ( 1, Container "Container 2a" ) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Task 50 (Multiselect.initModel [("yeetID", "YEET bb")] "A")) (Dict.fromList [ ( 0, Container "Container 1a" ), ( 1, Container "Container 2a" ) ]) ) ]
 
 
 init : Model
@@ -54,6 +55,7 @@ type alias Service =
 
 type alias Task =
     { totalMemory : Int
+    , regions: Multiselect.Model
     }
 
 
@@ -77,7 +79,7 @@ update msg model =
                 id =
                     Dict.size model.services
             in
-            { model | services = model.services |> Dict.insert id (Service name 50 (Task 50) Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            { model | services = model.services |> Dict.insert id (Service name 50 (Task 50 (Multiselect.initModel [("yeetID", "YEET bb")] "A")) Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }

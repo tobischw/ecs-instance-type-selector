@@ -7,6 +7,7 @@ import App.Service as Service
 import App.Settings as Settings
 import App.Task as Task
 import App.Util as Util
+import Multiselect
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
