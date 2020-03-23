@@ -1,7 +1,7 @@
 module App.Task exposing (Model, Msg(..), update, view)
 
 import App.Container as Container
-import App.Configuration as Configuration exposing (RegionRecord)
+import App.Configuration as Configuration exposing (RegionRecord, allRegions)
 import App.Util as Util
 import Bootstrap.Button as Button
 import App.Configuration as Configuration
@@ -18,8 +18,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Tuple exposing (first, second)
 
-
--- https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.partial.html
 
 type alias Model =
     Configuration.Model
@@ -42,21 +40,21 @@ update msg model =
                 Nothing ->
                     model
 
-        UpdateRegions id regs ->
+        UpdateRegions id regionChangeMessage ->
             let 
-                (regsModel, _, _) =
+                (newRegionModel, _, _) =
                      let
                         maybeService = Dict.get id model.services
                      in
                         case maybeService of
                             Just service -> 
-                                Multiselect.update regs service.regions
+                                Multiselect.update regionChangeMessage service.regions
                         
                             Nothing ->
-                                Multiselect.update regs (Multiselect.initModel [("yeetID", "YEET bb")] "A")
+                                Multiselect.update regionChangeMessage (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A")
                                  
             in
-                { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = regsModel })) model.services }
+                { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = newRegionModel })) model.services }
 
 view : Int -> Configuration.Service -> Html Msg
 view serviceId service =
@@ -66,7 +64,8 @@ view serviceId service =
             |> Card.block []
                 [ Block.custom <|
                     div [] 
-                    [ Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
+                    [ label [] [text "Regions: "]
+                    , Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
                     ]
                 ]
             |> Card.view
