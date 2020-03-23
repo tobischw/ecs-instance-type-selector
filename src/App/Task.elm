@@ -19,8 +19,6 @@ import Html.Events exposing (onInput)
 import Tuple exposing (first, second)
 
 
--- https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.partial.html
-
 type alias Model =
     Configuration.Model
 
@@ -66,7 +64,8 @@ view serviceId service =
             |> Card.block []
                 [ Block.custom <|
                     div [] 
-                    [ Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
+                    [ label [] [text "Regions: "]
+                    , Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
                     ]
                 ]
             |> Card.view

@@ -16,7 +16,7 @@ import Tuple exposing (first, second)
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel [("yeetID", "YEET bb")] "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" ), ( 1, Container "Container 2a" ) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" ), ( 1, Container "Container 2a" ) ]) ) ]
 
 
 init : Model
@@ -65,6 +65,7 @@ type alias RegionRecord =
     }
 
 
+-- https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.partial.html
 allRegions : List RegionRecord
 allRegions =
     [ RegionRecord "us" "US East (Ohio)" "us-east-2"
