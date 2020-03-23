@@ -107,7 +107,7 @@ update msg model =
                 id =
                     Dict.size model.services
             in
-            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel [("yeetID", "YEET bb")] "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }
