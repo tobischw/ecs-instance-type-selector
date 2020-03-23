@@ -66,8 +66,7 @@ view serviceId service =
             |> Card.block []
                 [ Block.custom <|
                     div [] 
-                    [ span [] [ text "This is where you would select how many tasks + what region they are in"]
-                    , Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
+                    [ Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
                     ]
                 ]
             |> Card.view
