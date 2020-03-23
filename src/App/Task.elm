@@ -1,7 +1,7 @@
 module App.Task exposing (Model, Msg(..), update, view)
 
 import App.Container as Container
-import App.Configuration as Configuration exposing (RegionRecord)
+import App.Configuration as Configuration exposing (RegionRecord, allRegions)
 import App.Util as Util
 import Bootstrap.Button as Button
 import App.Configuration as Configuration
@@ -51,7 +51,7 @@ update msg model =
                                 Multiselect.update regs service.regions
                         
                             Nothing ->
-                                Multiselect.update regs (Multiselect.initModel [("yeetID", "YEET bb")] "A")
+                                Multiselect.update regs (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A")
                                  
             in
                 { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = regsModel })) model.services }

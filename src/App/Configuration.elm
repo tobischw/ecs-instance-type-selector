@@ -1,4 +1,4 @@
-module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, init, update, view)
+module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, allRegions, init, update, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
