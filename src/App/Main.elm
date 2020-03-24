@@ -35,7 +35,7 @@ type Detail
     = None
     | Service Int
     | Task Int
-    | Container Int
+    | Container Int Int
     | Settings
 
 
@@ -50,6 +50,7 @@ type Msg
     | ConfigurationMsg Configuration.Msg
     | ServiceMsg Service.Msg
     | TaskMsg Task.Msg
+    | ContainerMsg Container.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -84,6 +85,9 @@ update msg model =
         TaskMsg taskMsg ->
             ( { model | configuration = Task.update taskMsg model.configuration }, Cmd.none )
 
+        ContainerMsg containerMsg ->
+            ( { model | configuration = Container.update containerMsg model.configuration }, Cmd.none )
+
 
 urlToDetail : Url -> Detail
 urlToDetail url =
@@ -96,7 +100,7 @@ urlParser : Parser (Detail -> a) a
 urlParser =
     Url.oneOf
         [ Url.map None Url.top
-        , Url.map Container (Url.s "container" </> Url.int)
+        , Url.map Container (Url.s "container" </> Url.int </> Url.int)
         , Url.map Service (Url.s "service" </> Url.int)
         , Url.map Task (Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
@@ -163,8 +167,22 @@ viewDetail model =
                    Nothing -> 
                         viewNotFoundDetail
 
-        Container id ->
-            Container.view
+        Container serviceId id ->
+            let
+                maybeService = Dict.get serviceId model.configuration.services
+            in
+                case maybeService of
+                   Just service -> 
+                        let 
+                            maybeContainer = Dict.get id service.containers
+                        in
+                            case maybeContainer of
+                                Just container ->
+                                    Html.map ContainerMsg (Container.view serviceId container)
+                                Nothing ->
+                                    viewNotFoundDetail
+                   Nothing -> 
+                        viewNotFoundDetail
 
         Settings ->
             Settings.view
@@ -192,7 +210,7 @@ viewNavbar model =
         |> Navbar.fixTop
         |> Navbar.withAnimation
         |> Navbar.dark
-        |> Navbar.brand [ href "#", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
+        |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
             [ img [ src "../logo.png", class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.view model.navbarState
 

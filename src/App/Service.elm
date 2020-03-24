@@ -24,15 +24,14 @@ type Msg
     = UpdateScalingTarget Int String
 
 
+-- find a better way to do this!
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateScalingTarget id value ->
             case String.toInt value of
                 Just i ->
-                    -- This needs to be either cleaned up or split into different function for easier re-use
                     { model | services = Dict.update id (Maybe.map (\scalingTarget -> { scalingTarget | scalingTarget = i })) model.services }
-
                 Nothing ->
                     model
 

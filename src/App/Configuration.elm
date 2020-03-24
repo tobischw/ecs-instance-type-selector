@@ -16,7 +16,7 @@ import Tuple exposing (first, second)
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" ), ( 1, Container "Container 2a" ) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 ), ( 1, Container "Container 2a" 20 20 20 ) ]) ) ]
 
 
 init : Model
@@ -55,6 +55,9 @@ type alias Service =
 
 type alias Container =
     { name : String
+    , vCPUs : Int
+    , memory : Int
+    , ioops : Int
     }
 
 
@@ -142,17 +145,17 @@ viewService serviceWithId =
           ]
         , [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
           ]
-        , List.map viewContainer (Dict.toList service.containers)
+        , List.map (viewContainer serviceId)  (Dict.toList service.containers)
         ]
 
 
-viewContainer : ( Int, Container ) -> ListGroup.CustomItem msg
-viewContainer containerWithId =
+viewContainer : Int -> ( Int, Container ) -> ListGroup.CustomItem msg
+viewContainer serviceId containerWithId =
     let
         container =
             second containerWithId
     in
-    listItem container.name "archive" [ href ("/container/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
+    listItem container.name "archive" [ href ("/container/" ++ String.fromInt (serviceId) ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
 
 
 viewNewServiceModal : Model -> Html Msg
