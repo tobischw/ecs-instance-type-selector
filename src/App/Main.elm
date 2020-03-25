@@ -20,6 +20,7 @@ import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
 import Dict exposing (Dict)
 
+import Tuple exposing (first, second)
 
 ---- MODEL ----
 
@@ -91,7 +92,10 @@ update msg model =
             ( { model | configuration = Container.update containerMsg model.configuration }, Cmd.none )
 
         SettingsMsg settingsMsg ->
-            ( { model | settings = Settings.update settingsMsg model.settings }, Cmd.none )
+            let 
+                msgWithCmd = Settings.update settingsMsg model.settings
+            in 
+                ( { model | settings = first msgWithCmd}, Cmd.map SettingsMsg (second msgWithCmd) )
 
 
 urlToDetail : Url -> Detail
@@ -230,7 +234,10 @@ viewNavbar model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Navbar.subscriptions model.navbarState NavbarMsg
+    Sub.batch [
+        Navbar.subscriptions model.navbarState NavbarMsg
+        , Sub.map SettingsMsg <| Settings.subscriptions model.settings
+    ]
 
 
 

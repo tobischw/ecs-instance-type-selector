@@ -1,9 +1,8 @@
-module App.Settings exposing (Model, Msg(..), init, update, view)
+module App.Settings exposing (Model, Msg(..), init, update, view, subscriptions)
 
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
-import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -45,15 +44,21 @@ type Msg
     = UpdateExcludedInstances Multiselect.Msg
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateExcludedInstances instancesChangedMessage ->
             let 
-                (newExcludedInstances, _, _) =
+                (newExcludedInstances, subCmd, _) =
                     Multiselect.update instancesChangedMessage model.excludedInstances
             in
-                { model | excludedInstances = newExcludedInstances }
+                ({ model | excludedInstances = newExcludedInstances }, Cmd.map UpdateExcludedInstances subCmd )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.map UpdateExcludedInstances <| Multiselect.subscriptions model.excludedInstances
+
 
 view : Model -> Html Msg
 view model =
