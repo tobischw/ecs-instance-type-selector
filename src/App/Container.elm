@@ -24,7 +24,7 @@ update msg model =
         UpdateVCPU serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = (Configuration.updateContainers serviceId id model.services (Configuration.VCPUS i))})) model.services }
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.VCPUS i)})) model.services }
                 Nothing ->
                     model
 
