@@ -24,19 +24,7 @@ update msg model =
         UpdateVCPU serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    let
-                        maybeService = Dict.get serviceId model.services
-                    in
-                        case maybeService of
-                            Just service -> 
-                                let
-                                    newContainers = Dict.update id (Maybe.map (\vCPUs -> { vCPUs | vCPUs = i})) service.containers
-                                in
-                                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = newContainers})) model.services }
-                            Nothing -> model
-                    
-
-                    --{ model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = (Dict.update id (Maybe.map (\) ) ) })) model.services }
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = (Configuration.updateContainers serviceId id model.services (Configuration.VCPUS i))})) model.services }
                 Nothing ->
                     model
 
