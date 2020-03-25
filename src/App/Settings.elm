@@ -17,27 +17,27 @@ type alias Model =
 
 init : Model
 init =
-    { excludedInstances = (Multiselect.initModel [ ( "one", "The 1st option" ) ] "A")
+    { excludedInstances = Multiselect.initModel instanceTypes "A"
     }
 
-
-instanceTypes : List String
+-- There's a better way to do this...
+instanceTypes : List (String, String)
 instanceTypes =
-    [ "T2"
-    , "M5"
-    , "M4"
-    , "M3"
-    , "C5"
-    , "C4"
-    , "C3"
-    , "X1"
-    , "R4"
-    , "R3"
-    , "P3"
-    , "P2"
-    , "G3"
-    , "F1"
-    , "I3"
+    [ ("t2", "T2")
+     , ("m5", "M5")
+     , ("m4", "M4")
+     , ("m3", "M3")
+     , ("c5", "C5")
+     , ("c4", "C4")
+     , ("c3", "C3")
+     , ("x1", "X1")
+     , ("r4", "R4")
+     , ("r3", "R3")
+     , ("p3", "P3")
+     , ("p2", "P2")
+     , ("g3", "G3")
+     , ("f1", "F1")
+     , ("i3", "I3")
     ]
 
 
@@ -48,9 +48,12 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateExcludedInstances value ->
-            model
-
+        UpdateExcludedInstances instancesChangedMessage ->
+            let 
+                (newExcludedInstances, _, _) =
+                    Multiselect.update instancesChangedMessage model.excludedInstances
+            in
+                { model | excludedInstances = newExcludedInstances }
 
 view : Model -> Html Msg
 view model =
@@ -62,16 +65,8 @@ view model =
                         [ Form.colLabel [ Col.sm3 ] [ text "Excluded Instance Types" ]
                         , Form.col [ Col.sm9 ]
                             [ Html.map UpdateExcludedInstances <| Multiselect.view model.excludedInstances
-                            , Form.help [] [ text "Exclude specific ECS instances" ]
+                            , Form.help [] [ text "Exclude specific ECS instances. These will be ignored during the cluster optimization calculation." ]
                             ]
                         ]
                 ]
         |> Card.view
-
-
-viewInstanceCheckbox : String -> Html Msg
-viewInstanceCheckbox name =
-    Form.row []
-        [ Form.col [ Col.sm12 ]
-            [ Checkbox.checkbox [ Checkbox.id name, Checkbox.checked True ] name ]
-        ]
