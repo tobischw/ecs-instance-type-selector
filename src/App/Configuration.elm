@@ -16,7 +16,7 @@ import Tuple exposing (first, second)
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 ), ( 1, Container "Container 2a" 20 20 20 ) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 100 ), ( 1, Container "Container 2a" 20 20 20 100) ]) ) ]
 
 
 init : Model
@@ -58,6 +58,7 @@ type alias Container =
     , vCPUs : Int
     , memory : Int
     , ioops : Int
+    , storage: Int
     }
 
 
@@ -99,6 +100,7 @@ type ContainerProps
     | Name String
     | Memory Int
     | Ioops Int
+    | Storage Int
 
 --               serviceID  containerID allServices containerUpdate -> newContainer
 updateContainers: Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
@@ -117,8 +119,10 @@ updateContainers serviceId containerId services containerUpdate =
                         Dict.update containerId (Maybe.map (\container -> {container | memory = newMem})) service.containers
                     Ioops newIoops ->
                         Dict.update containerId (Maybe.map (\container -> {container | ioops = newIoops})) service.containers
+                    Storage newSize ->
+                        Dict.update containerId (Maybe.map (\container -> {container | storage = newSize})) service.containers
             Nothing ->
-                Dict.fromList [ ( 0, Container "Shit's broke yo. Service Id didn't exist" 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 ) ]
+                Dict.fromList [ ( 0, Container "Shit's broke yo. Service Id didn't exist" 50 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 50 ) ]
     
 
 update : Msg -> Model -> Model
