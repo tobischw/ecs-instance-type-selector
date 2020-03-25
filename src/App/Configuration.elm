@@ -55,7 +55,7 @@ type alias Service =
 
 type alias Container =
     { name : String
-    , vCPUs : Int
+    , cpuShare : Int
     , memory : Int
     , ioops : Int
     , storage: Int
@@ -96,7 +96,7 @@ allRegions =
     ]
 
 type ContainerProps 
-    = VCPUS Int
+    = CPUShare Int
     | Name String
     | Memory Int
     | Ioops Int
@@ -111,8 +111,8 @@ updateContainers serviceId containerId services containerUpdate =
         case maybeService of
             Just service -> 
                 case containerUpdate of
-                    VCPUS num ->
-                        Dict.update containerId (Maybe.map (\container -> {container | vCPUs = num})) service.containers
+                    CPUShare num ->
+                        Dict.update containerId (Maybe.map (\container -> {container | cpuShare = num})) service.containers
                     Name newName ->
                         Dict.update containerId (Maybe.map (\container -> {container | name = newName})) service.containers
                     Memory newMem ->

@@ -15,7 +15,7 @@ type alias Model =
 
 
 type Msg 
-    = UpdateVCPU Int Int String
+    = UpdateCPUShare Int Int String
     | UpdateMem Int Int String
     | UpdateIoops Int Int String
     | UpdateStorage Int Int String
@@ -25,10 +25,10 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateVCPU serviceId id value ->
+        UpdateCPUShare serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.VCPUS i)})) model.services }
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.CPUShare i)})) model.services }
                 Nothing ->
                     model
         UpdateMem serviceId id value ->
@@ -59,10 +59,10 @@ view serviceId containerId container =
             [ Block.custom <|
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "vCPUs" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "CPU Share" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "1", Html.Attributes.max "96", value <| String.fromInt container.vCPUs, onInput (UpdateVCPU serviceId containerId) ] []
-                            , Form.help [] [ text (String.fromInt container.vCPUs ++ " vCPUs") ]
+                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "1", Html.Attributes.max "1024", value <| String.fromInt container.cpuShare, onInput (UpdateCPUShare serviceId containerId) ] []
+                            , Form.help [] [ text (String.fromInt container.cpuShare ++ "/1024 shares of CPU time") ]
                             ]
                         ]
                         ,
