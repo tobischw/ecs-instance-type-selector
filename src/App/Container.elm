@@ -16,6 +16,9 @@ type alias Model =
 
 type Msg 
     = UpdateVCPU Int Int String
+    | UpdateMem Int Int String
+    | UpdateIoops Int Int String
+    -- | UpdateName Int Int String
 
 -- find a better way to do this!
 update : Msg -> Model -> Model
@@ -25,6 +28,18 @@ update msg model =
             case String.toInt value of
                 Just i ->
                     { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.VCPUS i)})) model.services }
+                Nothing ->
+                    model
+        UpdateMem serviceId id value ->
+            case String.toInt value of
+                Just i ->
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Memory i)})) model.services }
+                Nothing ->
+                    model
+        UpdateIoops serviceId id value ->
+            case String.toInt value of
+                Just i ->
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Ioops i)})) model.services }
                 Nothing ->
                     model
 
@@ -46,7 +61,7 @@ view serviceId containerId container =
                         Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.memory ] []
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.memory, onInput (UpdateMem serviceId containerId)] []
                             , Form.help [] [ text "-- MiB" ]
                             ]
                         ]
@@ -54,7 +69,7 @@ view serviceId containerId container =
                         Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "IOOPS" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.ioops ] []
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.ioops, onInput (UpdateIoops serviceId containerId) ] []
                             , Form.help [] [ text "-- Mbits/sec" ]
                             ]
                         ]
