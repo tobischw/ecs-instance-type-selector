@@ -72,7 +72,7 @@ view serviceId service =
                 ]
             |> Card.view
         , Card.config [ Card.attrs [ class "mt-3" ] ]
-            |> Card.header [] [ text (service.name ++ " · Task Configuration") ]
+            |> Card.header [] [ text (service.name ++ " · Task Arrangment") ]
             |> Card.block []
                 [ Block.custom <|
                     Form.row []
