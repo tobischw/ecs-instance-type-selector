@@ -1,4 +1,4 @@
-module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, allRegions, init, update, view)
+module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, ContainerProps(..), updateContainers, allRegions, init, update, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -94,6 +94,32 @@ allRegions =
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
 
+type ContainerProps 
+    = VCPUS Int
+    | Name String
+    | Memory Int
+    | Ioops Int
+
+--               serviceID  containerID allServices containerUpdate -> newContainer
+updateContainers: Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
+updateContainers serviceId containerId services containerUpdate =
+    let
+        maybeService = Dict.get serviceId services
+    in
+        case maybeService of
+            Just service -> 
+                case containerUpdate of
+                    VCPUS num ->
+                        Dict.update containerId (Maybe.map (\container -> {container | vCPUs = num})) service.containers
+                    Name newName ->
+                        Dict.update containerId (Maybe.map (\container -> {container | name = newName})) service.containers
+                    Memory newMem ->
+                        Dict.update containerId (Maybe.map (\container -> {container | memory = newMem})) service.containers
+                    Ioops newIoops ->
+                        Dict.update containerId (Maybe.map (\container -> {container | ioops = newIoops})) service.containers
+            Nothing ->
+                Dict.fromList [ ( 0, Container "Shit's broke yo. Service Id didn't exist" 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 ) ]
+    
 
 update : Msg -> Model -> Model
 update msg model =
