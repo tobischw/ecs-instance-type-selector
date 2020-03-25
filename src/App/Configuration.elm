@@ -251,7 +251,7 @@ view model =
         , ListGroup.custom (viewServices model.services)
         , hr [] []
         , ListGroup.custom
-            [ listItem "Global Settings" "cog" [ href "../settings" ]
+            [ listItem "Global Settings" "cog" [ href "../../settings" ]
             , listItem "Export as JSON" "eject" [ href "#" ]
             , listItem "Load JSON" "download-outline" [ href "#" ]
             ]
