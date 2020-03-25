@@ -70,7 +70,7 @@ view serviceId containerId container =
                         [ Form.colLabel [ Col.sm3 ] [ text "IOOPS" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.ioops, onInput (UpdateIoops serviceId containerId) ] []
-                            , Form.help [] [ text "-- Mbits/sec" ]
+                            , Form.help [] [ text (String.fromInt container.ioops ++ " Mbits/sec") ]
                             ]
                         ]
                     ]
