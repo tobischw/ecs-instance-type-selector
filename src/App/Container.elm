@@ -13,13 +13,13 @@ import Dict exposing (Dict)
 type alias Model =
     Configuration.Model
 
-
 type Msg 
     = UpdateVCPU Int Int String
     | UpdateMem Int Int String
     | UpdateIoops Int Int String
     | UpdateStorage Int Int String
     -- | UpdateName Int Int String
+    
 
 -- find a better way to do this!
 update : Msg -> Model -> Model

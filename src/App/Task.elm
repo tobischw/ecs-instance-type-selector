@@ -1,15 +1,10 @@
 module App.Task exposing (Model, Msg(..), update, view)
 
-import App.Container as Container
 import App.Configuration as Configuration exposing (RegionRecord, allRegions)
-import App.Util as Util
-import Bootstrap.Button as Button
 import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Multiselect
-import Bootstrap.Dropdown as Dropdown
-import Bootstrap.Form.Select as Select
 import Bootstrap.Form as Form
 import Bootstrap.Grid.Col as Col
 import Dict exposing (Dict)
@@ -60,13 +55,20 @@ view : Int -> Configuration.Service -> Html Msg
 view serviceId service =
     div []
         [ Card.config []
-            |> Card.header [] [ text (service.name ++ " · Task Setup") ]
+            |> Card.header [] [ text (service.name ++ " · Tasks Setup") ]
             |> Card.block []
                 [ Block.custom <|
-                    div [] 
-                    [ label [] [text "Regions: "]
+                    Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Regions" ]
+                        , Form.col [ Col.sm9 ]
+                            [ Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
+                            , Form.help [] [ text "Select the regions (for redundancy). Each selection will equal a replicated task." ]
+                            ]
+                        ]
+                  {--  div [] 
+                    [ label [] [text "Regions"]
                     , Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
-                    ]
+                    ]--}
                 ]
             |> Card.view
         , Card.config [ Card.attrs [ class "mt-3" ] ]
