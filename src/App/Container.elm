@@ -7,6 +7,7 @@ import Bootstrap.Form as Form
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onInput)
 import Dict exposing (Dict)
 
 type alias Model =
@@ -14,22 +15,33 @@ type alias Model =
 
 
 type Msg 
-    = UpdateVCPU Int String
+    = UpdateVCPU Int Int String
 
 -- find a better way to do this!
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateVCPU id value ->
+        UpdateVCPU serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    model
-                    --{ model | services = Dict.update id (Maybe.map (\vCPUs -> { vCPUs | vCPUs = i })) model.services }
+                    let
+                        maybeService = Dict.get serviceId model.services
+                    in
+                        case maybeService of
+                            Just service -> 
+                                let
+                                    newContainers = Dict.update id (Maybe.map (\vCPUs -> { vCPUs | vCPUs = i})) service.containers
+                                in
+                                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = newContainers})) model.services }
+                            Nothing -> model
+                    
+
+                    --{ model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = (Dict.update id (Maybe.map (\) ) ) })) model.services }
                 Nothing ->
                     model
 
-view : Int -> Configuration.Container -> Html Msg
-view serviceId container =
+view : Int -> Int -> Configuration.Container -> Html Msg
+view serviceId containerId container =
     Card.config []
         |> Card.header [] [ text container.name]
         |> Card.block []
@@ -38,7 +50,7 @@ view serviceId container =
                     [ Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "vCPUs" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.vCPUs ] []
+                            [ input [ type_ "range", class "form-control-range", value <| String.fromInt container.vCPUs, onInput (UpdateVCPU serviceId containerId) ] []
                             , Form.help [] [ text "-- Units" ]
                             ]
                         ]

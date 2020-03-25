@@ -178,7 +178,7 @@ viewDetail model =
                         in
                             case maybeContainer of
                                 Just container ->
-                                    Html.map ContainerMsg (Container.view serviceId container)
+                                    Html.map ContainerMsg (Container.view serviceId id container)
                                 Nothing ->
                                     viewNotFoundDetail
                    Nothing -> 
