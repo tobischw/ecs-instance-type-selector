@@ -29,6 +29,7 @@ type alias Model =
     , navKey : Nav.Key
     , currentDetail : Detail
     , configuration : Configuration.Model
+    , settings : Settings.Model
     }
 
 type Detail
@@ -51,6 +52,7 @@ type Msg
     | ServiceMsg Service.Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
+    | SettingsMsg Settings.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,6 +89,9 @@ update msg model =
 
         ContainerMsg containerMsg ->
             ( { model | configuration = Container.update containerMsg model.configuration }, Cmd.none )
+
+        SettingsMsg settingsMsg ->
+            ( { model | settings = Settings.update settingsMsg model.settings }, Cmd.none )
 
 
 urlToDetail : Url -> Detail
@@ -185,7 +190,7 @@ viewDetail model =
                         viewNotFoundDetail
 
         Settings ->
-            Settings.view
+            Html.map SettingsMsg (Settings.view model.settings)
 
         _ ->
             viewNoneDetail
@@ -211,7 +216,7 @@ viewNavbar model =
         |> Navbar.withAnimation
         |> Navbar.dark
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
-            [ img [ src "../logo.png", class "logo" ] [], text "Cluster Prophet" ]
+            [ img [ src "../ec2.svg", class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.view model.navbarState
 
 
@@ -238,7 +243,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init, settings = Settings.init }, navbarCmd )
 
 
 main : Program () Model Msg

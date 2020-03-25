@@ -1,4 +1,4 @@
-module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, ContainerProps(..), updateContainers, allRegions, init, update, view)
+module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..), RegionRecord, Service, allRegions, init, update, updateContainers, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -8,15 +8,15 @@ import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
 import Dict exposing (Dict)
 import Html exposing (..)
-import Multiselect as Multiselect
 import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
+import Multiselect
 import Tuple exposing (first, second)
 
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 100 ), ( 1, Container "Container 2a" 20 20 20 100) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 100 ), ( 1, Container "Container 2a" 20 20 20 100 ) ]) ) ]
 
 
 init : Model
@@ -48,17 +48,18 @@ type Msg
 type alias Service =
     { name : String
     , scalingTarget : Int
-    , regions: Multiselect.Model
+    , regions : Multiselect.Model
     , taskTotalMemory : Int
     , containers : Dict Int Container
     }
+
 
 type alias Container =
     { name : String
     , vCPUs : Int
     , memory : Int
     , ioops : Int
-    , storage: Int
+    , storage : Int
     }
 
 
@@ -69,7 +70,10 @@ type alias RegionRecord =
     }
 
 
+
 -- https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.partial.html
+
+
 allRegions : List RegionRecord
 allRegions =
     [ RegionRecord "us" "US East (Ohio)" "us-east-2"
@@ -95,35 +99,46 @@ allRegions =
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
 
-type ContainerProps 
+
+type ContainerProps
     = VCPUS Int
     | Name String
     | Memory Int
     | Ioops Int
     | Storage Int
 
+
+
 --               serviceID  containerID allServices containerUpdate -> newContainer
-updateContainers: Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
+
+
+updateContainers : Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
 updateContainers serviceId containerId services containerUpdate =
     let
-        maybeService = Dict.get serviceId services
+        maybeService =
+            Dict.get serviceId services
     in
-        case maybeService of
-            Just service -> 
-                case containerUpdate of
-                    VCPUS num ->
-                        Dict.update containerId (Maybe.map (\container -> {container | vCPUs = num})) service.containers
-                    Name newName ->
-                        Dict.update containerId (Maybe.map (\container -> {container | name = newName})) service.containers
-                    Memory newMem ->
-                        Dict.update containerId (Maybe.map (\container -> {container | memory = newMem})) service.containers
-                    Ioops newIoops ->
-                        Dict.update containerId (Maybe.map (\container -> {container | ioops = newIoops})) service.containers
-                    Storage newSize ->
-                        Dict.update containerId (Maybe.map (\container -> {container | storage = newSize})) service.containers
-            Nothing ->
-                Dict.fromList [ ( 0, Container "Shit's broke yo. Service Id didn't exist" 50 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 50 ) ]
-    
+    case maybeService of
+        Just service ->
+            case containerUpdate of
+                VCPUS num ->
+                    Dict.update containerId (Maybe.map (\container -> { container | vCPUs = num })) service.containers
+
+                Name newName ->
+                    Dict.update containerId (Maybe.map (\container -> { container | name = newName })) service.containers
+
+                Memory newMem ->
+                    Dict.update containerId (Maybe.map (\container -> { container | memory = newMem })) service.containers
+
+                Ioops newIoops ->
+                    Dict.update containerId (Maybe.map (\container -> { container | ioops = newIoops })) service.containers
+
+                Storage newSize ->
+                    Dict.update containerId (Maybe.map (\container -> { container | storage = newSize })) service.containers
+
+        Nothing ->
+            Dict.fromList [ ( 0, Container "Service Id didn't exist" 50 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 50 ) ]
+
 
 update : Msg -> Model -> Model
 update msg model =
@@ -140,7 +155,7 @@ update msg model =
                 id =
                     Dict.size model.services
             in
-            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }
@@ -175,7 +190,7 @@ viewService serviceWithId =
           ]
         , [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
           ]
-        , List.map (viewContainer serviceId)  (Dict.toList service.containers)
+        , List.map (viewContainer serviceId) (Dict.toList service.containers)
         ]
 
 
@@ -185,7 +200,7 @@ viewContainer serviceId containerWithId =
         container =
             second containerWithId
     in
-    listItem container.name "archive" [ href ("/container/" ++ String.fromInt (serviceId) ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
+    listItem container.name "archive" [ href ("/container/" ++ String.fromInt serviceId ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
 
 
 viewNewServiceModal : Model -> Html Msg

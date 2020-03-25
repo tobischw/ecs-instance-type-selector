@@ -65,10 +65,6 @@ view serviceId service =
                             , Form.help [] [ text "Select the regions (for redundancy). Each selection will equal a replicated task." ]
                             ]
                         ]
-                  {--  div [] 
-                    [ label [] [text "Regions"]
-                    , Html.map (UpdateRegions serviceId) <| Multiselect.view service.regions
-                    ]--}
                 ]
             |> Card.view
         , Card.config [ Card.attrs [ class "mt-3" ] ]
