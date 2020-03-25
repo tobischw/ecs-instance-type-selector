@@ -1,13 +1,15 @@
 module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..), RegionRecord, Service, allRegions, init, update, updateContainers, view)
 
 import App.Util as Util
+import Bootstrap.Badge as Badge
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
-import Bootstrap.Badge as Badge
 import Bootstrap.Form.Input as Input
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
 import Bootstrap.Utilities.Flex as Flex
+import Bootstrap.Utilities.Size as Size
+import Bootstrap.Utilities.Spacing as Spacing
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -188,9 +190,23 @@ viewService serviceWithId =
             second serviceWithId
     in
     List.concat
-        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt serviceId), class "service-item" ]
+        [ 
+          [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "service-item", href ("/service/" ++ String.fromInt serviceId) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1"] [ Util.icon "weather-cloudy", text service.name ]
+                    , span [ class "" ] [ Util.icon "trash" ]
+                    ]
+                ]
           ]
-        , [ ListGroup.anchor [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ] [ Util.icon "clipboard", text "Tasks", Badge.pillInfo [] [ text "1" ] ] ]
+        , [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1"] [ Util.icon "clipboard", text "Tasks" ]
+                    , span [] [ Button.button [ Button.outlineSuccess, Button.small ] [ Util.icon "plus", text "Container" ] ]
+                    ]
+                ]
+          ]
         , List.map (viewContainer serviceId) (Dict.toList service.containers)
         ]
 
@@ -201,7 +217,7 @@ viewContainer serviceId containerWithId =
         container =
             second containerWithId
     in
-    listItem container.name "archive" [ href ("/container/" ++ String.fromInt serviceId ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
+    simpleListItem container.name "archive" [ href ("/container/" ++ String.fromInt serviceId ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
 
 
 viewNewServiceModal : Model -> Html Msg
@@ -239,8 +255,8 @@ viewNewServiceModal model =
         |> Modal.view model.newServiceModal
 
 
-listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
-listItem label icon attrs =
+simpleListItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
+simpleListItem label icon attrs =
     ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
 
 
@@ -248,13 +264,13 @@ view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
         [ Util.viewColumnTitle "Configuration"
-        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ text "Add Service" ]
+        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ Util.icon "plus", text "Add Service" ]
         , ListGroup.custom (viewServices model.services)
         , hr [] []
         , ListGroup.custom
-            [ listItem "Global Settings" "cog" [ href "../../settings" ]
-            , listItem "Export as JSON" "eject" [ href "#" ]
-            , listItem "Load JSON" "download-outline" [ href "#" ]
+            [ simpleListItem "Global Settings" "cog" [ href "../../settings" ]
+            , simpleListItem "Export as JSON" "eject" [ href "#" ]
+            , simpleListItem "Load JSON" "download-outline" [ href "#" ]
             ]
         , viewNewServiceModal model
         ]
