@@ -7,7 +7,6 @@ import App.Service as Service
 import App.Settings as Settings
 import App.Task as Task
 import App.Util as Util
-import Multiselect
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -20,6 +19,7 @@ import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
 import Dict exposing (Dict)
 
+import Tuple exposing (first, second)
 
 ---- MODEL ----
 
@@ -29,6 +29,7 @@ type alias Model =
     , navKey : Nav.Key
     , currentDetail : Detail
     , configuration : Configuration.Model
+    , settings : Settings.Model
     }
 
 type Detail
@@ -51,6 +52,7 @@ type Msg
     | ServiceMsg Service.Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
+    | SettingsMsg Settings.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,6 +89,12 @@ update msg model =
 
         ContainerMsg containerMsg ->
             ( { model | configuration = Container.update containerMsg model.configuration }, Cmd.none )
+
+        SettingsMsg settingsMsg ->
+            let 
+                msgWithCmd = Settings.update settingsMsg model.settings
+            in 
+                ( { model | settings = first msgWithCmd}, Cmd.map SettingsMsg (second msgWithCmd) )
 
 
 urlToDetail : Url -> Detail
@@ -178,14 +186,14 @@ viewDetail model =
                         in
                             case maybeContainer of
                                 Just container ->
-                                    Html.map ContainerMsg (Container.view serviceId container)
+                                    Html.map ContainerMsg (Container.view serviceId id container)
                                 Nothing ->
                                     viewNotFoundDetail
                    Nothing -> 
                         viewNotFoundDetail
 
         Settings ->
-            Settings.view
+            Html.map SettingsMsg (Settings.view model.settings)
 
         _ ->
             viewNoneDetail
@@ -211,7 +219,7 @@ viewNavbar model =
         |> Navbar.withAnimation
         |> Navbar.dark
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
-            [ img [ src "../logo.png", class "logo" ] [], text "Cluster Prophet" ]
+            [ img [ src "../ec2.svg", class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.view model.navbarState
 
 
@@ -227,7 +235,8 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch[
         Navbar.subscriptions model.navbarState NavbarMsg,
-        Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration
+        Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration,
+        Sub.map SettingsMsg <| Settings.subscriptions model.settings
     ]
 
 
@@ -241,7 +250,7 @@ init flags url key =
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init }, navbarCmd )
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init, settings = Settings.init }, navbarCmd )
 
 
 main : Program () Model Msg
