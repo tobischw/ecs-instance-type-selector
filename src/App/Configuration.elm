@@ -1,4 +1,4 @@
-module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, allRegions, init, update, view)
+module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, allRegions, init, update, view, subscriptions)
 
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -12,7 +12,10 @@ import Multiselect as Multiselect
 import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
 import Tuple exposing (first, second)
-
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Tab as Tab
+import Bootstrap.Utilities.Spacing as Spacing
 
 testServices : Dict Int Service
 testServices =
@@ -24,6 +27,7 @@ init =
     { services = testServices
     , newServiceModal = Modal.hidden
     , newServiceName = ""
+    , tabState = Tab.initialState
     }
 
 
@@ -35,6 +39,7 @@ type alias Model =
     { services : Services
     , newServiceModal : Modal.Visibility
     , newServiceName : String
+    , tabState : Tab.State
     }
 
 
@@ -43,6 +48,7 @@ type Msg
     | CloseModal
     | ShowModal
     | ChangeNewServiceName String
+    | TabMsg Tab.State
 
 
 type alias Service =
@@ -94,6 +100,9 @@ allRegions =
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Tab.subscriptions model.tabState TabMsg
 
 update : Msg -> Model -> Model
 update msg model =
@@ -120,6 +129,9 @@ update msg model =
 
         ChangeNewServiceName newName ->
             { model | newServiceName = newName }
+        
+        TabMsg state ->
+            { model | tabState = state}
 
 
 
@@ -161,23 +173,32 @@ viewContainer serviceId containerWithId =
 viewNewServiceModal : Model -> Html Msg
 viewNewServiceModal model =
     Modal.config CloseModal
-        |> Modal.small
+        |> Modal.large
         |> Modal.hideOnBackdropClick True
         |> Modal.h3 [] [ text "New Service" ]
         |> Modal.body []
-            [ Form.form []
-                [ Form.group []
-                    [ Form.label [] [ text "Name:" ]
-                    , Input.text
-                        [ Input.value model.newServiceName
-                        , Input.onInput ChangeNewServiceName
-                        , Input.attrs
-                            [ placeholder "Service Name"
-                            ]
+            [ Grid.containerFluid []
+               [ Grid.row [] 
+                    [ Grid.col 
+                        [Col.md] [ Form.group []
+                                    [
+                                        Form.label[] [text "Name:"]
+                                    ,   Input.text [
+                                                    Input.value model.newServiceName
+                                                ,   Input.onInput ChangeNewServiceName
+                                                ,   Input.attrs [placeholder "Service Name"]
+                                                ] 
+                                        
+                                    ]
                         ]
                     ]
-                ]
+               ]
+               , Grid.row [] 
+               [ Grid.col 
+                    [Col.sm] [viewConfigureNewServiceModel model]
+                    ]
             ]
+
         |> Modal.footer []
             [ Button.button
                 [ Button.outlinePrimary
@@ -192,7 +213,41 @@ viewNewServiceModal model =
             ]
         |> Modal.view model.newServiceModal
 
+viewConfigureNewServiceModel: Model -> Html Msg
+viewConfigureNewServiceModel model =
+    Tab.config TabMsg
+        |> Tab.withAnimation
+        |> Tab.items
+            [ Tab.item
+                { id = "addContainer"
+                , link = Tab.link [] [viewAddContainerTabHeader]
+                , pane =
+                    Tab.pane [Spacing.mt1]
+                        [ h4 [] [ text "New Container"]
+                        , hr [] []
+                        , viewAddContainerTabBody
+                        ]
+                }
+            ]
+            |> Tab.view model.tabState
 
+viewAddContainerTabHeader: Html Msg
+viewAddContainerTabHeader =
+    Grid.container []
+        [ Grid.row []
+            [ Grid.col [Col.md8] [ text "Add Container"]
+            , Grid.col [Col.md4] [Button.button [Button.small, Button.danger] [text "Delete"]]
+            ]
+        ]
+
+viewAddContainerTabBody: Html Msg
+viewAddContainerTabBody =
+    Form.form []
+        [ Form.group []
+            [ Form.label [for "containerName"] [ text "Container Name:"]
+            , Input.text [ Input.attrs [ placeholder "Oba#123"]]
+            ]
+        ]
 listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
 listItem label icon attrs =
     ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]

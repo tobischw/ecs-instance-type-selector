@@ -225,7 +225,10 @@ viewNavbar model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Navbar.subscriptions model.navbarState NavbarMsg
+    Sub.batch[
+        Navbar.subscriptions model.navbarState NavbarMsg,
+        Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration
+    ]
 
 
 
