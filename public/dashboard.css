@@ -108,3 +108,9 @@ body {
 .cursor-pointer {
   cursor: pointer;
 }
+
+.service-item {
+  /*border-bottom: 6px #f68536 solid !important;*/
+  background: #fafafa !important;
+  font-weight: bold;
+}

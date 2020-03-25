@@ -3,9 +3,11 @@ module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..)
 import App.Util as Util
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
+import Bootstrap.Badge as Badge
 import Bootstrap.Form.Input as Input
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
+import Bootstrap.Utilities.Flex as Flex
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -186,10 +188,9 @@ viewService serviceWithId =
             second serviceWithId
     in
     List.concat
-        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt serviceId) ]
+        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt serviceId), class "service-item" ]
           ]
-        , [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
-          ]
+        , [ ListGroup.anchor [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ] [ Util.icon "clipboard", text "Tasks", Badge.pillInfo [] [ text "1" ] ] ]
         , List.map (viewContainer serviceId) (Dict.toList service.containers)
         ]
 
