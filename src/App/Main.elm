@@ -13,8 +13,10 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
 import Browser exposing (UrlRequest(..), application, document)
 import Browser.Navigation as Nav
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Tuple exposing (first, second)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
 
@@ -27,24 +29,17 @@ type alias Model =
     { navbarState : Navbar.State
     , navKey : Nav.Key
     , currentDetail : Detail
+    , configuration : Configuration.Model
+    , settings : Settings.Model
     }
 
 
 type Detail
     = None
-    | Service
-    | Task
-    | Container
+    | Service Int
+    | Task Int
+    | Container Int Int
     | Settings
-
-
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
-    let
-        ( navbarState, navbarCmd ) =
-            Navbar.initialState NavbarMsg
-    in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url }, navbarCmd )
 
 
 
@@ -55,6 +50,11 @@ type Msg
     = NavbarMsg Navbar.State
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | ConfigurationMsg Configuration.Msg
+    | ServiceMsg Service.Msg
+    | TaskMsg Task.Msg
+    | ContainerMsg Container.Msg
+    | SettingsMsg Settings.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,6 +80,25 @@ update msg model =
             , Cmd.none
             )
 
+        ConfigurationMsg configurationMsg ->
+            ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
+
+        ServiceMsg serviceMsg ->
+            ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
+
+        TaskMsg taskMsg ->
+            ( { model | configuration = Task.update taskMsg model.configuration }, Cmd.none )
+
+        ContainerMsg containerMsg ->
+            ( { model | configuration = Container.update containerMsg model.configuration }, Cmd.none )
+
+        SettingsMsg settingsMsg ->
+            let
+                msgWithCmd =
+                    Settings.update settingsMsg model.settings
+            in
+            ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
+
 
 urlToDetail : Url -> Detail
 urlToDetail url =
@@ -92,9 +111,9 @@ urlParser : Parser (Detail -> a) a
 urlParser =
     Url.oneOf
         [ Url.map None Url.top
-        , Url.map Container (Url.s "container")
-        , Url.map Service (Url.s "service")
-        , Url.map Task (Url.s "task")
+        , Url.map Container (Url.s "container" </> Url.int </> Url.int)
+        , Url.map Service (Url.s "service" </> Url.int)
+        , Url.map Task (Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
         ]
 
@@ -117,37 +136,79 @@ viewContent : Model -> Html Msg
 viewContent model =
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
-            [ Configuration.view
-            , viewDetailColumn model.currentDetail
+            [ Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+                [ Html.map ConfigurationMsg (Configuration.view model.configuration)
+                ]
+            , viewDetailColumn model
             , Results.view
             ]
         ]
 
 
-viewDetailColumn : Detail -> Grid.Column Msg
-viewDetailColumn detail =
-    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+viewDetailColumn : Model -> Grid.Column Msg
+viewDetailColumn model =
+    Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Detail"
-            , viewDetail detail
+            , viewDetail model
             ]
         ]
 
 
-viewDetail : Detail -> Html Msg
-viewDetail detail =
-    case detail of
-        Container ->
-            Container.view
 
-        Service ->
-            Service.view
+-- Simplify viewDetail somehow, it looks a bit messy
 
-        Task ->
-            Task.view True
+
+viewDetail : Model -> Html Msg
+viewDetail model =
+    case model.currentDetail of
+        Service id ->
+            let
+                maybeService =
+                    Dict.get id model.configuration.services
+            in
+            case maybeService of
+                Just service ->
+                    Html.map ServiceMsg (Service.view id service)
+
+                Nothing ->
+                    viewNotFoundDetail
+
+        Task serviceId ->
+            let
+                maybeService =
+                    Dict.get serviceId model.configuration.services
+            in
+            case maybeService of
+                Just service ->
+                    Html.map TaskMsg (Task.view serviceId service)
+
+                Nothing ->
+                    viewNotFoundDetail
+
+        Container serviceId id ->
+            let
+                maybeService =
+                    Dict.get serviceId model.configuration.services
+            in
+            case maybeService of
+                Just service ->
+                    let
+                        maybeContainer =
+                            Dict.get id service.containers
+                    in
+                    case maybeContainer of
+                        Just container ->
+                            Html.map ContainerMsg (Container.view serviceId id container)
+
+                        Nothing ->
+                            viewNotFoundDetail
+
+                Nothing ->
+                    viewNotFoundDetail
 
         Settings ->
-            Settings.view
+            Html.map SettingsMsg (Settings.view model.settings)
 
         _ ->
             viewNoneDetail
@@ -159,6 +220,12 @@ viewNoneDetail =
         [ text "Nothing here. Select a service, task, or container from the left sidebar to start configuring." ]
 
 
+viewNotFoundDetail : Html Msg
+viewNotFoundDetail =
+    span [ class "text-muted align-middle" ]
+        [ text "Whatever you are looking for does not exist." ]
+
+
 viewNavbar : Model -> Html Msg
 viewNavbar model =
     Navbar.config NavbarMsg
@@ -166,18 +233,36 @@ viewNavbar model =
         |> Navbar.fixTop
         |> Navbar.withAnimation
         |> Navbar.dark
-        |> Navbar.brand [ href "#", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
-            [ img [ src "logo.png", class "logo" ] [], text "Cluster Prophet" ]
+        |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
+            [ img [ src "../ec2.svg", class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.view model.navbarState
+
+
+
+---- HELPERS ----
+---- SUBSCRIPTION ----
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Navbar.subscriptions model.navbarState NavbarMsg
+    Sub.batch
+        [ Navbar.subscriptions model.navbarState NavbarMsg
+        , Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration
+        , Sub.map SettingsMsg <| Settings.subscriptions model.settings
+        ]
 
 
 
 ---- PROGRAM ----
+
+
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+    let
+        ( navbarState, navbarCmd ) =
+            Navbar.initialState NavbarMsg
+    in
+    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init, settings = Settings.init }, navbarCmd )
 
 
 main : Program () Model Msg
