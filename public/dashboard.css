@@ -110,7 +110,7 @@ body {
 }
 
 .service-item {
-  /*border-bottom: 6px #f68536 solid !important;*/
-  background: #fafafa !important;
+  border-bottom: 2px rgba(0,0,0,.125) solid !important;
+  /*background: #fafafa !important;*/
   font-weight: bold;
 }

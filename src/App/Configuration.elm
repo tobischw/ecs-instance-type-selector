@@ -1,12 +1,14 @@
-module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..), RegionRecord, Service, allRegions, init, update, updateContainers, view, subscriptions)
+module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..), RegionRecord, Service, allRegions, init, subscriptions, update, updateContainers, view)
 
 import App.Util as Util
-import Bootstrap.Badge as Badge
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
+import Bootstrap.Tab as Tab
 import Bootstrap.Utilities.Flex as Flex
 import Bootstrap.Utilities.Size as Size
 import Bootstrap.Utilities.Spacing as Spacing
@@ -16,10 +18,7 @@ import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
 import Multiselect
 import Tuple exposing (first, second)
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Tab as Tab
-import Bootstrap.Utilities.Spacing as Spacing
+
 
 testServices : Dict Int Service
 testServices =
@@ -49,6 +48,7 @@ type alias Model =
 
 type Msg
     = AddService
+    | AddContainer Int
     | CloseModal
     | ShowModal
     | ChangeNewServiceName String
@@ -109,9 +109,11 @@ allRegions =
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
 
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Tab.subscriptions model.tabState TabMsg
+
 
 type ContainerProps
     = VCPUS Int
@@ -119,11 +121,6 @@ type ContainerProps
     | Memory Int
     | Ioops Int
     | Storage Int
-
-
-
---               serviceID  containerID allServices containerUpdate -> newContainer
-
 
 updateContainers : Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
 updateContainers serviceId containerId services containerUpdate =
@@ -178,21 +175,31 @@ update msg model =
 
         ChangeNewServiceName newName ->
             { model | newServiceName = newName }
-        
+
+        AddContainer serviceId ->
+            let
+                maybeService =
+                    Dict.get serviceId model.services
+            in
+                case maybeService of
+                    Just service ->
+                        { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container "Test" 0 0 0 0) service.containers })) model.services }
+                    Nothing ->
+                        model
         TabMsg state ->
-            { model | tabState = state}
+            { model | tabState = state }
 
 
 
 -- rewrite these view functions, use Dict.map?
 
 
-viewServices : Services -> List (ListGroup.CustomItem msg)
+viewServices : Services -> List (ListGroup.CustomItem Msg)
 viewServices services =
     List.concatMap viewService (Dict.toList services)
 
 
-viewService : ( Int, Service ) -> List (ListGroup.CustomItem msg)
+viewService : ( Int, Service ) -> List (ListGroup.CustomItem Msg)
 viewService serviceWithId =
     let
         serviceId =
@@ -202,11 +209,10 @@ viewService serviceWithId =
             second serviceWithId
     in
     List.concat
-        [ 
-          [ ListGroup.anchor
+        [ [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "service-item", href ("/service/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1"] [ Util.icon "weather-cloudy", text service.name ]
+                    [ span [ class "pt-1" ] [ Util.icon "weather-cloudy", text service.name ]
                     , span [ class "" ] [ Util.icon "trash" ]
                     ]
                 ]
@@ -214,8 +220,8 @@ viewService serviceWithId =
         , [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1"] [ Util.icon "clipboard", text "Tasks" ]
-                    , span [] [ Button.button [ Button.outlineSuccess, Button.small ] [ Util.icon "plus", text "Container" ] ]
+                    [ span [ class "pt-1" ] [ Util.icon "clipboard", text "Tasks" ]
+                    , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer serviceId) ] [ Util.icon "plus", text "Container" ] ]
                     ]
                 ]
           ]
@@ -223,7 +229,7 @@ viewService serviceWithId =
         ]
 
 
-viewContainer : Int -> ( Int, Container ) -> ListGroup.CustomItem msg
+viewContainer : Int -> ( Int, Container ) -> ListGroup.CustomItem Msg
 viewContainer serviceId containerWithId =
     let
         container =
@@ -240,27 +246,26 @@ viewNewServiceModal model =
         |> Modal.h3 [] [ text "New Service" ]
         |> Modal.body []
             [ Grid.containerFluid []
-               [ Grid.row [] 
-                    [ Grid.col 
-                        [Col.md] [ Form.group []
-                                    [
-                                        Form.label[] [text "Name:"]
-                                    ,   Input.text [
-                                                    Input.value model.newServiceName
-                                                ,   Input.onInput ChangeNewServiceName
-                                                ,   Input.attrs [placeholder "Service Name"]
-                                                ] 
-                                        
-                                    ]
+                [ Grid.row []
+                    [ Grid.col
+                        [ Col.md ]
+                        [ Form.group []
+                            [ Form.label [] [ text "Name:" ]
+                            , Input.text
+                                [ Input.value model.newServiceName
+                                , Input.onInput ChangeNewServiceName
+                                , Input.attrs [ placeholder "Service Name" ]
+                                ]
+                            ]
                         ]
                     ]
-               ]
-               , Grid.row [] 
-               [ Grid.col 
-                    [Col.sm] [viewConfigureNewServiceModel model]
-                    ]
+                ]
+            , Grid.row []
+                [ Grid.col
+                    [ Col.sm ]
+                    [ viewConfigureNewServiceModel model ]
+                ]
             ]
-
         |> Modal.footer []
             [ Button.button
                 [ Button.outlinePrimary
@@ -275,43 +280,47 @@ viewNewServiceModal model =
             ]
         |> Modal.view model.newServiceModal
 
-viewConfigureNewServiceModel: Model -> Html Msg
+
+viewConfigureNewServiceModel : Model -> Html Msg
 viewConfigureNewServiceModel model =
     Tab.config TabMsg
         |> Tab.withAnimation
         |> Tab.items
             [ Tab.item
                 { id = "addContainer"
-                , link = Tab.link [] [viewAddContainerTabHeader]
+                , link = Tab.link [] [ viewAddContainerTabHeader ]
                 , pane =
-                    Tab.pane [Spacing.mt1]
-                        [ h4 [] [ text "New Container"]
+                    Tab.pane [ Spacing.mt1 ]
+                        [ h4 [] [ text "New Container" ]
                         , hr [] []
                         , viewAddContainerTabBody
                         ]
                 }
             ]
-            |> Tab.view model.tabState
+        |> Tab.view model.tabState
 
-viewAddContainerTabHeader: Html Msg
+
+viewAddContainerTabHeader : Html Msg
 viewAddContainerTabHeader =
     Grid.container []
         [ Grid.row []
-            [ Grid.col [Col.md8] [ text "Add Container"]
-            , Grid.col [Col.md4] [Button.button [Button.small, Button.danger] [text "Delete"]]
+            [ Grid.col [ Col.md8 ] [ text "Add Container" ]
+            , Grid.col [ Col.md4 ] [ Button.button [ Button.small, Button.danger ] [ text "Delete" ] ]
             ]
         ]
 
-viewAddContainerTabBody: Html Msg
+
+viewAddContainerTabBody : Html Msg
 viewAddContainerTabBody =
     Form.form []
         [ Form.group []
-            [ Form.label [for "containerName"] [ text "Container Name:"]
-            , Input.text [ Input.attrs [ placeholder "Oba#123"]]
+            [ Form.label [ for "containerName" ] [ text "Container Name:" ]
+            , Input.text [ Input.attrs [ placeholder "Oba#123" ] ]
             ]
         ]
 
-simpleListItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
+
+simpleListItem : String -> String -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg
 simpleListItem label icon attrs =
     ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
 
