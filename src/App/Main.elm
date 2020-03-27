@@ -13,13 +13,14 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
 import Browser exposing (UrlRequest(..), application, document)
 import Browser.Navigation as Nav
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Tuple exposing (first, second)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
-import Dict exposing (Dict)
 
-import Tuple exposing (first, second)
+
 
 ---- MODEL ----
 
@@ -31,6 +32,7 @@ type alias Model =
     , configuration : Configuration.Model
     , settings : Settings.Model
     }
+
 
 type Detail
     = None
@@ -91,10 +93,11 @@ update msg model =
             ( { model | configuration = Container.update containerMsg model.configuration }, Cmd.none )
 
         SettingsMsg settingsMsg ->
-            let 
-                msgWithCmd = Settings.update settingsMsg model.settings
-            in 
-                ( { model | settings = first msgWithCmd}, Cmd.map SettingsMsg (second msgWithCmd) )
+            let
+                msgWithCmd =
+                    Settings.update settingsMsg model.settings
+            in
+            ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
 
 urlToDetail : Url -> Detail
@@ -151,46 +154,58 @@ viewDetailColumn model =
             ]
         ]
 
+
+
 -- Simplify viewDetail somehow, it looks a bit messy
+
+
 viewDetail : Model -> Html Msg
 viewDetail model =
     case model.currentDetail of
         Service id ->
             let
-                maybeService = Dict.get id model.configuration.services
+                maybeService =
+                    Dict.get id model.configuration.services
             in
-                case maybeService of
-                   Just service -> 
-                        Html.map ServiceMsg (Service.view id service)
-                   Nothing -> 
-                        viewNotFoundDetail
+            case maybeService of
+                Just service ->
+                    Html.map ServiceMsg (Service.view id service)
+
+                Nothing ->
+                    viewNotFoundDetail
 
         Task serviceId ->
             let
-                maybeService = Dict.get serviceId model.configuration.services
+                maybeService =
+                    Dict.get serviceId model.configuration.services
             in
-                case maybeService of
-                   Just service -> 
-                        Html.map TaskMsg (Task.view serviceId service)
-                   Nothing -> 
-                        viewNotFoundDetail
+            case maybeService of
+                Just service ->
+                    Html.map TaskMsg (Task.view serviceId service)
+
+                Nothing ->
+                    viewNotFoundDetail
 
         Container serviceId id ->
             let
-                maybeService = Dict.get serviceId model.configuration.services
+                maybeService =
+                    Dict.get serviceId model.configuration.services
             in
-                case maybeService of
-                   Just service -> 
-                        let 
-                            maybeContainer = Dict.get id service.containers
-                        in
-                            case maybeContainer of
-                                Just container ->
-                                    Html.map ContainerMsg (Container.view serviceId id container)
-                                Nothing ->
-                                    viewNotFoundDetail
-                   Nothing -> 
-                        viewNotFoundDetail
+            case maybeService of
+                Just service ->
+                    let
+                        maybeContainer =
+                            Dict.get id service.containers
+                    in
+                    case maybeContainer of
+                        Just container ->
+                            Html.map ContainerMsg (Container.view serviceId id container)
+
+                        Nothing ->
+                            viewNotFoundDetail
+
+                Nothing ->
+                    viewNotFoundDetail
 
         Settings ->
             Html.map SettingsMsg (Settings.view model.settings)
@@ -225,19 +240,16 @@ viewNavbar model =
 
 
 ---- HELPERS ----
-
-
-
 ---- SUBSCRIPTION ----
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch[
-        Navbar.subscriptions model.navbarState NavbarMsg,
-        Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration,
-        Sub.map SettingsMsg <| Settings.subscriptions model.settings
-    ]
+    Sub.batch
+        [ Navbar.subscriptions model.navbarState NavbarMsg
+        , Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration
+        , Sub.map SettingsMsg <| Settings.subscriptions model.settings
+        ]
 
 
 

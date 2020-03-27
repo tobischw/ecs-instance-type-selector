@@ -17,11 +17,9 @@ type Msg
     = UpdateVCPU Int Int String
     | UpdateMem Int Int String
     | UpdateIoops Int Int String
-    | UpdateStorage Int Int String
-    -- | UpdateName Int Int String
+    | UpdateNetwork Int Int String
     
 
--- find a better way to do this!
 update : Msg -> Model -> Model
 update msg model =
     case msg of
@@ -43,17 +41,16 @@ update msg model =
                     { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Ioops i)})) model.services }
                 Nothing ->
                     model
-        UpdateStorage serviceId id value ->
+        UpdateNetwork serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Storage i)})) model.services }
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Network i)})) model.services }
                 Nothing ->
                     model
 
 view : Int -> Int -> Configuration.Container -> Html Msg
 view serviceId containerId container =
     Card.config []
-    -- All min/maxes gotten from https://aws.amazon.com/ec2/instance-types/
         |> Card.header [] [ text container.name]
         |> Card.block []
             [ Block.custom <|
@@ -83,11 +80,10 @@ view serviceId containerId container =
                         ]
                         ,
                         Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Storage" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Network" ]
                         , Form.col [ Col.sm9 ]
-                            -- Something about raid??? 15,200 == 8x1900Gb Nvme - i3.16xlarge
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "50", Html.Attributes.max "152000", value <| String.fromInt container.storage, onInput (UpdateStorage serviceId containerId) ] []
-                            , Form.help [] [ text (String.fromInt container.storage ++ " Gb") ]
+                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "50", Html.Attributes.max "152000", value <| String.fromInt container.network, onInput (UpdateNetwork serviceId containerId) ] []
+                            , Form.help [] [ text (String.fromInt container.network ++ " MiB/sec") ]
                             ]
                         ]
                     ]

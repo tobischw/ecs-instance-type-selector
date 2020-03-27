@@ -69,7 +69,7 @@ type alias Container =
     , vCPUs : Int
     , memory : Int
     , ioops : Int
-    , storage : Int
+    , network : Int
     }
 
 
@@ -120,7 +120,7 @@ type ContainerProps
     | Name String
     | Memory Int
     | Ioops Int
-    | Storage Int
+    | Network Int
 
 updateContainers : Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
 updateContainers serviceId containerId services containerUpdate =
@@ -143,11 +143,11 @@ updateContainers serviceId containerId services containerUpdate =
                 Ioops newIoops ->
                     Dict.update containerId (Maybe.map (\container -> { container | ioops = newIoops })) service.containers
 
-                Storage newSize ->
-                    Dict.update containerId (Maybe.map (\container -> { container | storage = newSize })) service.containers
+                Network newNetwork ->
+                    Dict.update containerId (Maybe.map (\container -> { container | network = newNetwork })) service.containers
 
         Nothing ->
-            Dict.fromList [ ( 0, Container "Service Id didn't exist" 50 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 50 ) ]
+            Dict.fromList [ ( 0, Container "Invalid Container" 50 50 50 50 ) ]
 
 
 update : Msg -> Model -> Model
@@ -165,6 +165,7 @@ update msg model =
                 id =
                     Dict.size model.services
             in
+            -- These long lines need to be split up
             { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
@@ -191,7 +192,6 @@ update msg model =
 
 
 
--- rewrite these view functions, use Dict.map?
 
 
 viewServices : Services -> List (ListGroup.CustomItem Msg)
