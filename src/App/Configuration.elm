@@ -18,7 +18,7 @@ import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
 import Multiselect
 import Tuple exposing (first, second)
-
+import FeatherIcons
 
 testServices : Dict Int Service
 testServices =
@@ -212,7 +212,7 @@ viewService serviceWithId =
         [ [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "service-item", href ("/service/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ Util.icon "weather-cloudy", text service.name ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.toHtml [] , text service.name ]
                     , span [ class "" ] [ Util.icon "trash" ]
                     ]
                 ]
