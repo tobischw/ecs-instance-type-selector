@@ -22,7 +22,7 @@ import Tuple exposing (first, second)
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 100 ), ( 1, Container "Container 2a" 20 20 20 100 ) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1" 50 50 50 100) ]) ) ]
 
 
 init : Model
@@ -183,7 +183,7 @@ update msg model =
             in
                 case maybeService of
                     Just service ->
-                        { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container "Test" 0 0 0 0) service.containers })) model.services }
+                        { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container ("Container " ++ String.fromInt (Dict.size service.containers + 1)) 0 0 0 0) service.containers })) model.services }
                     Nothing ->
                         model
         TabMsg state ->
