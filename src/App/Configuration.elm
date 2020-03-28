@@ -1,22 +1,28 @@
-module App.Configuration exposing (Container, Model, Msg(..), Service, RegionRecord, ContainerProps(..), updateContainers, allRegions, init, update, view)
+module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..), RegionRecord, Service, allRegions, init, subscriptions, update, updateContainers, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Modal as Modal
+import Bootstrap.Tab as Tab
+import Bootstrap.Utilities.Flex as Flex
+import Bootstrap.Utilities.Size as Size
+import Bootstrap.Utilities.Spacing as Spacing
 import Dict exposing (Dict)
 import Html exposing (..)
-import Multiselect as Multiselect
 import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
+import Multiselect
 import Tuple exposing (first, second)
 
 
 testServices : Dict Int Service
 testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1a" 50 50 50 100 ), ( 1, Container "Container 2a" 20 20 20 100) ]) ) ]
+    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1" 50 50 50 100) ]) ) ]
 
 
 init : Model
@@ -24,6 +30,7 @@ init =
     { services = testServices
     , newServiceModal = Modal.hidden
     , newServiceName = ""
+    , tabState = Tab.initialState
     }
 
 
@@ -35,30 +42,34 @@ type alias Model =
     { services : Services
     , newServiceModal : Modal.Visibility
     , newServiceName : String
+    , tabState : Tab.State
     }
 
 
 type Msg
     = AddService
+    | AddContainer Int
     | CloseModal
     | ShowModal
     | ChangeNewServiceName String
+    | TabMsg Tab.State
 
 
 type alias Service =
     { name : String
     , scalingTarget : Int
-    , regions: Multiselect.Model
+    , regions : Multiselect.Model
     , taskTotalMemory : Int
     , containers : Dict Int Container
     }
+
 
 type alias Container =
     { name : String
     , cpuShare : Int
     , memory : Int
     , ioops : Int
-    , storage: Int
+    , network : Int
     }
 
 
@@ -69,7 +80,10 @@ type alias RegionRecord =
     }
 
 
+
 -- https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.partial.html
+
+
 allRegions : List RegionRecord
 allRegions =
     [ RegionRecord "us" "US East (Ohio)" "us-east-2"
@@ -95,35 +109,45 @@ allRegions =
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
 
-type ContainerProps 
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Tab.subscriptions model.tabState TabMsg
+
+type ContainerProps
     = CPUShare Int
     | Name String
     | Memory Int
     | Ioops Int
-    | Storage Int
+    | Network Int
 
---               serviceID  containerID allServices containerUpdate -> newContainer
-updateContainers: Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
+updateContainers : Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
 updateContainers serviceId containerId services containerUpdate =
     let
-        maybeService = Dict.get serviceId services
+        maybeService =
+            Dict.get serviceId services
     in
-        case maybeService of
-            Just service -> 
-                case containerUpdate of
-                    CPUShare num ->
-                        Dict.update containerId (Maybe.map (\container -> {container | cpuShare = num})) service.containers
-                    Name newName ->
-                        Dict.update containerId (Maybe.map (\container -> {container | name = newName})) service.containers
-                    Memory newMem ->
-                        Dict.update containerId (Maybe.map (\container -> {container | memory = newMem})) service.containers
-                    Ioops newIoops ->
-                        Dict.update containerId (Maybe.map (\container -> {container | ioops = newIoops})) service.containers
-                    Storage newSize ->
-                        Dict.update containerId (Maybe.map (\container -> {container | storage = newSize})) service.containers
-            Nothing ->
-                Dict.fromList [ ( 0, Container "Shit's broke yo. Service Id didn't exist" 50 50 50 50 ), ( 1, Container "Yup. v broke." 20 20 20 50 ) ]
-    
+    case maybeService of
+        Just service ->
+            case containerUpdate of
+                CPUShare num ->
+                    Dict.update containerId (Maybe.map (\container -> { container | cpuShare = num })) service.containers
+
+                Name newName ->
+                    Dict.update containerId (Maybe.map (\container -> { container | name = newName })) service.containers
+
+                Memory newMem ->
+                    Dict.update containerId (Maybe.map (\container -> { container | memory = newMem })) service.containers
+
+                Ioops newIoops ->
+                    Dict.update containerId (Maybe.map (\container -> { container | ioops = newIoops })) service.containers
+
+                Network newNetwork ->
+                    Dict.update containerId (Maybe.map (\container -> { container | network = newNetwork })) service.containers
+
+        Nothing ->
+            Dict.fromList [ ( 0, Container "Invalid Container" 50 50 50 50 ) ]
+
 
 update : Msg -> Model -> Model
 update msg model =
@@ -140,7 +164,8 @@ update msg model =
                 id =
                     Dict.size model.services
             in
-            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            -- These long lines need to be split up
+            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }
@@ -151,17 +176,29 @@ update msg model =
         ChangeNewServiceName newName ->
             { model | newServiceName = newName }
 
+        AddContainer serviceId ->
+            let
+                maybeService =
+                    Dict.get serviceId model.services
+            in
+                case maybeService of
+                    Just service ->
+                        { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container ("Container " ++ String.fromInt (Dict.size service.containers + 1)) 0 0 0 0) service.containers })) model.services }
+                    Nothing ->
+                        model
+        TabMsg state ->
+            { model | tabState = state }
 
 
--- rewrite these view functions, use Dict.map?
 
 
-viewServices : Services -> List (ListGroup.CustomItem msg)
+
+viewServices : Services -> List (ListGroup.CustomItem Msg)
 viewServices services =
     List.concatMap viewService (Dict.toList services)
 
 
-viewService : ( Int, Service ) -> List (ListGroup.CustomItem msg)
+viewService : ( Int, Service ) -> List (ListGroup.CustomItem Msg)
 viewService serviceWithId =
     let
         serviceId =
@@ -171,41 +208,61 @@ viewService serviceWithId =
             second serviceWithId
     in
     List.concat
-        [ [ listItem service.name "weather-cloudy" [ href ("/service/" ++ String.fromInt serviceId) ]
+        [ [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "service-item", href ("/service/" ++ String.fromInt serviceId) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1" ] [ Util.icon "weather-cloudy", text service.name ]
+                    , span [ class "" ] [ Util.icon "trash" ]
+                    ]
+                ]
           ]
-        , [ listItem "Tasks" "clipboard" [ href ("/task/" ++ String.fromInt serviceId), style "padding-left" "40px" ]
+        , [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1" ] [ Util.icon "clipboard", text "Tasks" ]
+                    , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer serviceId) ] [ Util.icon "plus", text "Container" ] ]
+                    ]
+                ]
           ]
-        , List.map (viewContainer serviceId)  (Dict.toList service.containers)
+        , List.map (viewContainer serviceId) (Dict.toList service.containers)
         ]
 
 
-viewContainer : Int -> ( Int, Container ) -> ListGroup.CustomItem msg
+viewContainer : Int -> ( Int, Container ) -> ListGroup.CustomItem Msg
 viewContainer serviceId containerWithId =
     let
         container =
             second containerWithId
     in
-    listItem container.name "archive" [ href ("/container/" ++ String.fromInt (serviceId) ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
+    simpleListItem container.name "archive" [ href ("/container/" ++ String.fromInt serviceId ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
 
 
 viewNewServiceModal : Model -> Html Msg
 viewNewServiceModal model =
     Modal.config CloseModal
-        |> Modal.small
+        |> Modal.large
         |> Modal.hideOnBackdropClick True
         |> Modal.h3 [] [ text "New Service" ]
         |> Modal.body []
-            [ Form.form []
-                [ Form.group []
-                    [ Form.label [] [ text "Name:" ]
-                    , Input.text
-                        [ Input.value model.newServiceName
-                        , Input.onInput ChangeNewServiceName
-                        , Input.attrs
-                            [ placeholder "Service Name"
+            [ Grid.containerFluid []
+                [ Grid.row []
+                    [ Grid.col
+                        [ Col.md ]
+                        [ Form.group []
+                            [ Form.label [] [ text "Name:" ]
+                            , Input.text
+                                [ Input.value model.newServiceName
+                                , Input.onInput ChangeNewServiceName
+                                , Input.attrs [ placeholder "Service Name" ]
+                                ]
                             ]
                         ]
                     ]
+                ]
+            , Grid.row []
+                [ Grid.col
+                    [ Col.sm ]
+                    [ viewConfigureNewServiceModel model ]
                 ]
             ]
         |> Modal.footer []
@@ -223,8 +280,47 @@ viewNewServiceModal model =
         |> Modal.view model.newServiceModal
 
 
-listItem : String -> String -> List (Html.Attribute msg) -> ListGroup.CustomItem msg
-listItem label icon attrs =
+viewConfigureNewServiceModel : Model -> Html Msg
+viewConfigureNewServiceModel model =
+    Tab.config TabMsg
+        |> Tab.withAnimation
+        |> Tab.items
+            [ Tab.item
+                { id = "addContainer"
+                , link = Tab.link [] [ viewAddContainerTabHeader ]
+                , pane =
+                    Tab.pane [ Spacing.mt1 ]
+                        [ h4 [] [ text "New Container" ]
+                        , hr [] []
+                        , viewAddContainerTabBody
+                        ]
+                }
+            ]
+        |> Tab.view model.tabState
+
+
+viewAddContainerTabHeader : Html Msg
+viewAddContainerTabHeader =
+    Grid.container []
+        [ Grid.row []
+            [ Grid.col [ Col.md8 ] [ text "Add Container" ]
+            , Grid.col [ Col.md4 ] [ Button.button [ Button.small, Button.danger ] [ text "Delete" ] ]
+            ]
+        ]
+
+
+viewAddContainerTabBody : Html Msg
+viewAddContainerTabBody =
+    Form.form []
+        [ Form.group []
+            [ Form.label [ for "containerName" ] [ text "Container Name:" ]
+            , Input.text [ Input.attrs [ placeholder "Oba#123" ] ]
+            ]
+        ]
+
+
+simpleListItem : String -> String -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg
+simpleListItem label icon attrs =
     ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
 
 
@@ -232,13 +328,13 @@ view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
         [ Util.viewColumnTitle "Configuration"
-        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ text "Add Service" ]
+        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ Util.icon "plus", text "Add Service" ]
         , ListGroup.custom (viewServices model.services)
         , hr [] []
         , ListGroup.custom
-            [ listItem "Global Settings" "cog" [ href "../settings" ]
-            , listItem "Export as JSON" "eject" [ href "#" ]
-            , listItem "Load JSON" "download-outline" [ href "#" ]
+            [ simpleListItem "Global Settings" "cog" [ href "../../settings" ]
+            , simpleListItem "Export as JSON" "eject" [ href "#" ]
+            , simpleListItem "Load JSON" "download-outline" [ href "#" ]
             ]
         , viewNewServiceModal model
         ]

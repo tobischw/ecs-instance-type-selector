@@ -108,3 +108,9 @@ body {
 .cursor-pointer {
   cursor: pointer;
 }
+
+.service-item {
+  border-bottom: 2px rgba(0,0,0,.125) solid !important;
+  /*background: #fafafa !important;*/
+  font-weight: bold;
+}

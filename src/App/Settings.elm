@@ -1,58 +1,77 @@
-module App.Settings exposing (view)
+module App.Settings exposing (Model, Msg(..), init, update, view, subscriptions)
 
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
-import Bootstrap.Form.Checkbox as Checkbox
-import Bootstrap.Form.Input as Input
-import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Row
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Multiselect
 
 
-instanceTypes : List String
+type alias Model =
+    { excludedInstances : Multiselect.Model
+    }
+
+
+init : Model
+init =
+    { excludedInstances = Multiselect.initModel instanceTypes "A"
+    }
+
+-- There's a better way to do this...
+instanceTypes : List (String, String)
 instanceTypes =
-    [ "T2"
-    , "M5"
-    , "M4"
-    , "M3"
-    , "C5"
-    , "C4"
-    , "C3"
-    , "X1"
-    , "R4"
-    , "R3"
-    , "P3"
-    , "P2"
-    , "G3"
-    , "F1"
-    , "I3"
+    [ ("t2", "T2")
+     , ("m5", "M5")
+     , ("m4", "M4")
+     , ("m3", "M3")
+     , ("c5", "C5")
+     , ("c4", "C4")
+     , ("c3", "C3")
+     , ("x1", "X1")
+     , ("r4", "R4")
+     , ("r3", "R3")
+     , ("p3", "P3")
+     , ("p2", "P2")
+     , ("g3", "G3")
+     , ("f1", "F1")
+     , ("i3", "I3")
     ]
 
 
-view : Html msg
-view =
+type Msg
+    = UpdateExcludedInstances Multiselect.Msg
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        UpdateExcludedInstances instancesChangedMessage ->
+            let 
+                (newExcludedInstances, subCmd, _) =
+                    Multiselect.update instancesChangedMessage model.excludedInstances
+            in
+                ({ model | excludedInstances = newExcludedInstances }, Cmd.map UpdateExcludedInstances subCmd )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.map UpdateExcludedInstances <| Multiselect.subscriptions model.excludedInstances
+
+
+view : Model -> Html Msg
+view model =
     Card.config []
         |> Card.header [] [ text "Global Settings" ]
         |> Card.block []
-            [ Block.custom <|
-                Form.form []
-                    [ Form.row []
-                        [ Form.colLabel [ Col.sm12 ] [ text "Included Instance Types", Form.help [] [ text "Only checked instance types will be included during the calculation." ] ]
+                [ Block.custom <|
+                    Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Excluded Instance Types" ]
+                        , Form.col [ Col.sm9 ]
+                            [ Html.map UpdateExcludedInstances <| Multiselect.view model.excludedInstances
+                            , Form.help [] [ text "Exclude specific ECS instances. These will be ignored during the cluster optimization calculation." ]
+                            ]
                         ]
-                    , div [] (List.map viewInstanceCheckbox (List.sort instanceTypes))
-                    , hr [] []
-                    ]
-            ]
+                ]
         |> Card.view
-
-
-viewInstanceCheckbox : String -> Html msg
-viewInstanceCheckbox name =
-    Form.row []
-        [ Form.col [ Col.sm12 ]
-            [ Checkbox.checkbox [ Checkbox.id name, Checkbox.checked True ] name ]
-        ]
- 
