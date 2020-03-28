@@ -69,7 +69,7 @@ type alias Container =
     , cpuShare : Int
     , memory : Int
     , ioops : Int
-    , network : Int
+    , bandwidth: Int
     }
 
 
@@ -119,7 +119,7 @@ type ContainerProps
     | Name String
     | Memory Int
     | Ioops Int
-    | Network Int
+    | Bandwidth Int
 
 updateContainers : Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
 updateContainers serviceId containerId services containerUpdate =
@@ -142,8 +142,8 @@ updateContainers serviceId containerId services containerUpdate =
                 Ioops newIoops ->
                     Dict.update containerId (Maybe.map (\container -> { container | ioops = newIoops })) service.containers
 
-                Network newNetwork ->
-                    Dict.update containerId (Maybe.map (\container -> { container | network = newNetwork })) service.containers
+                Bandwidth newBandwidth ->
+                    Dict.update containerId (Maybe.map (\container -> { container | bandwidth = newBandwidth })) service.containers
 
         Nothing ->
             Dict.fromList [ ( 0, Container "Invalid Container" 50 50 50 50 ) ]

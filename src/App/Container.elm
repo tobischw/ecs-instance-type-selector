@@ -17,7 +17,7 @@ type Msg
     = UpdateCPUShare Int Int String
     | UpdateMem Int Int String
     | UpdateIoops Int Int String
-    | UpdateNetwork Int Int String
+    | UpdateBandwidth Int Int String
     
 
 update : Msg -> Model -> Model
@@ -42,10 +42,10 @@ update msg model =
                     { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Ioops i)})) model.services }
                 Nothing ->
                     model
-        UpdateNetwork serviceId id value ->
+        UpdateBandwidth serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Network i)})) model.services }
+                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Bandwidth i)})) model.services }
                 Nothing ->
                     model
 
@@ -81,10 +81,10 @@ view serviceId containerId container =
                         ]
                         ,
                         Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Network" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Bandwidth" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "50", Html.Attributes.max "152000", value <| String.fromInt container.network, onInput (UpdateNetwork serviceId containerId) ] []
-                            , Form.help [] [ text (String.fromInt container.network ++ " MiB/sec") ]
+                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "50", Html.Attributes.max "152000", value <| String.fromInt container.bandwidth, onInput (UpdateBandwidth serviceId containerId) ] []
+                            , Form.help [] [ text (String.fromInt container.bandwidth ++ " MiB/sec") ]
                             ]
                         ]
                     ]
