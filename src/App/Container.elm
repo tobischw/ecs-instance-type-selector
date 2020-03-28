@@ -64,7 +64,7 @@ view serviceId containerId container =
         |> Card.header [] [ text container.name]
         |> Card.block []
             [ Block.custom <|
-                Form.form []
+                Form.form []-- Todo: these form rows would lend themselves well to being split up into function
                     [ Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "CPU Share" ]
                         , Form.col [ Col.sm9 ]
@@ -76,7 +76,7 @@ view serviceId containerId container =
                         Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
                         , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "500", Html.Attributes.max "3904000", value <| String.fromInt container.memory, onInput (UpdateMem serviceId containerId)] []
+                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "500", Html.Attributes.max "3904000", Html.Attributes.step "1000", value <| String.fromInt container.memory, onInput (UpdateMem serviceId containerId)] []
                             , Form.help [] [ text (viewMemoryLabel container.memory)]
                             ]
                         ]

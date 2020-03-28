@@ -109,7 +109,7 @@ body {
   cursor: pointer;
 }
 
-.service-item {
+.cluster-item {
   border-bottom: 2px rgba(0,0,0,.125) solid !important;
   /*background: #fafafa !important;*/
   font-weight: bold;
@@ -118,6 +118,6 @@ body {
 .feather {
     vertical-align: middle;
     display: inline-block;
-    margin-right: 8px;
+    margin-right: 5px;
     margin-top: -2px;
 }

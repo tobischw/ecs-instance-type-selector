@@ -207,16 +207,22 @@ viewService serviceWithId =
         service =
             second serviceWithId
     in
-    List.concat
+    List.concat -- Todo: these need to be split into separate views or something, too messy
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "service-item", href ("/service/" ++ String.fromInt serviceId) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/service/" ++ String.fromInt serviceId) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Cluster 1"] , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml []]
+                    ]
+                ]
+          ], [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/service/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ] , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml []]
                     ]
                 ]
           ]
         , [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "50px", href ("/task/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
                     , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer serviceId) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [], text "Container" ] ]
