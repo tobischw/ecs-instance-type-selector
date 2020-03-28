@@ -49,6 +49,15 @@ update msg model =
                 Nothing ->
                     model
 
+viewMemoryLabel : Int -> String
+viewMemoryLabel memoryInMB =
+    if memoryInMB < 999 then
+        String.fromInt memoryInMB ++ " MiB"
+    else if memoryInMB < 999999 then
+        String.fromFloat (toFloat memoryInMB / 1000) ++ " GiB"
+   else
+        String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
+
 view : Int -> Int -> Configuration.Container -> Html Msg
 view serviceId containerId container =
     Card.config []
@@ -68,7 +77,7 @@ view serviceId containerId container =
                         [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
                         , Form.col [ Col.sm9 ]
                             [ input [ type_ "range", class "form-control-range", Html.Attributes.min "500", Html.Attributes.max "3904000", value <| String.fromInt container.memory, onInput (UpdateMem serviceId containerId)] []
-                            , Form.help [] [ text (String.fromInt container.memory ++ " MiB")  ]
+                            , Form.help [] [ text (viewMemoryLabel container.memory)]
                             ]
                         ]
                         ,
