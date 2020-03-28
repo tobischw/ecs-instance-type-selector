@@ -211,16 +211,15 @@ viewService serviceWithId =
         [ [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "service-item", href ("/service/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.toHtml [] , text service.name ]
-                    , span [ class "" ] [ Util.icon "trash" ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ] , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml []]
                     ]
                 ]
           ]
         , [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt serviceId) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ Util.icon "clipboard", text "Tasks" ]
-                    , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer serviceId) ] [ Util.icon "plus", text "Container" ] ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
+                    , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer serviceId) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [], text "Container" ] ]
                     ]
                 ]
           ]
@@ -234,7 +233,7 @@ viewContainer serviceId containerWithId =
         container =
             second containerWithId
     in
-    simpleListItem container.name "archive" [ href ("/container/" ++ String.fromInt serviceId ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
+    simpleListItem container.name FeatherIcons.box  [ href ("/container/" ++ String.fromInt serviceId ++ "/" ++ String.fromInt (first containerWithId)), style "padding-left" "60px" ]
 
 
 viewNewServiceModal : Model -> Html Msg
@@ -319,22 +318,22 @@ viewAddContainerTabBody =
         ]
 
 
-simpleListItem : String -> String -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg
+simpleListItem : String -> FeatherIcons.Icon -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg
 simpleListItem label icon attrs =
-    ListGroup.anchor [ ListGroup.attrs attrs ] [ Util.icon icon, text label ]
+    ListGroup.anchor [ ListGroup.attrs attrs ] [ icon |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text label ]
 
 
 view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
         [ Util.viewColumnTitle "Configuration"
-        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ Util.icon "plus", text "Add Service" ]
+        , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Service" ]
         , ListGroup.custom (viewServices model.services)
         , hr [] []
         , ListGroup.custom
-            [ simpleListItem "Global Settings" "cog" [ href "../../settings" ]
-            , simpleListItem "Export as JSON" "eject" [ href "#" ]
-            , simpleListItem "Load JSON" "download-outline" [ href "#" ]
+            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "../../settings" ]
+            , simpleListItem "Export as JSON" FeatherIcons.share [ href "#" ]
+            , simpleListItem "Load JSON" FeatherIcons.download [ href "#" ]
             ]
         , viewNewServiceModal model
         ]

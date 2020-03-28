@@ -114,3 +114,10 @@ body {
   /*background: #fafafa !important;*/
   font-weight: bold;
 }
+
+.feather {
+    vertical-align: middle;
+    display: inline-block;
+    margin-right: 8px;
+    margin-top: -2px;
+}
