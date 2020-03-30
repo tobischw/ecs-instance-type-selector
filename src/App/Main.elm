@@ -251,7 +251,6 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Navbar.subscriptions model.navbarState NavbarMsg
-        , Sub.map ConfigurationMsg <| Configuration.subscriptions model.configuration
         , Sub.map SettingsMsg <| Settings.subscriptions model.settings
         ]
 

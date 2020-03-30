@@ -1,6 +1,6 @@
 module App.Task exposing (Model, Msg(..), update, view)
 
-import App.Configuration as Configuration exposing (RegionRecord, allRegions)
+import App.Constants as Constants exposing (RegionRecord, allRegions)
 import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
