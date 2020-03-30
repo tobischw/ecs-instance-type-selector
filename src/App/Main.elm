@@ -36,9 +36,10 @@ type alias Model =
 
 type Detail
     = None
+    | Cluster Int
     | Service Int
     | Task Int
-    | Container Int Int
+    | Container Int
     | Settings
 
 
