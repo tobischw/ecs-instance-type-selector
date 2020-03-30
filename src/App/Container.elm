@@ -27,25 +27,37 @@ update msg model =
         UpdateCPUShare serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.CPUShare i)})) model.services }
+                    { model | services = Dict.update serviceId
+                        (Maybe.map (\containers -> { containers | containers = 
+                            Configuration.updateContainers serviceId id model.services (Configuration.CPUShare i)
+                        })) model.services }
                 Nothing ->
                     model
         UpdateMem serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Memory i)})) model.services }
+                    { model | services = Dict.update serviceId 
+                        (Maybe.map (\containers -> { containers | containers =
+                            Configuration.updateContainers serviceId id model.services (Configuration.Memory i)
+                        })) model.services }
                 Nothing ->
                     model
         UpdateIoops serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Ioops i)})) model.services }
+                    { model | services = Dict.update serviceId 
+                        (Maybe.map (\containers -> { containers | containers =
+                            Configuration.updateContainers serviceId id model.services (Configuration.Ioops i)
+                        })) model.services }
                 Nothing ->
                     model
         UpdateBandwidth serviceId id value ->
             case String.toInt value of
                 Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Bandwidth i)})) model.services }
+                    { model | services = Dict.update serviceId 
+                        (Maybe.map (\containers -> { containers | containers =
+                            Configuration.updateContainers serviceId id model.services (Configuration.Bandwidth i)
+                        })) model.services }
                 Nothing ->
                     model
 
