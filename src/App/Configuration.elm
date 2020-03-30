@@ -1,4 +1,4 @@
-module App.Configuration exposing (Container, ContainerProps(..), Model, Msg(..), RegionRecord, Service, allRegions, init, subscriptions, update, updateContainers, view)
+module App.Configuration exposing (Container, Model, Msg(..), RegionRecord, Service, allRegions, init, subscriptions, update, updateContainers, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -20,15 +20,12 @@ import Multiselect
 import Tuple exposing (first, second)
 import FeatherIcons
 
-{-
-testServices : Dict Int Service
-testServices =
-    Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1" 50 50 50 100) ]) ) ]
--}
 
 init : Model
 init =
-    { services = Dict.fromList [] 
+    { clusters = Dict.fromList [ (0, Cluster "Cluster 1") ]
+    , services = Dict.fromList [] 
+    , containers = Dict.fromList []
     , newServiceModal = Modal.hidden
     , newServiceName = ""
     , tabState = Tab.initialState
@@ -75,7 +72,6 @@ type alias Service =
     , scalingTarget : Int
     , regions : Multiselect.Model
     , taskTotalMemory : Int
-    , containers : Dict Int Container
     }
 
 
@@ -130,13 +126,8 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Tab.subscriptions model.tabState TabMsg
 
-type ContainerProps
-    = CPUShare Int
-    | Name String
-    | Memory Int
-    | Ioops Int
-    | Bandwidth Int
 
+{-
 updateContainers : Int -> Int -> Dict Int Service -> ContainerProps -> Dict Int Container
 updateContainers serviceId containerId services containerUpdate =
     let
@@ -163,7 +154,7 @@ updateContainers serviceId containerId services containerUpdate =
 
         Nothing ->
             Dict.fromList [ ]
-
+-}
 
 update : Msg -> Model -> Model
 update msg model =
@@ -199,15 +190,35 @@ update msg model =
             in
                 case maybeService of
                     Just service ->
-                        { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container ("Container " ++ String.fromInt (Dict.size service.containers + 1)) 0 0 0 0) service.containers })) model.services }
+                        --{ model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container ("Container " ++ String.fromInt (Dict.size service.containers + 1)) 0 0 0 0) service.containers })) model.services }
                     Nothing ->
                         model
         TabMsg state ->
             { model | tabState = state }
 
 
+viewClusters : Clusters -> List (ListGroup.CustomItem Msg)
+viewClusters clusters =
+    List.concatMap viewCluster (Dict.toList clusters)
 
 
+viewCluster : (Int, Cluser) -> List (ListGroup.CustomItem Msg)
+viewCluster clusterTuple =
+    let
+        id = first clusterTuple
+        cluster = second clusterTuple
+    in
+        List.concat
+        [
+            [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name] , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml []]
+                    ]
+                ]
+            ]
+        ]
+            
 
 viewServices : Services -> List (ListGroup.CustomItem Msg)
 viewServices services =
