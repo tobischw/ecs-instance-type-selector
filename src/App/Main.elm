@@ -111,7 +111,8 @@ urlParser : Parser (Detail -> a) a
 urlParser =
     Url.oneOf
         [ Url.map None Url.top
-        , Url.map Container (Url.s "container" </> Url.int </> Url.int)
+        , Url.map Cluster (Url.s "cluster" </> Url.int)
+        , Url.map Container (Url.s "container" </> Url.int)
         , Url.map Service (Url.s "service" </> Url.int)
         , Url.map Task (Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
@@ -161,6 +162,8 @@ viewDetailColumn model =
 
 viewDetail : Model -> Html Msg
 viewDetail model =
+    div [] [ text "Placeholder" ]
+    {-
     case model.currentDetail of
         Service id ->
             let
@@ -212,7 +215,7 @@ viewDetail model =
 
         _ ->
             viewNoneDetail
-
+    -}
 
 viewNoneDetail : Html Msg
 viewNoneDetail =

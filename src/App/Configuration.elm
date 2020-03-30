@@ -1,4 +1,4 @@
-module App.Configuration exposing (Container, Model, Msg(..), RegionRecord, Service, allRegions, init, subscriptions, update, updateContainers, view)
+module App.Configuration exposing (Container, Model, Msg(..), RegionRecord, Service, allRegions, init, subscriptions, update, view)
 
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -191,6 +191,7 @@ update msg model =
                 case maybeService of
                     Just service ->
                         --{ model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container ("Container " ++ String.fromInt (Dict.size service.containers + 1)) 0 0 0 0) service.containers })) model.services }
+                        model
                     Nothing ->
                         model
         TabMsg state ->
@@ -199,11 +200,11 @@ update msg model =
 
 viewClusters : Clusters -> List (ListGroup.CustomItem Msg)
 viewClusters clusters =
-    List.concatMap viewCluster (Dict.toList clusters)
+    List.concatMap viewClusterItem (Dict.toList clusters)
 
 
-viewCluster : (Int, Cluser) -> List (ListGroup.CustomItem Msg)
-viewCluster clusterTuple =
+viewClusterItem : (Int, Cluster) -> List (ListGroup.CustomItem Msg)
+viewClusterItem clusterTuple =
     let
         id = first clusterTuple
         cluster = second clusterTuple
@@ -217,6 +218,7 @@ viewCluster clusterTuple =
                     ]
                 ]
             ]
+        , List.map (viewContainer serviceId) (Dict.toList service.containers)
         ]
             
 
@@ -256,7 +258,7 @@ viewService serviceWithId =
                     ]
                 ]
           ]
-        , List.map (viewContainer serviceId) (Dict.toList service.containers)
+        --, List.map (viewContainer serviceId) (Dict.toList service.containers)
         ]
 
 
@@ -361,7 +363,7 @@ view model =
     div [ class "px-3", class "pt-1" ]
         [ Util.viewColumnTitle "Configuration"
         , Button.button [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ], Button.onClick ShowModal ] [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Service" ]
-        , ListGroup.custom (viewServices model.services)
+        , ListGroup.custom (viewClusters model.clusters)
         , hr [] []
         , ListGroup.custom
             [ simpleListItem "Global Settings" FeatherIcons.settings [ href "../../settings" ]
