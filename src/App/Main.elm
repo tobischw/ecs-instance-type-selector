@@ -150,7 +150,7 @@ viewDetailColumn model =
     Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Detail"
-            , viewDetail model
+            --, viewDetail model
             ]
         ]
 

@@ -22,7 +22,6 @@ type Msg
 
 update : Msg -> Model -> Model
 update msg model =
-    -- Todo: These case expressions need to be cleaned up! They are a bit of a mess right now. Look into Partial Application!
     case msg of
         UpdateCPUShare serviceId id value ->
             case String.toInt value of

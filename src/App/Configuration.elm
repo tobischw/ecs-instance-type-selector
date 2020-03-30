@@ -20,14 +20,15 @@ import Multiselect
 import Tuple exposing (first, second)
 import FeatherIcons
 
+{-
 testServices : Dict Int Service
 testServices =
     Dict.fromList [ ( 0, Service "Service A" 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 (Dict.fromList [ ( 0, Container "Container 1" 50 50 50 100) ]) ) ]
-
+-}
 
 init : Model
 init =
-    { services = testServices
+    { services = Dict.fromList [] 
     , newServiceModal = Modal.hidden
     , newServiceName = ""
     , tabState = Tab.initialState
@@ -37,9 +38,17 @@ init =
 type alias Services =
     Dict Int Service
 
+type alias Clusters =
+    Dict Int Cluster
+
+
+type alias Containers =
+    Dict Int Container
 
 type alias Model =
-    { services : Services
+    { clusters : Clusters
+    , services : Services
+    , containers : Containers
     , newServiceModal : Modal.Visibility
     , newServiceName : String
     , tabState : Tab.State
@@ -55,8 +64,14 @@ type Msg
     | TabMsg Tab.State
 
 
+type alias Cluster =
+    {
+        name : String
+    }
+
 type alias Service =
     { name : String
+    , clusterId : Int
     , scalingTarget : Int
     , regions : Multiselect.Model
     , taskTotalMemory : Int
@@ -66,6 +81,7 @@ type alias Service =
 
 type alias Container =
     { name : String
+    , serviceId : Int
     , cpuShare : Int
     , memory : Int
     , ioops : Int
@@ -146,7 +162,7 @@ updateContainers serviceId containerId services containerUpdate =
                     Dict.update containerId (Maybe.map (\container -> { container | bandwidth = newBandwidth })) service.containers
 
         Nothing ->
-            Dict.fromList [ ( 0, Container "Invalid Container" 50 50 50 50 ) ]
+            Dict.fromList [ ]
 
 
 update : Msg -> Model -> Model
@@ -164,8 +180,8 @@ update msg model =
                 id =
                     Dict.size model.services
             in
-            -- These long lines need to be split up
-            { model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            --{ model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
+            model
 
         CloseModal ->
             { model | newServiceModal = Modal.hidden, newServiceName = "" }

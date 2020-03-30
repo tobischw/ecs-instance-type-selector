@@ -3,7 +3,7 @@
     "source-directories": [
         "src"
     ],
-    "elm-version": "0.19.1",
+    "elm-version": "0.19.0",
     "dependencies": {
         "direct": {
             "avh4/elm-color": "1.0.0",
@@ -12,6 +12,7 @@
             "elm/core": "1.0.2",
             "elm/html": "1.0.0",
             "elm/url": "1.0.0",
+            "elm-community/dict-extra": "2.4.0",
             "elm-community/html-extra": "3.3.0",
             "feathericons/elm-feather": "1.4.0",
             "inkuzmin/elm-multiselect": "3.0.3",
