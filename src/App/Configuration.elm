@@ -47,6 +47,7 @@ type Msg
     = AddCluster
     | AddService Int
     | AddContainer Int
+    | DeleteContainer Int
 
 
 type alias Cluster =
@@ -83,6 +84,9 @@ update msg model =
 
         AddContainer serviceId ->
             { model | containers = model.containers |> Dict.insert (Dict.size model.containers) (Container "Container" serviceId 128 2048 128 1048)}
+        
+        DeleteContainer containerId ->
+            {model | containers = model.containers |> Dict.remove containerId}
 
 
 view : Model -> Html Msg
@@ -210,7 +214,13 @@ viewContainerItem containerTuple =
         container =
             second containerTuple
     in
-    simpleListItem container.name FeatherIcons.box [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ]
+    ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ] [ 
+        FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
+        , text container.name
+        , span [class "float-right"] [ -- srry I didn't wanna screw with elm-bootstrap grossness
+            Button.button [ Button.outlineDanger, Button.small, Button.onClick (DeleteContainer id) ] [ FeatherIcons.minus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ]]
+        ]
+
 
 
 simpleListItem : String -> FeatherIcons.Icon -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg
