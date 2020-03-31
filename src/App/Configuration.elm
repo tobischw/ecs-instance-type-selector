@@ -150,7 +150,7 @@ viewServices model services =
 viewServiceItem : Model -> ( Int, Service ) -> List (ListGroup.CustomItem Msg)
 viewServiceItem model serviceTuple =
     let
-        serviceId =
+        id =
             first serviceTuple
 
         service =
@@ -158,22 +158,26 @@ viewServiceItem model serviceTuple =
     in
     List.concat 
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/service/" ++ String.fromInt serviceId) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ] , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml []]
                     ]
                 ]
           ]
-        , [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "50px", href ("/task/" ++ String.fromInt serviceId) ] ]
-                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
-                    , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer serviceId) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [], text "Container" ] ]
-                    ]
-                ]
-          ]
+        , viewTaskItem id 
         , viewContainers model (getContainers id model.containers)
         ]
+    
+viewTaskItem : Int -> List (ListGroup.CustomItem Msg)
+viewTaskItem id =
+ [ ListGroup.anchor
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "50px", href ("/task/" ++ String.fromInt id) ] ]
+                [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
+                    , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [], text "Container" ] ]
+                    ]
+                ] ]
+          
 
 getContainers : Int -> Containers -> Containers
 getContainers serviceId containers =
@@ -186,9 +190,9 @@ getContainers serviceId containers =
     in
         containers |> filterMap associateContainer
 
-viewContainers : Model -> Containers -> ListGroup.CustomItem Msg
+viewContainers : Model -> Containers -> List (ListGroup.CustomItem Msg)
 viewContainers model containers =
-    List.concatMap viewContainerItem (Dict.toList model.containers)
+    List.map viewContainerItem (Dict.toList model.containers)
 
 viewContainerItem : ( Int, Container ) -> ListGroup.CustomItem Msg
 viewContainerItem containerTuple =
