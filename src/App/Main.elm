@@ -156,7 +156,7 @@ viewDetailColumn : Model -> Grid.Column Msg
 viewDetailColumn model =
     Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
-            [ Util.viewColumnTitle "Detail"
+            [ Util.viewColumnTitle "Detail", hr [] []
                  , viewDetail model
             ]
         ]
@@ -184,65 +184,12 @@ viewDetail model =
             Dict.get id model.configuration.containers
                 |> Maybe.map (\value -> Html.map ContainerMsg (Container.view id value))
                 |> Maybe.withDefault viewNotFoundDetail
-                
+
         Settings ->
             Html.map SettingsMsg (Settings.view model.settings)
 
         _ ->
             viewNotFoundDetail
-    {-
-    case model.currentDetail of
-        Service id ->
-            let
-                maybeService =
-                    Dict.get id model.configuration.services
-            in
-            case maybeService of
-                Just service ->
-                    Html.map ServiceMsg (Service.view id service)
-
-                Nothing ->
-                    viewNotFoundDetail
-
-        Task serviceId ->
-            let
-                maybeService =
-                    Dict.get serviceId model.configuration.services
-            in
-            case maybeService of
-                Just service ->
-                    Html.map TaskMsg (Task.view serviceId service)
-
-                Nothing ->
-                    viewNotFoundDetail
-
-        Container serviceId id ->
-            let
-                maybeService =
-                    Dict.get serviceId model.configuration.services
-            in
-            case maybeService of
-                Just service ->
-                    let
-                        maybeContainer =
-                            Dict.get id service.containers
-                    in
-                    case maybeContainer of
-                        Just container ->
-                            Html.map ContainerMsg (Container.view serviceId id container)
-
-                        Nothing ->
-                            viewNotFoundDetail
-
-                Nothing ->
-                    viewNotFoundDetail
-
-        Settings ->
-            Html.map SettingsMsg (Settings.view model.settings)
-
-        _ ->
-            viewNoneDetail
-    -}
 
 viewNoneDetail : Html Msg
 viewNoneDetail =

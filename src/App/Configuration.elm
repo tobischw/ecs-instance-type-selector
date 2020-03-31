@@ -19,7 +19,7 @@ import Tuple exposing (first, second)
 init : Model
 init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
-    , services = Dict.fromList [ ( 0, Service "Service wait" 0 0 (Multiselect.initModel [] "A") 0 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 0 ) ]
+    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 0 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 0 ) ]
     , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 20 ), ( 1, Container "Container B" 0 20 20 20 20 ) ]
     }
 
@@ -44,7 +44,8 @@ type alias Model =
 
 
 type Msg
-    = AddService
+    = AddCluster
+    | AddService Int
     | AddContainer Int
 
 
@@ -75,36 +76,23 @@ type alias Container =
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        AddService ->
-            let
-                id =
-                    Dict.size model.services
-            in
-            --{ model | services = model.services |> Dict.insert id (Service name 50 (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A") 50 Dict.empty), newServiceName = "", newServiceModal = Modal.hidden }
-            model
+        AddCluster ->
+           { model | clusters = model.clusters |> Dict.insert (Dict.size model.clusters) (Cluster "Cluster")} 
+        AddService clusterId ->
+            { model | services = model.services |> Dict.insert (Dict.size model.services) (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0)}
 
         AddContainer serviceId ->
-            let
-                maybeService =
-                    Dict.get serviceId model.services
-            in
-            case maybeService of
-                Just service ->
-                    --{ model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Dict.insert (Dict.size service.containers) (Container ("Container " ++ String.fromInt (Dict.size service.containers + 1)) 0 0 0 0) service.containers })) model.services }
-                    model
-
-                Nothing ->
-                    model
+            { model | containers = model.containers |> Dict.insert (Dict.size model.containers) (Container "Container" serviceId 128 2048 128 1048)}
 
 
 view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
-        [ Util.viewColumnTitle "Configuration"
+        [ Util.viewColumnTitle "Configuration", hr [] []
         , Button.button
-            [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ]
+            [ Button.outlineSuccess, Button.onClick AddCluster, Button.block, Button.attrs [ class "mb-2" ] 
             ]
-            [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
+            [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster"]
         , ListGroup.custom (viewClusters model)
         , hr [] []
         , ListGroup.custom
@@ -134,7 +122,7 @@ viewClusterItem model clusterTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
-                    , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                    , span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.onClick (AddService id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
                     ]
                 ]
           ]
@@ -171,7 +159,7 @@ viewServiceItem model serviceTuple =
     in
     List.concat
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/service/" ++ String.fromInt id) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ]
                     , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
@@ -186,10 +174,10 @@ viewServiceItem model serviceTuple =
 viewTaskItem : Int -> List (ListGroup.CustomItem Msg)
 viewTaskItem id =
     [ ListGroup.anchor
-        [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "50px", href ("/task/" ++ String.fromInt id) ] ]
+        [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt id) ] ]
         [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
             [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
-            , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [], text "Container" ] ]
+            , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
             ]
         ]
     ]
