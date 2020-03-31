@@ -184,6 +184,9 @@ viewDetail model =
             Dict.get id model.configuration.containers
                 |> Maybe.map (\value -> Html.map ContainerMsg (Container.view id value))
                 |> Maybe.withDefault viewNotFoundDetail
+                
+        Settings ->
+            Html.map SettingsMsg (Settings.view model.settings)
 
         _ ->
             viewNotFoundDetail
