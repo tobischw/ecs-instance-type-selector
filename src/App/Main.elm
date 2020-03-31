@@ -3,6 +3,7 @@ module App.Main exposing (..)
 import App.Configuration as Configuration
 import App.Container as Container
 import App.Results as Results
+import App.Cluster as Cluster
 import App.Service as Service
 import App.Settings as Settings
 import App.Task as Task
@@ -52,6 +53,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | ConfigurationMsg Configuration.Msg
+    | ClusterMsg Cluster.Msg
     | ServiceMsg Service.Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
@@ -84,6 +86,9 @@ update msg model =
         ConfigurationMsg configurationMsg ->
             ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
 
+        ClusterMsg clusterMsg ->
+            ( { model | configuration = Cluster.update clusterMsg model.configuration }, Cmd.none ) 
+
         ServiceMsg serviceMsg ->
             ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
 
@@ -113,8 +118,8 @@ urlParser =
     Url.oneOf
         [ Url.map None Url.top
         , Url.map Cluster (Url.s "cluster" </> Url.int)
-        , Url.map Container (Url.s "container" </> Url.int)
         , Url.map Service (Url.s "service" </> Url.int)
+        , Url.map Container (Url.s "container" </> Url.int)
         , Url.map Task (Url.s "task" </> Url.int)
         , Url.map Settings (Url.s "settings")
         ]
@@ -152,18 +157,26 @@ viewDetailColumn model =
     Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Detail"
-            --, viewDetail model
+                 , viewDetail model
             ]
         ]
 
 
-
--- Simplify viewDetail somehow, it looks a bit messy
-
-
 viewDetail : Model -> Html Msg
 viewDetail model =
-    div [] [ text "Placeholder" ]
+    case model.currentDetail of
+        Cluster id ->
+            Dict.get id model.configuration.clusters
+                |> Maybe.map (\value -> Html.map ClusterMsg (Cluster.view id value))
+                |> Maybe.withDefault viewNotFoundDetail
+
+        Service id ->
+            Dict.get id model.configuration.services
+                |> Maybe.map (\value -> Html.map ServiceMsg (Service.view id value))
+                |> Maybe.withDefault viewNotFoundDetail
+
+        _ ->
+            viewNotFoundDetail
     {-
     case model.currentDetail of
         Service id ->

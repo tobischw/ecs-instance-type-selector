@@ -12,10 +12,6 @@ import Html.Events exposing (onInput)
 import Html.Events.Extra exposing (onChange)
 
 
-
--- This seems a bit messy, but technically allowed since we end up w/ "global" state
-
-
 type alias Model =
     Configuration.Model
 
@@ -24,16 +20,11 @@ type Msg
     = UpdateScalingTarget Int String
 
 
--- find a better way to do this!
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateScalingTarget id value ->
-            case String.toInt value of
-                Just i ->
-                    { model | services = Dict.update id (Maybe.map (\scalingTarget -> { scalingTarget | scalingTarget = i })) model.services }
-                Nothing ->
-                    model
+            { model | services = Dict.update id (Maybe.map (\service -> { service | scalingTarget = String.toInt value |> Maybe.withDefault 0 })) model.services }
 
 
 view : Int -> Configuration.Service -> Html Msg
