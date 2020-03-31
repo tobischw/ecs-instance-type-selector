@@ -103,8 +103,6 @@ view model =
         [ Util.viewColumnTitle "Configuration"
         , Button.button
             [ Button.outlineSuccess, Button.block, Button.attrs [ class "mb-2" ]
-
-            {- , Button.onClick ShowModal -}
             ]
             [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
         , ListGroup.custom (viewClusters model)
