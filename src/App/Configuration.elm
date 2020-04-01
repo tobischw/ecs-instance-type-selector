@@ -20,7 +20,8 @@ init : Model
 init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
     , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 0 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 0 ) ]
-    , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 20 ), ( 1, Container "Container B" 0 20 20 20 20 ) ]
+    , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 False 20 ), ( 1, Container "Container B" 0 20 20 20 False 20 ) ]
+    , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
     }
 
 
@@ -40,6 +41,7 @@ type alias Model =
     { clusters : Clusters
     , services : Services
     , containers : Containers
+    , autoIncrement : Int
     }
 
 
@@ -47,6 +49,9 @@ type Msg
     = AddCluster
     | AddService Int
     | AddContainer Int
+    | DeleteContainer Int
+    | DeleteService Int
+    | DeleteCluster Int
 
 
 type alias Cluster =
@@ -69,30 +74,67 @@ type alias Container =
     , cpuShare : Int
     , memory : Int
     , ioops : Int
+    , useEBS : Bool
     , bandwidth : Int
     }
+
+
+generateId : Model -> Int
+generateId model =
+    model.autoIncrement + 1
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-           { model | clusters = model.clusters |> Dict.insert (Dict.size model.clusters) (Cluster "Cluster")} 
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model }
+
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert (Dict.size model.services) (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0)}
+            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0), autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert (Dict.size model.containers) (Container "Container" serviceId 128 2048 128 1048)}
+            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2048 128 True 1048), autoIncrement = generateId model }
+
+        DeleteContainer containerId ->
+            { model | containers = model.containers |> Dict.remove containerId }
+
+        DeleteService serviceId ->
+            let
+                newModel =
+                    { model | containers = model.containers |> Dict.Extra.removeWhen (\_ container -> container.serviceId == serviceId) }
+            in
+            { newModel | services = model.services |> Dict.remove serviceId }
+
+        DeleteCluster clusterId ->
+            let
+                servicesToRemove =
+                    model.services |> Dict.filter (\_ service -> service.clusterId == clusterId)
+
+                serviceIdsToRemove =
+                    servicesToRemove |> Dict.keys
+
+                newContainers =
+                    model.containers |> Dict.Extra.removeWhen (\_ container -> List.length (List.filter (\item -> item == container.serviceId) serviceIdsToRemove) > 0)
+
+                newServices =
+                    model.services |> Dict.Extra.removeWhen (\_ service -> service.clusterId == clusterId)
+            in
+            { model | containers = newContainers, services = newServices, clusters = model.clusters |> Dict.remove clusterId }
 
 
 view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
-        [ Util.viewColumnTitle "Configuration", hr [] []
+        [ Util.viewColumnTitle "Configuration"
+        , hr [] []
         , Button.button
-            [ Button.outlineSuccess, Button.onClick AddCluster, Button.block, Button.attrs [ class "mb-2" ] 
+            [ Button.outlineSuccess
+            , Button.onClick AddCluster
+            , Button.block
+            , Button.attrs [ class "mb-2" ]
             ]
-            [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster"]
+            [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
         , ListGroup.custom (viewClusters model)
         , hr [] []
         , ListGroup.custom
@@ -122,7 +164,12 @@ viewClusterItem model clusterTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
-                    , span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.onClick (AddService id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+                    , div []
+                        [ span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+                        , span [ class "ml-3 text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+
+                        -- needed to prevent the onClick of the list item from firing, and rerouting us to a non-existant thingy
+                        ]
                     ]
                 ]
           ]
@@ -162,7 +209,7 @@ viewServiceItem model serviceTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ]
-                    , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                    , span [ class "text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
                     ]
                 ]
           ]
@@ -177,7 +224,7 @@ viewTaskItem id =
         [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt id) ] ]
         [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
             [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
-            , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.onClick (AddContainer id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+            , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddContainer id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
             ]
         ]
     ]
@@ -210,7 +257,11 @@ viewContainerItem containerTuple =
         container =
             second containerTuple
     in
-    simpleListItem container.name FeatherIcons.box [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ]
+    ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
+        [ FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
+        , text container.name
+        , span [ class "ml-3 text-danger float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+        ]
 
 
 simpleListItem : String -> FeatherIcons.Icon -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg

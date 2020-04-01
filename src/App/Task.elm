@@ -1,16 +1,16 @@
 module App.Task exposing (Model, Msg(..), update, view)
 
-import App.Constants as Constants exposing (RegionRecord, allRegions)
 import App.Configuration as Configuration
+import App.Constants as Constants exposing (RegionRecord, allRegions)
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
-import Multiselect
 import Bootstrap.Form as Form
 import Bootstrap.Grid.Col as Col
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
+import Multiselect
 import Tuple exposing (first, second)
 
 
@@ -23,7 +23,10 @@ type Msg
     | UpdateRegions Int Multiselect.Msg
 
 
+
 -- https://elmseeds.thaterikperson.com/elm-multiselect
+
+
 update : Msg -> Model -> Model
 update msg model =
     case msg of
@@ -36,20 +39,21 @@ update msg model =
                     model
 
         UpdateRegions id regionChangeMessage ->
-            let 
-                (newRegionModel, _, _) =
-                     let
-                        maybeService = Dict.get id model.services
-                     in
-                        case maybeService of
-                            Just service -> 
-                                Multiselect.update regionChangeMessage service.regions
-                        
-                            Nothing ->
-                                Multiselect.update regionChangeMessage (Multiselect.initModel (List.map (\region -> (region.regionCode, region.displayName)) allRegions) "A")
-                                 
+            let
+                ( newRegionModel, _, _ ) =
+                    let
+                        maybeService =
+                            Dict.get id model.services
+                    in
+                    case maybeService of
+                        Just service ->
+                            Multiselect.update regionChangeMessage service.regions
+
+                        Nothing ->
+                            Multiselect.update regionChangeMessage (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A")
             in
-                { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = newRegionModel })) model.services }
+            { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = newRegionModel })) model.services }
+
 
 view : Int -> Configuration.Service -> Html Msg
 view serviceId service =

@@ -1,5 +1,6 @@
 module App.Constants exposing (..)
 
+
 type alias RegionRecord =
     { regionCode : String
     , displayName : String
@@ -31,4 +32,3 @@ allRegions =
     , RegionRecord "me" "Middle East (Bahrain)" "me-south-1"
     , RegionRecord "sa" "South America (Sao Paulo)" "sa-east-1"
     ]
-
