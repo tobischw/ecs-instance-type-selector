@@ -109,8 +109,20 @@ body {
   cursor: pointer;
 }
 
-.service-item {
+.cluster-item {
   border-bottom: 2px rgba(0,0,0,.125) solid !important;
-  /*background: #fafafa !important;*/
+  background: #fafafa !important;
   font-weight: bold;
+}
+
+.feather {
+    vertical-align: middle;
+    display: inline-block;
+    margin-right: 5px;
+    margin-top: -2px;
+}
+
+.empty-button {
+    padding-top: 3px;
+    margin-right: 0px;
 }

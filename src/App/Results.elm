@@ -8,7 +8,7 @@ import Canvas exposing (..)
 import Canvas.Settings exposing (..)
 import Canvas.Settings.Text exposing (TextAlign(..), align, font)
 import Color
-import Html exposing (Html, canvas, div)
+import Html exposing (Html, canvas, div, hr)
 import Html.Attributes exposing (class, style)
 
 
@@ -17,7 +17,7 @@ view =
     Grid.col [ Col.md4, Col.attrs [ class "p-0" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle
-                "Live Results"
+                "Live Results", hr [] []
             , div [ class "pb-2"]
                 [ Progress.progress [ Progress.value 0, Progress.animated ] ]
                 ,

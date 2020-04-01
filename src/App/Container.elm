@@ -1,6 +1,7 @@
 module App.Container exposing (Model, Msg(..), update, view)
 
 import App.Configuration as Configuration
+import App.Util as Util 
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
@@ -14,78 +15,59 @@ type alias Model =
     Configuration.Model
 
 type Msg 
-    = UpdateVCPU Int Int String
-    | UpdateMem Int Int String
-    | UpdateIoops Int Int String
-    | UpdateNetwork Int Int String
+    = UpdateCPUShare Int String
+    | UpdateMemory Int String
+    | UpdateIoops Int String
+    | UpdateBandwidth Int String
     
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateVCPU serviceId id value ->
-            case String.toInt value of
-                Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.VCPUS i)})) model.services }
-                Nothing ->
-                    model
-        UpdateMem serviceId id value ->
-            case String.toInt value of
-                Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Memory i)})) model.services }
-                Nothing ->
-                    model
-        UpdateIoops serviceId id value ->
-            case String.toInt value of
-                Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Ioops i)})) model.services }
-                Nothing ->
-                    model
-        UpdateNetwork serviceId id value ->
-            case String.toInt value of
-                Just i ->
-                    { model | services = Dict.update serviceId (Maybe.map (\containers -> { containers | containers = Configuration.updateContainers serviceId id model.services (Configuration.Network i)})) model.services }
-                Nothing ->
-                    model
+        UpdateCPUShare id value ->
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | cpuShare = Util.toInt value})) model.containers}
 
-view : Int -> Int -> Configuration.Container -> Html Msg
-view serviceId containerId container =
+        UpdateMemory id value ->
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | memory = Util.toInt value})) model.containers}
+
+        UpdateIoops id value ->
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | ioops = Util.toInt value})) model.containers}
+            
+        UpdateBandwidth id value ->
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | bandwidth = Util.toInt value})) model.containers}
+            
+viewMemoryLabel : Int -> String
+viewMemoryLabel memoryInMB =
+    if memoryInMB < 999 then
+        String.fromInt memoryInMB ++ " MiB"
+    else if memoryInMB < 999999 then
+        String.fromFloat (toFloat memoryInMB / 1000) ++ " GiB"
+   else
+        String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
+
+
+viewFormRowSlider : String -> String -> Int -> Int -> Int -> Int -> (String -> Msg) -> Html Msg
+viewFormRowSlider label sublabel val min max step msg =
+    Form.row []
+        [ Form.colLabel [ Col.sm3 ] [ text label ]
+        , Form.col [ Col.sm9 ]
+             [ input [ type_ "range", class "form-control-range", Html.Attributes.min <| String.fromInt min, Html.Attributes.max <| String.fromInt max, Html.Attributes.step <| String.fromInt step, value <| String.fromInt val, onInput msg ] []
+               , Form.help [] [ text sublabel ]
+             ]
+        ]
+                       
+
+view : Int -> Configuration.Container -> Html Msg
+view id container =
     Card.config []
         |> Card.header [] [ text container.name]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
-                    [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "vCPUs" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "1", Html.Attributes.max "96", value <| String.fromInt container.vCPUs, onInput (UpdateVCPU serviceId containerId) ] []
-                            , Form.help [] [ text (String.fromInt container.vCPUs ++ " vCPUs") ]
-                            ]
-                        ]
-                        ,
-                        Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Memory" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "0", Html.Attributes.max "3904000", value <| String.fromInt container.memory, onInput (UpdateMem serviceId containerId)] []
-                            , Form.help [] [ text (String.fromInt container.memory ++ " MiB")  ]
-                            ]
-                        ]
-                        ,
-                        Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "IOOPS" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "4750", Html.Attributes.max "19000", value <| String.fromInt container.ioops, onInput (UpdateIoops serviceId containerId) ] []
-                            , Form.help [] [ text (String.fromInt container.ioops ++ " MiB/sec") ]
-                            ]
-                        ]
-                        ,
-                        Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Network" ]
-                        , Form.col [ Col.sm9 ]
-                            [ input [ type_ "range", class "form-control-range", Html.Attributes.min "50", Html.Attributes.max "152000", value <| String.fromInt container.network, onInput (UpdateNetwork serviceId containerId) ] []
-                            , Form.help [] [ text (String.fromInt container.network ++ " MiB/sec") ]
-                            ]
-                        ]
+                    [ viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
+                    , viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 500 3904000 1000 (UpdateMemory id)
+                    , viewFormRowSlider "IOOPs" ((String.fromInt <| container.ioops) ++ " MiB/sec") container.ioops 4750 19000 1000 (UpdateIoops id)
+                    , viewFormRowSlider "Bandwidth" ((String.fromInt <| container.bandwidth) ++ " GiB/sec") container.bandwidth 1 25 1 (UpdateBandwidth id)
                     ]
             ]
         |> Card.view
