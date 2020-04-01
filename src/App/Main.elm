@@ -1,9 +1,9 @@
 module App.Main exposing (..)
 
+import App.Cluster as Cluster
 import App.Configuration as Configuration
 import App.Container as Container
 import App.Results as Results
-import App.Cluster as Cluster
 import App.Service as Service
 import App.Settings as Settings
 import App.Task as Task
@@ -87,7 +87,7 @@ update msg model =
             ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
 
         ClusterMsg clusterMsg ->
-            ( { model | configuration = Cluster.update clusterMsg model.configuration }, Cmd.none ) 
+            ( { model | configuration = Cluster.update clusterMsg model.configuration }, Cmd.none )
 
         ServiceMsg serviceMsg ->
             ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
@@ -156,8 +156,9 @@ viewDetailColumn : Model -> Grid.Column Msg
 viewDetailColumn model =
     Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
-            [ Util.viewColumnTitle "Detail", hr [] []
-                 , viewDetail model
+            [ Util.viewColumnTitle "Detail"
+            , hr [] []
+            , viewDetail model
             ]
         ]
 
@@ -190,6 +191,7 @@ viewDetail model =
 
         _ ->
             viewNotFoundDetail
+
 
 viewNoneDetail : Html Msg
 viewNoneDetail =

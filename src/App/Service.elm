@@ -1,7 +1,7 @@
 module App.Service exposing (Model, Msg(..), update, view)
 
 import App.Configuration as Configuration
-import App.Util as Util 
+import App.Util as Util
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
@@ -25,7 +25,7 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateScalingTarget id value ->
-            { model | services = Dict.update id (Maybe.map (\service -> { service | scalingTarget = Util.toInt value})) model.services }
+            { model | services = Dict.update id (Maybe.map (\service -> { service | scalingTarget = Util.toInt value })) model.services }
 
 
 view : Int -> Configuration.Service -> Html Msg

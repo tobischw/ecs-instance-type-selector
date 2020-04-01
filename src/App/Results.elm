@@ -17,11 +17,11 @@ view =
     Grid.col [ Col.md4, Col.attrs [ class "p-0" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle
-                "Live Results", hr [] []
-            , div [ class "pb-2"]
+                "Live Results"
+            , hr [] []
+            , div [ class "pb-2" ]
                 [ Progress.progress [ Progress.value 0, Progress.animated ] ]
-                ,
-            Util.viewColumnTitle
+            , Util.viewColumnTitle
                 "Packing"
             , viewBrownieGraph
             ]
@@ -44,12 +44,13 @@ viewBrownieGraph =
     Canvas.toHtml ( width, height )
         [ style "border" "none" ]
         (shapes [ fill (Color.rgb 0.85 0.92 1) ] [ rect ( 0, 0 ) width height ]
-        :: renderSlice "Service A" 0 0 100 150 )
+            :: renderSlice "Service A" 0 0 100 150
+        )
 
 
 renderSlice : String -> Float -> Float -> Float -> Float -> List Renderable
 renderSlice disp x y width height =
-        [ shapes [ fill Color.blue ]
-            [ rect ( x, y ) width height ]
-        , text [ font { size = 20, family = "sans-serif" }, align Center, fill Color.white ] ( 20, 20 ) disp
-        ]
+    [ shapes [ fill Color.blue ]
+        [ rect ( x, y ) width height ]
+    , text [ font { size = 20, family = "sans-serif" }, align Center, fill Color.white ] ( 20, 20 ) disp
+    ]

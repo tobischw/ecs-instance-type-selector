@@ -1,6 +1,6 @@
 module App.Cluster exposing (Model, Msg(..), update, view)
 
-import App.Configuration as Configuration 
+import App.Configuration as Configuration
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
@@ -10,6 +10,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Tuple exposing (first, second)
+
 
 type alias Model =
     Configuration.Model
@@ -25,6 +26,7 @@ update msg model =
         UpdateCluster ->
             model
 
+
 view : Int -> Configuration.Cluster -> Html Msg
 view id cluster =
     Card.config []
@@ -35,9 +37,7 @@ view id cluster =
                     [ Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Test Field" ]
                         , Form.col [ Col.sm9 ]
-                            [ 
-                             
-                            ]
+                            []
                         ]
                     ]
             ]
