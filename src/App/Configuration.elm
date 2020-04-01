@@ -125,30 +125,34 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "px-3", class "pt-1" ]
-        [ Util.viewColumnTitle "Configuration"
-        , hr [] []
-        , Button.button
+    div [ class "px-3", class "pt-1"][
+        div [] 
+            [ Util.viewColumnTitle "Configuration"
+            , hr [][]
+        ],
+        div [] [
+            Button.button 
             [ Button.outlineSuccess
             , Button.onClick AddCluster
             , Button.block
             , Button.attrs [ class "mb-2" ]
-            ]
-            [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
-        , ListGroup.custom (viewClusters model)
-        , hr [] []
-        , ListGroup.custom
-            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "../../settings" ]
-            , simpleListItem "Export as JSON" FeatherIcons.share [ href "#" ]
-            , simpleListItem "Load JSON" FeatherIcons.download [ href "#" ]
-            ]
+            ] [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
+            , hr [][] 
+        ],
+        viewClusters model
+        , hr [][]
+        , ListGroup.custom 
+        [ simpleListItem "Global Settings" FeatherIcons.settings [ href "../../settings" ]
+        , simpleListItem "Export JSON" FeatherIcons.share [ href "#" ]
+        , simpleListItem "Load JSON" FeatherIcons.download [ href "#"]
         ]
+    ]
 
-
-viewClusters : Model -> List (ListGroup.CustomItem Msg)
+viewClusters : Model -> Html Msg
 viewClusters model =
-    List.concatMap (viewClusterItem model) (Dict.toList model.clusters)
-
+    div [style "max-height" "300px", style "overflow-y" "scroll"] [
+        ListGroup.custom(List.concatMap (viewClusterItem model) (Dict.toList model.clusters))
+    ]
 
 viewClusterItem : Model -> ( Int, Cluster ) -> List (ListGroup.CustomItem Msg)
 viewClusterItem model clusterTuple =
