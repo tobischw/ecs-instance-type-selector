@@ -91,7 +91,10 @@ update msg model =
             {model | containers = model.containers |> Dict.remove containerId}
 
         DeleteService serviceId ->
-            model
+            let
+                newModel = {model | containers = model.containers |> Dict.Extra.removeWhen (\_ container -> container.serviceId == serviceId )}
+            in
+                {newModel | services  = model.services|> Dict.remove serviceId}
 
         DeleteCluster clusterId ->
             model
