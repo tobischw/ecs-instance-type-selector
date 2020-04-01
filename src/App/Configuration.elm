@@ -21,7 +21,7 @@ init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
     , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 0 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 0 ) ]
     , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 20 ), ( 1, Container "Container B" 0 20 20 20 20 ) ]
-    , idTrack = 2 -- Set this to 0 once we get rid of sample data
+    , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
     }
 
 
@@ -41,7 +41,7 @@ type alias Model =
     { clusters : Clusters
     , services : Services
     , containers : Containers
-    , idTrack : Int
+    , autoIncrement : Int
     }
 
 
@@ -80,18 +80,18 @@ type alias Container =
 
 generateId : Model -> Int
 generateId model =
-    model.idTrack + 1
+    model.autoIncrement + 1
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-           { model | clusters = model.clusters |> Dict.insert model.idTrack (Cluster "Cluster"), idTrack = generateId model} 
+           { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model} 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.idTrack (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0), idTrack = generateId model}
+            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0), autoIncrement = generateId model}
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.idTrack (Container "Container" serviceId 128 2048 128 1048), idTrack = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2048 128 1048), autoIncrement = generateId model }
         
         DeleteContainer containerId ->
             {model | containers = model.containers |> Dict.remove containerId}
