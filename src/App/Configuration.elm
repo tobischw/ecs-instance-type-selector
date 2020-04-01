@@ -97,7 +97,13 @@ update msg model =
                 {newModel | services  = model.services|> Dict.remove serviceId}
 
         DeleteCluster clusterId ->
-            model
+            let
+                servicesToRemove = model.services |> Dict.filter (\_ service -> service.clusterId == clusterId)
+                serviceIdsToRemove = servicesToRemove |> Dict.keys
+                newContainers = model.containers |> Dict.Extra.removeWhen (\_ container -> (List.length (List.filter (\item -> item == container.serviceId) serviceIdsToRemove) > 0))
+                newServices = model.services |> Dict.Extra.removeWhen (\_ service -> service.clusterId == clusterId)
+            in
+                {model | containers = newContainers, services=newServices, clusters = model.clusters |> Dict.remove clusterId}
 
 
 view : Model -> Html Msg
