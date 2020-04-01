@@ -47,6 +47,9 @@ type Msg
     = AddCluster
     | AddService Int
     | AddContainer Int
+    | DeleteContainer Int
+    | DeleteService Int
+    | DeleteCluster Int
 
 
 type alias Cluster =
@@ -83,6 +86,24 @@ update msg model =
 
         AddContainer serviceId ->
             { model | containers = model.containers |> Dict.insert (Dict.size model.containers) (Container "Container" serviceId 128 2048 128 1048)}
+        
+        DeleteContainer containerId ->
+            {model | containers = model.containers |> Dict.remove containerId}
+
+        DeleteService serviceId ->
+            let
+                newModel = {model | containers = model.containers |> Dict.Extra.removeWhen (\_ container -> container.serviceId == serviceId )}
+            in
+                {newModel | services  = model.services|> Dict.remove serviceId}
+
+        DeleteCluster clusterId ->
+            let
+                servicesToRemove = model.services |> Dict.filter (\_ service -> service.clusterId == clusterId)
+                serviceIdsToRemove = servicesToRemove |> Dict.keys
+                newContainers = model.containers |> Dict.Extra.removeWhen (\_ container -> (List.length (List.filter (\item -> item == container.serviceId) serviceIdsToRemove) > 0))
+                newServices = model.services |> Dict.Extra.removeWhen (\_ service -> service.clusterId == clusterId)
+            in
+                {model | containers = newContainers, services=newServices, clusters = model.clusters |> Dict.remove clusterId}
 
 
 view : Model -> Html Msg
@@ -122,7 +143,11 @@ viewClusterItem model clusterTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
-                    , span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.onClick (AddService id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+                    , div [] [
+                        span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.onClick (AddService id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+                        , span [ class "ml-3 text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id)] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                        -- needed to prevent the onClick of the list item from firing, and rerouting us to a non-existant thingy
+                        ]
                     ]
                 ]
           ]
@@ -162,7 +187,7 @@ viewServiceItem model serviceTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ]
-                    , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                    , span [ class "text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
                     ]
                 ]
           ]
@@ -210,7 +235,12 @@ viewContainerItem containerTuple =
         container =
             second containerTuple
     in
-    simpleListItem container.name FeatherIcons.box [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ]
+    ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ] [ 
+        FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
+        , text container.name
+        , span [ class "ml-3 text-danger float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id)] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+    ]
+
 
 
 simpleListItem : String -> FeatherIcons.Icon -> List (Html.Attribute Msg) -> ListGroup.CustomItem Msg
