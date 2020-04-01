@@ -2,8 +2,6 @@ module App.Util exposing (viewColumnTitle, toInt, showIf, viewFormRowSlider, vie
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Bootstrap.Card as Card
-import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Grid.Col as Col
