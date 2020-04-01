@@ -48,6 +48,8 @@ type Msg
     | AddService Int
     | AddContainer Int
     | DeleteContainer Int
+    | DeleteService Int
+    | DeleteCluster Int
 
 
 type alias Cluster =
@@ -88,6 +90,12 @@ update msg model =
         DeleteContainer containerId ->
             {model | containers = model.containers |> Dict.remove containerId}
 
+        DeleteService serviceId ->
+            model
+
+        DeleteCluster clusterId ->
+            model
+
 
 view : Model -> Html Msg
 view model =
@@ -126,7 +134,11 @@ viewClusterItem model clusterTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
-                    , span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.onClick (AddService id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+                    , div [] [
+                        span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.onClick (AddService id) ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+                        , span [ class "ml-3 text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id)] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                        -- needed to prevent the onClick of the list item from firing, and rerouting us to a non-existant thingy
+                        ]
                     ]
                 ]
           ]
@@ -166,7 +178,7 @@ viewServiceItem model serviceTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ]
-                    , span [ class "" ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                    , span [ class "text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
                     ]
                 ]
           ]
@@ -217,9 +229,8 @@ viewContainerItem containerTuple =
     ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ] [ 
         FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
         , text container.name
-        , span [class "float-right"] [ -- srry I didn't wanna screw with elm-bootstrap grossness
-            Button.button [ Button.outlineDanger, Button.small, Button.onClick (DeleteContainer id) ] [ FeatherIcons.minus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ]]
-        ]
+        , span [ class "ml-3 text-danger float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id)] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+    ]
 
 
 
