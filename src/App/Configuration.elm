@@ -19,7 +19,7 @@ import Tuple exposing (first, second)
 init : Model
 init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
-    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 0 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 0 ) ]
+    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 1 1 ) ]
     , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 False 20 ), ( 1, Container "Container B" 0 20 20 20 False 20 ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
     }
@@ -64,7 +64,8 @@ type alias Service =
     , clusterId : Int
     , scalingTarget : Int
     , regions : Multiselect.Model
-    , taskTotalMemory : Int
+    , minTasks : Int
+    , maxTasks : Int
     }
 
 
@@ -91,7 +92,7 @@ update msg model =
             { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0), autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
 
         AddContainer serviceId ->
             { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2048 128 True 1048), autoIncrement = generateId model }
@@ -150,9 +151,10 @@ view model =
 
 viewClusters : Model -> Html Msg
 viewClusters model =
-    div [style "max-height" "300px", style "overflow-y" "scroll"] [
+    div [style "max-height" "60vh", style "overflow-y" "scroll"] [
         ListGroup.custom(List.concatMap (viewClusterItem model) (Dict.toList model.clusters))
     ]
+
 
 viewClusterItem : Model -> ( Int, Cluster ) -> List (ListGroup.CustomItem Msg)
 viewClusterItem model clusterTuple =
