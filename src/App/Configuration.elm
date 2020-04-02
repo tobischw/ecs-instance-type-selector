@@ -20,7 +20,7 @@ init : Model
 init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
     , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 1 1 ) ]
-    , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 False 20 ), ( 1, Container "Container B" 0 20 20 20 False 20 ) ]
+    , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 False 20 False ), ( 1, Container "Container B" 0 20 20 20 False 20 False ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
     }
 
@@ -77,6 +77,7 @@ type alias Container =
     , ioops : Int
     , useEBS : Bool
     , bandwidth : Int
+    , displayExtraMemory: Bool
     }
 
 
@@ -95,7 +96,7 @@ update msg model =
             { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2048 128 True 1048), autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2048 128 True 1048 False), autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
