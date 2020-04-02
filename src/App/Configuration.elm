@@ -6,12 +6,14 @@ import Bootstrap.Button as Button
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Utilities.Flex as Flex
 import Bootstrap.Utilities.Size as Size
+import Bootstrap.ButtonGroup as ButtonGroup
 import Dict exposing (Dict)
 import Dict.Extra exposing (filterMap)
 import FeatherIcons
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
+import Html.Events exposing (onDoubleClick)
 import Multiselect
 import Tuple exposing (first, second)
 
@@ -150,7 +152,7 @@ view model =
 
 viewClusters : Model -> Html Msg
 viewClusters model =
-    div [style "max-height" "300px", style "overflow-y" "scroll"] [
+    div [style "max-height" "50vw", style "overflow-y" "scroll"] [
         ListGroup.custom(List.concatMap (viewClusterItem model) (Dict.toList model.clusters))
     ]
 
@@ -168,18 +170,21 @@ viewClusterItem model clusterTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
-                    , div []
-                        [ span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
-                        , span [ class "ml-3 text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
-
-                        -- needed to prevent the onClick of the list item from firing, and rerouting us to a non-existant thingy
-                        ]
+                    ,
+                    viewModifyDeleteButtonGroup id 
                     ]
                 ]
           ]
         , viewServices model (getServices id model.services)
         ]
 
+viewModifyDeleteButtonGroup : Int -> Html Msg
+viewModifyDeleteButtonGroup id = 
+    ButtonGroup.buttonGroup [ButtonGroup.small] 
+    [ ButtonGroup.button [ Button.outlineSuccess, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ]
+    , ButtonGroup.button [ Button.outlineSecondary, Button.small, Button.attrs [] ] [FeatherIcons.edit |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+    , ButtonGroup.button [ Button.outlineDanger, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] ] [FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+    ]
 
 getServices : Int -> Services -> Services
 getServices clusterId services =
@@ -213,7 +218,7 @@ viewServiceItem model serviceTuple =
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ]
-                    , span [ class "text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                    , span [ class "text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id)] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
                     ]
                 ]
           ]
