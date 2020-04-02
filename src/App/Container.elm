@@ -5,8 +5,6 @@ import App.Util as Util
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
-import Bootstrap.Form.Checkbox as Checkbox
-import Bootstrap.Grid.Col as Col
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -45,7 +43,12 @@ update msg model =
             { model | containers = Dict.update id (Maybe.map (\container -> { container | bandwidth = Util.toInt value })) model.containers }
 
         UseMoreMemory id checked ->
-            { model | containers = Dict.update id (Maybe.map (\container -> { container | displayExtraMemory = checked})) model.containers }
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | showExtraMemory = checked, memory = 
+                    if checked then
+                        container.memory
+                    else
+                        32000
+            })) model.containers }
 
 
 viewMemoryLabel : Int -> String
@@ -68,8 +71,8 @@ view id container =
                 Form.form []
                     [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
                     , hr [] []
-                    , Util.showIf (container.memory >= 32000) (Util.viewFormCheckbox "Increase max memory" "" container.useEBS (UseMoreMemory id))
-                    , Util.viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 250 (Util.determineMaxContainerMemory container.displayExtraMemory) (Util.determineContainerMemStep container.displayExtraMemory) (UpdateMemory id)
+                    , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Increase max memory" "" container.showExtraMemory (UseMoreMemory id))
+                    , Util.viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 250 (Util.determineMaxContainerMemory container.showExtraMemory) (Util.determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
                     , hr [] []
                     , Util.viewFormCheckbox "Use Elastic Block Storage" "" container.useEBS (UpdateEBS id)
                     , Util.showIf (not container.useEBS) (Util.viewFormRowSlider "IOOPs" ((String.fromInt <| container.ioops) ++ " MiB/sec") container.ioops 4750 19000 1000 (UpdateIoops id))

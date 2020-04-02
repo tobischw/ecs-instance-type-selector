@@ -77,7 +77,7 @@ type alias Container =
     , ioops : Int
     , useEBS : Bool
     , bandwidth : Int
-    , displayExtraMemory: Bool
+    , showExtraMemory : Bool
     }
 
 
