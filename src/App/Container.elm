@@ -45,7 +45,7 @@ update msg model =
             { model | containers = Dict.update id (Maybe.map (\container -> { container | bandwidth = Util.toInt value })) model.containers }
 
         UseMoreMemory id checked ->
-            { model | containers = Dict.update id (Maybe.map (\container -> { container | displayExtraMemory = checked, memory=32001 })) model.containers }
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | displayExtraMemory = checked})) model.containers }
 
 
 viewMemoryLabel : Int -> String
@@ -68,7 +68,7 @@ view id container =
                 Form.form []
                     [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
                     , hr [] []
-                    , Util.showIf (container.memory == 32000) (Util.viewFormCheckbox "Use More Memory" "" container.useEBS (UseMoreMemory id))
+                    , Util.showIf (container.memory >= 32000) (Util.viewFormCheckbox "Increase max memory" "" container.useEBS (UseMoreMemory id))
                     , Util.viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 250 (Util.determineMaxContainerMemory container.displayExtraMemory) (Util.determineContainerMemStep container.displayExtraMemory) (UpdateMemory id)
                     , hr [] []
                     , Util.viewFormCheckbox "Use Elastic Block Storage" "" container.useEBS (UpdateEBS id)
