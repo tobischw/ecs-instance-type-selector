@@ -178,7 +178,7 @@ viewDetail model =
 
         Task id ->
             Dict.get id model.configuration.services
-                |> Maybe.map (\value -> Html.map TaskMsg (Task.view id value))
+                |> Maybe.map (\value -> Html.map TaskMsg (Task.view id value (Configuration.getContainers id model.configuration.containers)))
                 |> Maybe.withDefault viewNotFoundDetail
 
         Container id ->

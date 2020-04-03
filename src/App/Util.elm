@@ -1,4 +1,4 @@
-module App.Util exposing (viewColumnTitle, toInt, showIf, viewFormRowSlider, viewFormCheckbox, determineContainerMemStep, determineMaxContainerMemory)
+module App.Util exposing (viewColumnTitle, toInt, showIf, viewFormRowSlider, viewFormCheckbox, viewFormLabel, determineContainerMemStep, determineMaxContainerMemory)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -32,6 +32,19 @@ viewFormRowSlider label sublabel val min max step msg =
             [ input [ type_ "range", class "form-control-range", Html.Attributes.min <| String.fromInt min, Html.Attributes.max <| String.fromInt max, Html.Attributes.step <| String.fromInt step, value <| String.fromInt val, onInput msg ] []
              , Form.help [] [ text sublabel ]
             ]
+    ]
+
+
+viewFormLabel : String -> String -> String -> Html msg  
+viewFormLabel label sublabel val =
+ Form.row []
+    [
+        Form.colLabel [ Col.sm3 ] [ text label ]
+       , Form.col [ Col.sm9, Col.attrs [ class "mt-1"] ]
+         [
+            text val
+            , Form.help [] [ text sublabel ] 
+         ]
     ]
 
 viewFormCheckbox : String -> String -> Bool -> (Bool -> msg) -> Html msg

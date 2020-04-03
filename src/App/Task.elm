@@ -55,10 +55,10 @@ update msg model =
             { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = newRegionModel })) model.services }
 
 
-view : Int -> Configuration.Service -> Html Msg
-view id service =
+view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
+view id service containers =
     div []
-        [ Card.config []
+        [ {-Card.config []
             |> Card.header [] [ text (service.name ++ " · Tasks Setup") ]
             |> Card.block []
                 [ Block.custom <|
@@ -70,9 +70,9 @@ view id service =
                             ]
                         ]
                 ]
-            |> Card.view
-        , Card.config [ Card.attrs [ class "mt-3" ] ]
-            |> Card.header [] [ text service.name]
+            |> Card.view-}
+           Card.config [ Card.attrs [ class "mt-3" ] ]
+            |> Card.header [] [ text (service.name ++ " - Task Settings")]
             |> Card.block []
                 [ Block.custom <|
                     Form.form []
@@ -82,4 +82,19 @@ view id service =
                         ]
                 ]
             |> Card.view
+            , Card.config [ Card.attrs [ class "mt-3"]]
+                |> Card.header [] [ text "Containers Overview"]
+                |> Card.block []
+                    [
+                        Block.custom <|
+                            Form.form []
+                            [
+                                Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " MiB")
+                            ]
+                    ]
+                |> Card.view
         ]
+
+sumMemory : Configuration.Containers -> Float
+sumMemory containers =
+    List.sum (List.map (\container -> toFloat container.memory) (Dict.values containers))
