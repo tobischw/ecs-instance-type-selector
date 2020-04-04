@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), Service, getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), PackingStrategy(..), Service, getContainers, init, update, view)
 
 import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
