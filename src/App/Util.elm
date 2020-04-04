@@ -1,4 +1,4 @@
-module App.Util exposing (viewColumnTitle, toInt, showIf, viewFormRowSlider, viewFormCheckbox)
+module App.Util exposing (viewColumnTitle, toInt, showIf, viewFormRowSlider, viewFormCheckbox, viewFormLabel, determineContainerMemStep, determineMaxContainerMemory)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -34,6 +34,19 @@ viewFormRowSlider label sublabel val min max step msg =
             ]
     ]
 
+
+viewFormLabel : String -> String -> String -> Html msg  
+viewFormLabel label sublabel val =
+ Form.row []
+    [
+        Form.colLabel [ Col.sm3 ] [ text label ]
+       , Form.col [ Col.sm9, Col.attrs [ class "mt-1"] ]
+         [
+            text val
+            , Form.help [] [ text sublabel ] 
+         ]
+    ]
+
 viewFormCheckbox : String -> String -> Bool -> (Bool -> msg) -> Html msg
 viewFormCheckbox label sublabel checked msg =
     Form.row []
@@ -41,4 +54,14 @@ viewFormCheckbox label sublabel checked msg =
             Form.col [ Col.offsetSm3, Col.sm10 ]
                 [ Checkbox.checkbox [ Checkbox.onCheck msg, Checkbox.checked checked ] label ]
         ]
+
+determineMaxContainerMemory: Bool -> Int
+determineMaxContainerMemory useMoreMem = 
+    if useMoreMem then 24576000
+    else 32000
+
+determineContainerMemStep: Bool -> Int
+determineContainerMemStep extraMemEnabled = 
+    if extraMemEnabled then 1000
+    else 250
 

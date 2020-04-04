@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Model, Msg(..), Service, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), Service, getContainers, init, update, view)
 
 import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
@@ -19,8 +19,8 @@ import Tuple exposing (first, second)
 init : Model
 init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
-    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 (Multiselect.initModel [] "A") 0 ), ( 1, Service "Service 2" 0 0 (Multiselect.initModel [] "A") 0 ) ]
-    , containers = Dict.fromList [ ( 0, Container "Container A" 0 20 20 20 False 20 ), ( 1, Container "Container B" 0 20 20 20 False 20 ) ]
+    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
+    , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
     }
 
@@ -63,9 +63,16 @@ type alias Service =
     { name : String
     , clusterId : Int
     , scalingTarget : Int
+    , packingStrategy : PackingStrategy
     , regions : Multiselect.Model
-    , taskTotalMemory : Int
+    , minTasks : Int
+    , maxTasks : Int
     }
+
+
+type PackingStrategy
+    = ByCPUShares
+    | ByMemory
 
 
 type alias Container =
@@ -76,6 +83,7 @@ type alias Container =
     , ioops : Int
     , useEBS : Bool
     , bandwidth : Int
+    , showExtraMemory : Bool
     }
 
 
@@ -91,10 +99,10 @@ update msg model =
             { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 (Multiselect.initModel [] "A") 0), autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2048 128 True 1048), autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2000 128 True 1048 False), autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
@@ -126,28 +134,35 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "px-3", class "pt-1" ]
-        [ Util.viewColumnTitle "Configuration"
-        , hr [] []
-        , Button.button
-            [ Button.outlineSuccess
-            , Button.onClick AddCluster
-            , Button.block
-            , Button.attrs [ class "mb-2" ]
+        [ div []
+            [ Util.viewColumnTitle "Configuration"
+            , hr [] []
             ]
-            [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
-        , ListGroup.custom (viewClusters model)
+        , div []
+            [ Button.button
+                [ Button.outlineSuccess
+                , Button.onClick AddCluster
+                , Button.block
+                , Button.attrs [ class "mb-2" ]
+                ]
+                [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
+            , hr [] []
+            ]
+        , viewClusters model
         , hr [] []
         , ListGroup.custom
             [ simpleListItem "Global Settings" FeatherIcons.settings [ href "../../settings" ]
-            , simpleListItem "Export as JSON" FeatherIcons.share [ href "#" ]
+            , simpleListItem "Export JSON" FeatherIcons.share [ href "#" ]
             , simpleListItem "Load JSON" FeatherIcons.download [ href "#" ]
             ]
         ]
 
 
-viewClusters : Model -> List (ListGroup.CustomItem Msg)
+viewClusters : Model -> Html Msg
 viewClusters model =
-    List.concatMap (viewClusterItem model) (Dict.toList model.clusters)
+    div [ style "max-height" "60vh", style "overflow-y" "scroll" ]
+        [ ListGroup.custom (List.concatMap (viewClusterItem model) (Dict.toList model.clusters))
+        ]
 
 
 viewClusterItem : Model -> ( Int, Cluster ) -> List (ListGroup.CustomItem Msg)
