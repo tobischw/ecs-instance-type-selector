@@ -43,12 +43,24 @@ update msg model =
             { model | containers = Dict.update id (Maybe.map (\container -> { container | bandwidth = Util.toInt value })) model.containers }
 
         UseMoreMemory id checked ->
-            { model | containers = Dict.update id (Maybe.map (\container -> { container | showExtraMemory = checked, memory = 
-                    if checked then
-                        container.memory
-                    else
-                        32000
-            })) model.containers }
+            { model
+                | containers =
+                    Dict.update id
+                        (Maybe.map
+                            (\container ->
+                                { container
+                                    | showExtraMemory = checked
+                                    , memory =
+                                        if checked then
+                                            container.memory
+
+                                        else
+                                            32000
+                                }
+                            )
+                        )
+                        model.containers
+            }
 
 
 viewMemoryLabel : Int -> String
@@ -62,6 +74,7 @@ viewMemoryLabel memoryInMB =
     else
         String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
 
+
 view : Int -> Configuration.Container -> Html Msg
 view id container =
     Card.config []
@@ -71,7 +84,7 @@ view id container =
                 Form.form []
                     [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
                     , hr [] []
-                    , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Increase max memory" "" container.showExtraMemory (UseMoreMemory id))
+                    , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Show more memory options" "" container.showExtraMemory (UseMoreMemory id))
                     , Util.viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 250 (Util.determineMaxContainerMemory container.showExtraMemory) (Util.determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
                     , hr [] []
                     , Util.viewFormCheckbox "Use Elastic Block Storage" "" container.useEBS (UpdateEBS id)

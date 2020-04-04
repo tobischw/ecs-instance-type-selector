@@ -58,43 +58,42 @@ update msg model =
 view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
 view id service containers =
     div []
-        [ {-Card.config []
-            |> Card.header [] [ text (service.name ++ " · Tasks Setup") ]
-            |> Card.block []
-                [ Block.custom <|
-                    Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Regions" ]
-                        , Form.col [ Col.sm9 ]
-                            [ Html.map (UpdateRegions id) <| Multiselect.view service.regions
-                            , Form.help [] [ text "Select the regions (for redundancy). Each selection will equal a replicated task." ]
-                            ]
-                        ]
-                ]
-            |> Card.view-}
-           Card.config [ Card.attrs [ class "mt-3" ] ]
-            |> Card.header [] [ text (service.name ++ " - Task Settings")]
+        [ {- Card.config []
+             |> Card.header [] [ text (service.name ++ " · Tasks Setup") ]
+             |> Card.block []
+                 [ Block.custom <|
+                     Form.row []
+                         [ Form.colLabel [ Col.sm3 ] [ text "Regions" ]
+                         , Form.col [ Col.sm9 ]
+                             [ Html.map (UpdateRegions id) <| Multiselect.view service.regions
+                             , Form.help [] [ text "Select the regions (for redundancy). Each selection will equal a replicated task." ]
+                             ]
+                         ]
+                 ]
+             |> Card.view
+          -}
+          Card.config [ Card.attrs [ class "mt-3" ] ]
+            |> Card.header [] [ text (service.name ++ " - Task Settings") ]
             |> Card.block []
                 [ Block.custom <|
                     Form.form []
-                        [
-                            Util.viewFormRowSlider "Min. Tasks" ((String.fromInt <| service.minTasks) ++ " Tasks") service.minTasks 0 100 1 (UpdateMinTasks id)
-                            , Util.viewFormRowSlider "Max. Tasks" ((String.fromInt <| service.maxTasks) ++ " Tasks") service.maxTasks 0 100 1 (UpdateMaxTasks id)
+                        [ Util.viewFormRowSlider "Min. Tasks" ((String.fromInt <| service.minTasks) ++ " Tasks") service.minTasks 0 100 1 (UpdateMinTasks id)
+                        , Util.viewFormRowSlider "Max. Tasks" ((String.fromInt <| service.maxTasks) ++ " Tasks") service.maxTasks 0 100 1 (UpdateMaxTasks id)
                         ]
                 ]
             |> Card.view
-            , Card.config [ Card.attrs [ class "mt-3"]]
-                |> Card.header [] [ text "Containers Overview"]
-                |> Card.block []
-                    [
-                        Block.custom <|
-                            Form.form []
-                            [
-                                Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " MiB")
-                            ]
-                    ]
-                |> Card.view
+        , Card.config [ Card.attrs [ class "mt-3" ] ]
+            |> Card.header [] [ text "Containers Overview" ]
+            |> Card.block []
+                [ Block.custom <|
+                    Form.form []
+                        [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
+                        ]
+                ]
+            |> Card.view
         ]
+
 
 sumMemory : Configuration.Containers -> Float
 sumMemory containers =
-    List.sum (List.map (\container -> toFloat container.memory) (Dict.values containers))
+    List.sum (List.map (\container -> toFloat container.memory) (Dict.values containers)) / 1000
