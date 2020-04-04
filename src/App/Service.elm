@@ -35,8 +35,12 @@ view id service =
         |> Card.block []
             [ Block.custom <|
                 Form.form []
-                [
-                    Util.viewFormRowSlider "Scaling Target" ((String.fromInt <| service.scalingTarget) ++ "%") service.scalingTarget 0 100 1 (UpdateScalingTarget id)
-                ]
+                    [ Util.viewFormRowSlider "Scaling Target" ((String.fromInt <| service.scalingTarget) ++ "%") service.scalingTarget 0 100 1 (UpdateScalingTarget id)
+                    , Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Packing Strategy" ]
+                        , Form.col [ Col.sm9, Col.attrs [ class "mt-" ] ]
+                            []
+                        ]
+                    ]
             ]
         |> Card.view
