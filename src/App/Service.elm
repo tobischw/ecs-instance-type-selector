@@ -5,6 +5,8 @@ import App.Util as Util
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
+import Bootstrap.Form.Fieldset as Fieldset
+import Bootstrap.Form.Radio as Radio
 import Bootstrap.Grid.Col as Col
 import Dict exposing (Dict)
 import Html exposing (..)
@@ -38,8 +40,17 @@ view id service =
                     [ Util.viewFormRowSlider "Scaling Target" ((String.fromInt <| service.scalingTarget) ++ "%") service.scalingTarget 0 100 1 (UpdateScalingTarget id)
                     , Form.row []
                         [ Form.colLabel [ Col.sm3 ] [ text "Packing Strategy" ]
-                        , Form.col [ Col.sm9, Col.attrs [ class "mt-" ] ]
-                            []
+                        , Form.col [ Col.sm9 ]
+                            [ Fieldset.config
+                                |> Fieldset.asGroup
+                                |> Fieldset.children
+                                    (Radio.radioList "scalingTargets"
+                                        [ Radio.create [ Radio.id "cpushares" ] "By CPU Shares"
+                                        , Radio.create [ Radio.id "memory" ] "By Memory"
+                                        ]
+                                    )
+                                |> Fieldset.view
+                            ]
                         ]
                     ]
             ]
