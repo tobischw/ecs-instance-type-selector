@@ -1,5 +1,6 @@
 module App.Settings exposing (Model, Msg(..), init, subscriptions, update, view)
 
+import App.Util as Util
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
@@ -11,12 +12,14 @@ import Multiselect
 
 type alias Model =
     { excludedInstances : Multiselect.Model
+    , enableLiveResults : Bool
     }
 
 
 init : Model
 init =
     { excludedInstances = Multiselect.initModel instanceTypes "A"
+    , enableLiveResults = True
     }
 
 
@@ -46,6 +49,7 @@ instanceTypes =
 
 type Msg
     = UpdateExcludedInstances Multiselect.Msg
+    | UpdateEnableLiveResults Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -57,6 +61,9 @@ update msg model =
                     Multiselect.update instancesChangedMessage model.excludedInstances
             in
             ( { model | excludedInstances = newExcludedInstances }, Cmd.map UpdateExcludedInstances subCmd )
+
+        UpdateEnableLiveResults value ->
+            ( { model | enableLiveResults = value }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -70,12 +77,16 @@ view model =
         |> Card.header [] [ text "Global Settings" ]
         |> Card.block []
             [ Block.custom <|
-                Form.row []
-                    [ Form.colLabel [ Col.sm3 ] [ text "Excluded Instance Types" ]
-                    , Form.col [ Col.sm9 ]
-                        [ Html.map UpdateExcludedInstances <| Multiselect.view model.excludedInstances
-                        , Form.help [] [ text "Exclude specific ECS instances. These will be ignored during the cluster optimization calculation." ]
+                Form.form []
+                    [ Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Excluded Instance Types" ]
+                        , Form.col [ Col.sm9 ]
+                            [ Html.map UpdateExcludedInstances <| Multiselect.view model.excludedInstances
+                            , Form.help [] [ text "Exclude specific ECS instances. These will be ignored during the cluster optimization calculation." ]
+                            ]
                         ]
+                    , hr [] []
+                    , Util.viewFormCheckbox "Enable live results" "If enabled, the results are immediately updated when the configuration is modified." model.enableLiveResults UpdateEnableLiveResults
                     ]
             ]
         |> Card.view

@@ -53,7 +53,9 @@ viewFormCheckbox : String -> String -> Bool -> (Bool -> msg) -> Html msg
 viewFormCheckbox label sublabel checked msg =
     Form.row []
         [ Form.col [ Col.offsetSm3, Col.sm10 ]
-            [ Checkbox.checkbox [ Checkbox.onCheck msg, Checkbox.checked checked ] label ]
+            [ Checkbox.checkbox [ Checkbox.onCheck msg, Checkbox.checked checked ] label
+            , showIf (sublabel /= "") (Form.help [] [ text sublabel ])
+            ]
         ]
 
 

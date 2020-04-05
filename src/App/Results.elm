@@ -8,7 +8,7 @@ import Canvas as Canvas exposing (..)
 import Canvas.Settings exposing (..)
 import Canvas.Settings.Text exposing (TextAlign(..), align, font)
 import Color
-import Html exposing (Html, canvas, div, hr, span)
+import Html exposing (Html, canvas, div, hr, small, span)
 import Html.Attributes exposing (class, style)
 
 
@@ -17,15 +17,22 @@ view =
     Grid.col [ Col.md4, Col.attrs [ class "p-0" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle
-                "Live Results"
+                "Results"
             , hr [] []
-            , div [ class "pb-2" ]
-                [ span [ class "text-muted" ] [ Html.text "0 instances fetched."],
-                  Progress.progress [ Progress.value 0, Progress.animated ] ]
+            , viewConnectionStatus
             , Util.viewColumnTitle
                 "Packing"
-           -- , viewBrownieGraph
+
+            -- , viewBrownieGraph
             ]
+        ]
+
+
+viewConnectionStatus : Html msg
+viewConnectionStatus =
+    div [ class "pb-2" ]
+        [ small [ class "text-muted" ] [ Html.text "Initialized · 0 instances fetched · 0 excluded instances" ]
+        , Progress.progress [ Progress.value 0, Progress.animated ]
         ]
 
 
