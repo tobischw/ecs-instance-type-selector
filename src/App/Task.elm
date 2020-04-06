@@ -108,7 +108,7 @@ sumIoops containers =
         if allUseEBS == True then
             "All containers using EBS"
         else if someUseEBS then
-            (String.fromInt (List.length containersWithEBS)) ++ " containers using EBS. " ++ (String.fromInt (List.length containersWoEBS)) ++ " containers not using EBS, totalling: " ++ (String.fromInt otherSum) ++ "MiB/sec"
+            (String.fromInt (List.length containersWithEBS)) ++ " container/s using EBS. " ++ (String.fromInt (List.length containersWoEBS)) ++ " container/s not using EBS, totalling: " ++ (String.fromInt otherSum) ++ "MiB/sec"
         else
             (String.fromInt otherSum) ++ " MiB/sec"
 
