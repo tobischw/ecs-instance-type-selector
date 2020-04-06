@@ -74,9 +74,9 @@ view id service containers =
                 [ Block.custom <|
                     Form.form []
                         [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
-                        , Util.viewFormLabel "Total CPU Shares" "Total number of CPU shares needed for 1 task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
-                        , Util.viewFormLabel "Total CPU Shares" "Total number of CPU shares needed for 1 task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
-                        
+                        , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
+                        , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
+                        , Util.viewFormLabel "IO Total" "IO reuirements for all containers in one task" (sumIoops containers)
                         ]
                 ]
             |> Card.view
@@ -94,3 +94,21 @@ sumCPUShare containers =
 sumBandwidth: Configuration.Containers -> Int
 sumBandwidth containers =
     List.sum (List.map (\container -> container.bandwidth) (Dict.values containers))
+
+sumIoops: Configuration.Containers -> String
+sumIoops containers = 
+    let
+        containersWithEBS = List.filter (\container -> container.useEBS == True) (Dict.values containers)
+        containersWoEBS = List.filter (\container -> container.useEBS == False) (Dict.values containers)
+        otherSum = List.sum( List.map (\container -> container.ioops) containersWoEBS)
+
+        allUseEBS = (List.length containersWithEBS) == (List.length (Dict.values containers))
+        someUseEBS = (List.length containersWithEBS) > 0
+    in
+        if allUseEBS == True then
+            "All containers using EBS"
+        else if someUseEBS then
+            (String.fromInt (List.length containersWithEBS)) ++ " containers using EBS. " ++ (String.fromInt (List.length containersWoEBS)) ++ " containers not using EBS, totalling: " ++ (String.fromInt otherSum) ++ "MiB/sec"
+        else
+            (String.fromInt otherSum) ++ " MiB/sec"
+
