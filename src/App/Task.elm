@@ -75,6 +75,8 @@ view id service containers =
                     Form.form []
                         [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
                         , Util.viewFormLabel "Total CPU Shares" "Total number of CPU shares needed for 1 task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
+                        , Util.viewFormLabel "Total CPU Shares" "Total number of CPU shares needed for 1 task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
+                        
                         ]
                 ]
             |> Card.view
@@ -88,3 +90,7 @@ sumMemory containers =
 sumCPUShare: Configuration.Containers -> Int
 sumCPUShare containers = 
     List.sum (List.map (\container -> container.cpuShare) (Dict.values containers))
+
+sumBandwidth: Configuration.Containers -> Int
+sumBandwidth containers =
+    List.sum (List.map (\container -> container.bandwidth) (Dict.values containers))
