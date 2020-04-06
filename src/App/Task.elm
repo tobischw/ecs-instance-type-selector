@@ -58,21 +58,7 @@ update msg model =
 view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
 view id service containers =
     div []
-        [ {- Card.config []
-             |> Card.header [] [ text (service.name ++ " · Tasks Setup") ]
-             |> Card.block []
-                 [ Block.custom <|
-                     Form.row []
-                         [ Form.colLabel [ Col.sm3 ] [ text "Regions" ]
-                         , Form.col [ Col.sm9 ]
-                             [ Html.map (UpdateRegions id) <| Multiselect.view service.regions
-                             , Form.help [] [ text "Select the regions (for redundancy). Each selection will equal a replicated task." ]
-                             ]
-                         ]
-                 ]
-             |> Card.view
-          -}
-          Card.config [ Card.attrs [ class "mt-3" ] ]
+        [ Card.config [ Card.attrs [ class "mt-3" ] ]
             |> Card.header [] [ text (service.name ++ " - Task Settings") ]
             |> Card.block []
                 [ Block.custom <|
@@ -88,6 +74,7 @@ view id service containers =
                 [ Block.custom <|
                     Form.form []
                         [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
+                        , Util.viewFormLabel "Total CPU Shares" "Total number of CPU shares needed for 1 task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
                         ]
                 ]
             |> Card.view
@@ -97,3 +84,7 @@ view id service containers =
 sumMemory : Configuration.Containers -> Float
 sumMemory containers =
     List.sum (List.map (\container -> toFloat container.memory) (Dict.values containers)) / 1000
+
+sumCPUShare: Configuration.Containers -> Int
+sumCPUShare containers = 
+    List.sum (List.map (\container -> container.cpuShare) (Dict.values containers))
