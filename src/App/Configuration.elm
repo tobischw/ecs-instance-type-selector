@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), Service, getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), PackingStrategy(..), Service, getContainers, init, update, view)
 
 import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
@@ -102,7 +102,7 @@ update msg model =
             { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2000 128 True 1048 False), autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 4000 128 True 20 False), autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
