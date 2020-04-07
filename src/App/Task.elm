@@ -58,21 +58,7 @@ update msg model =
 view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
 view id service containers =
     div []
-        [ {- Card.config []
-             |> Card.header [] [ text (service.name ++ " · Tasks Setup") ]
-             |> Card.block []
-                 [ Block.custom <|
-                     Form.row []
-                         [ Form.colLabel [ Col.sm3 ] [ text "Regions" ]
-                         , Form.col [ Col.sm9 ]
-                             [ Html.map (UpdateRegions id) <| Multiselect.view service.regions
-                             , Form.help [] [ text "Select the regions (for redundancy). Each selection will equal a replicated task." ]
-                             ]
-                         ]
-                 ]
-             |> Card.view
-          -}
-          Card.config [ Card.attrs [ class "mt-3" ] ]
+        [ Card.config [ Card.attrs [ class "mt-3" ] ]
             |> Card.header [] [ text (service.name ++ " - Task Settings") ]
             |> Card.block []
                 [ Block.custom <|
@@ -88,6 +74,9 @@ view id service containers =
                 [ Block.custom <|
                     Form.form []
                         [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
+                        , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
+                        , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
+                        , Util.viewFormLabel "IO Total" "IO reuirements for all containers in one task" (sumIoops containers)
                         ]
                 ]
             |> Card.view
@@ -97,3 +86,29 @@ view id service containers =
 sumMemory : Configuration.Containers -> Float
 sumMemory containers =
     List.sum (List.map (\container -> toFloat container.memory) (Dict.values containers)) / 1000
+
+sumCPUShare: Configuration.Containers -> Int
+sumCPUShare containers = 
+    List.sum (List.map (\container -> container.cpuShare) (Dict.values containers))
+
+sumBandwidth: Configuration.Containers -> Int
+sumBandwidth containers =
+    List.sum (List.map (\container -> container.bandwidth) (Dict.values containers))
+
+sumIoops: Configuration.Containers -> String
+sumIoops containers = 
+    let
+        containersWithEBS = List.filter (\container -> container.useEBS == True) (Dict.values containers)
+        containersWoEBS = List.filter (\container -> container.useEBS == False) (Dict.values containers)
+        otherSum = List.sum( List.map (\container -> container.ioops) containersWoEBS)
+
+        allUseEBS = (List.length containersWithEBS) == (List.length (Dict.values containers))
+        someUseEBS = (List.length containersWithEBS) > 0
+    in
+        if allUseEBS == True then
+            "All containers using EBS"
+        else if someUseEBS then
+            (String.fromInt (List.length containersWithEBS)) ++ " container/s using EBS. " ++ (String.fromInt (List.length containersWoEBS)) ++ " container/s not using EBS, totalling: " ++ (String.fromInt otherSum) ++ "MiB/sec"
+        else
+            (String.fromInt otherSum) ++ " MiB/sec"
+
