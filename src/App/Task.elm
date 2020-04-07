@@ -76,7 +76,7 @@ view id service containers =
                         [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
                         , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
                         , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
-                        , Util.viewFormLabel "IO Total" "IO reuirements for all containers in one task" (sumIoops containers)
+                        , Util.viewFormLabel "IO Total" "IO requirements for all containers in one task" (sumIoops containers)
                         ]
                 ]
             |> Card.view
@@ -102,13 +102,13 @@ sumIoops containers =
         containersWoEBS = List.filter (\container -> container.useEBS == False) (Dict.values containers)
         otherSum = List.sum( List.map (\container -> container.ioops) containersWoEBS)
 
-        allUseEBS = (List.length containersWithEBS) == (List.length (Dict.values containers))
-        someUseEBS = (List.length containersWithEBS) > 0
+        allUseEBS = List.length containersWithEBS == List.length (Dict.values containers)
+        someUseEBS = List.length containersWithEBS > 0
     in
         if allUseEBS == True then
             "All containers using EBS"
         else if someUseEBS then
-            (String.fromInt (List.length containersWithEBS)) ++ " container/s using EBS. " ++ (String.fromInt (List.length containersWoEBS)) ++ " container/s not using EBS, totalling: " ++ (String.fromInt otherSum) ++ "MiB/sec"
+            String.fromInt (List.length containersWithEBS) ++ " container/s using EBS. " ++ String.fromInt (List.length containersWoEBS) ++ " container/s not using EBS, totalling: " ++ String.fromInt otherSum ++ "MiB/sec"
         else
-            (String.fromInt otherSum) ++ " MiB/sec"
+            String.fromInt otherSum ++ " MiB/sec"
 
