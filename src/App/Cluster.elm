@@ -11,6 +11,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Tuple exposing (first, second)
 import Multiselect
+import App.Util as Util
 import App.Constants as Constants
 
 
@@ -26,7 +27,18 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateClusterRegions id multiSelectMsg ->
-            model
+            let 
+                (regionsModel, _, _) = 
+                    let
+                        maybeCluster = Dict.get id model.clusters
+                    in
+                        case maybeCluster of
+                            Just cluster ->
+                                Multiselect.update multiSelectMsg cluster.regions
+                            Nothing ->
+                                Multiselect.update multiSelectMsg Util.initRegionsMultiselect
+            in
+                {model | clusters = Dict.update id (Maybe.map (\cluster -> {cluster | regions = regionsModel})) model.clusters}
 
 
 view : Int -> Configuration.Cluster -> Html Msg
