@@ -1,6 +1,26 @@
 module App.Constants exposing (..)
 
 
+instanceTypes : List ( String, String )
+instanceTypes =
+    [ ( "t2", "T2" )
+    , ( "m5", "M5" )
+    , ( "m4", "M4" )
+    , ( "m3", "M3" )
+    , ( "c5", "C5" )
+    , ( "c4", "C4" )
+    , ( "c3", "C3" )
+    , ( "x1", "X1" )
+    , ( "r4", "R4" )
+    , ( "r3", "R3" )
+    , ( "p3", "P3" )
+    , ( "p2", "P2" )
+    , ( "g3", "G3" )
+    , ( "f1", "F1" )
+    , ( "i3", "I3" )
+    ]
+
+
 type alias RegionRecord =
     { regionCode : String
     , displayName : String
