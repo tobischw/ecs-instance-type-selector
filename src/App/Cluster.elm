@@ -10,6 +10,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Tuple exposing (first, second)
+import Multiselect
+import App.Constants as Constants
 
 
 type alias Model =
@@ -17,13 +19,13 @@ type alias Model =
 
 
 type Msg
-    = UpdateCluster
+    = UpdateClusterRegions Int Multiselect.Msg
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateCluster ->
+        UpdateClusterRegions id multiSelectMsg ->
             model
 
 
@@ -35,9 +37,11 @@ view id cluster =
             [ Block.custom <|
                 Form.form []
                     [ Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Test Field" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Regions:" ]
                         , Form.col [ Col.sm9 ]
-                            []
+                            [
+                                Html.map (UpdateClusterRegions id) <| Multiselect.view cluster.regions
+                            ]
                         ]
                     ]
             ]
