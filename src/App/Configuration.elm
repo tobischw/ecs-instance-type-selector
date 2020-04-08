@@ -17,13 +17,14 @@ import Html.Events exposing (onDoubleClick)
 import Multiselect
 import Tuple exposing (first, second)
 
-
 init : Model
 init =
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
     , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
     , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
+    , labelName = "Cluster"
+    , isEnabled = False
     }
 
 
@@ -44,6 +45,8 @@ type alias Model =
     , services : Services
     , containers : Containers
     , autoIncrement : Int
+    , labelName : String
+    , isEnabled : Bool
     }
 
 
@@ -54,6 +57,7 @@ type Msg
     | DeleteContainer Int
     | DeleteService Int
     | DeleteCluster Int
+    | UpdateName String Bool
 
 
 type alias Cluster =
@@ -132,6 +136,8 @@ update msg model =
             in
             { model | containers = newContainers, services = newServices, clusters = model.clusters |> Dict.remove clusterId }
 
+        UpdateName name enabled ->
+            {model | labelName = name, isEnabled = enabled}
 
 view : Model -> Html Msg
 view model =
@@ -180,7 +186,7 @@ viewClusterItem model clusterTuple =
         [ [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], viewName (model)]
                     ,
                     viewModifyDeleteButtonGroup id 
                     ]
@@ -189,11 +195,18 @@ viewClusterItem model clusterTuple =
         , viewServices model (getServices id model.services)
         ]
 
+newName { lblName, onInput, isEnabled} =
+    label [contenteditable isEnabled] [text lblName]
+
+viewName: Model -> Html Msg
+viewName model  =
+    label [] [newName {lblName = model.labelName, onInput = UpdateName, isEnabled = model.isEnabled}]
+
 viewModifyDeleteButtonGroup : Int -> Html Msg
 viewModifyDeleteButtonGroup id = 
     ButtonGroup.buttonGroup [ButtonGroup.small] 
     [ ButtonGroup.button [ Button.outlineSuccess, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ]
-    , ButtonGroup.button [ Button.outlineSecondary, Button.small, Button.attrs [] ] [FeatherIcons.edit |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+    , ButtonGroup.button [ Button.outlineSecondary, Button.small, Button.attrs [Html.Events.Extra.onClickPreventDefaultAndStopPropagation (UpdateName "Enter new name" True)] ] [FeatherIcons.edit |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
     , ButtonGroup.button [ Button.outlineDanger, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] ] [FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
     ]
 
