@@ -1,11 +1,13 @@
-module App.Util exposing (determineContainerMemStep, determineMaxContainerMemory, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
+module App.Util exposing (determineContainerMemStep, initRegionsMultiselect, determineMaxContainerMemory, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
 
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Multiselect
 import Html.Events exposing (onInput)
+import App.Constants as Constants
 
 
 viewColumnTitle : String -> Html msg
@@ -75,3 +77,7 @@ determineContainerMemStep extraMemEnabled =
 
     else
         250
+
+initRegionsMultiselect: Multiselect.Model
+initRegionsMultiselect = 
+    Multiselect.initModel (List.map (\region -> (region.regionName, region.displayName))  Constants.allRegions) "mselect"

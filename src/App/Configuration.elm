@@ -18,7 +18,7 @@ import Tuple exposing (first, second)
 
 init : Model
 init =
-    { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
+    { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" Util.initRegionsMultiselect ) ]
     , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
     , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
@@ -56,6 +56,7 @@ type Msg
 
 type alias Cluster =
     { name : String
+    , regions: Multiselect.Model
     }
 
 
@@ -96,7 +97,7 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-            { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model }
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster" Util.initRegionsMultiselect), autoIncrement = generateId model }
 
         AddService clusterId ->
             { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
