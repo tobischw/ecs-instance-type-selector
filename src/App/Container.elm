@@ -62,6 +62,7 @@ update msg model =
                         model.containers
             }
 
+
 determineMaxContainerMemory : Bool -> Int
 determineMaxContainerMemory useMoreMem =
     if useMoreMem then
@@ -69,6 +70,7 @@ determineMaxContainerMemory useMoreMem =
 
     else
         32000
+
 
 determineContainerMemStep : Bool -> Int
 determineContainerMemStep extraMemEnabled =
@@ -78,7 +80,11 @@ determineContainerMemStep extraMemEnabled =
     else
         250
 
+
+
 -- this function feels odd
+
+
 viewMemoryLabel : Int -> String
 viewMemoryLabel memoryInMB =
     if memoryInMB < 999 then

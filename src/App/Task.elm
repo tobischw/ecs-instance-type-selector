@@ -22,7 +22,6 @@ type alias Model =
 type Msg
     = UpdateMinTasks Int String
     | UpdateMaxTasks Int String
-    | UpdateRegions Int Multiselect.Msg
 
 
 
@@ -37,22 +36,6 @@ update msg model =
 
         UpdateMaxTasks id value ->
             { model | services = Dict.update id (Maybe.map (\service -> { service | maxTasks = Util.toInt value })) model.services }
-
-        UpdateRegions id regionChangeMessage ->
-            let
-                ( newRegionModel, _, _ ) =
-                    let
-                        maybeService =
-                            Dict.get id model.services
-                    in
-                    case maybeService of
-                        Just service ->
-                            Multiselect.update regionChangeMessage service.regions
-
-                        Nothing ->
-                            Multiselect.update regionChangeMessage (Multiselect.initModel (List.map (\region -> ( region.regionCode, region.displayName )) allRegions) "A")
-            in
-            { model | services = Dict.update id (Maybe.map (\regions -> { regions | regions = newRegionModel })) model.services }
 
 
 view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
@@ -87,29 +70,41 @@ sumMemory : Configuration.Containers -> Float
 sumMemory containers =
     List.sum (List.map (\container -> toFloat container.memory) (Dict.values containers)) / 1000
 
-sumCPUShare: Configuration.Containers -> Int
-sumCPUShare containers = 
+
+sumCPUShare : Configuration.Containers -> Int
+sumCPUShare containers =
     List.sum (List.map (\container -> container.cpuShare) (Dict.values containers))
 
-sumBandwidth: Configuration.Containers -> Int
+
+sumBandwidth : Configuration.Containers -> Int
 sumBandwidth containers =
     List.sum (List.map (\container -> container.bandwidth) (Dict.values containers))
 
-sumIoops: Configuration.Containers -> String
-sumIoops containers = 
+
+sumIoops : Configuration.Containers -> String
+sumIoops containers =
     let
         -- This feels like a lot of duplicated code
-        containersWithEBS = List.filter (\container -> container.useEBS == True) (Dict.values containers)
-        containersWoEBS = List.filter (\container -> container.useEBS == False) (Dict.values containers)
-        otherSum = List.sum( List.map (\container -> container.ioops) containersWoEBS)
+        containersWithEBS =
+            List.filter (\container -> container.useEBS == True) (Dict.values containers)
 
-        allUseEBS = List.length containersWithEBS == List.length (Dict.values containers)
-        someUseEBS = List.length containersWithEBS > 0
+        containersWoEBS =
+            List.filter (\container -> container.useEBS == False) (Dict.values containers)
+
+        otherSum =
+            List.sum (List.map (\container -> container.ioops) containersWoEBS)
+
+        allUseEBS =
+            List.length containersWithEBS == List.length (Dict.values containers)
+
+        someUseEBS =
+            List.length containersWithEBS > 0
     in
-        if allUseEBS == True then
-            "All containers using EBS"
-        else if someUseEBS then
-            String.fromInt (List.length containersWithEBS) ++ " container/s using EBS. " ++ String.fromInt (List.length containersWoEBS) ++ " container/s not using EBS, totalling: " ++ String.fromInt otherSum ++ "MiB/sec"
-        else
-            String.fromInt otherSum ++ " MiB/sec"
+    if allUseEBS == True then
+        "All containers using EBS"
 
+    else if someUseEBS then
+        String.fromInt (List.length containersWithEBS) ++ " container/s using EBS. " ++ String.fromInt (List.length containersWoEBS) ++ " container/s not using EBS, totalling: " ++ String.fromInt otherSum ++ "MiB/sec"
+
+    else
+        String.fromInt otherSum ++ " MiB/sec"

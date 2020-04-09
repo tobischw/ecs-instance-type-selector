@@ -1,13 +1,13 @@
 module App.Util exposing (initRegionsMultiselect, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
 
+import App.Constants as Constants
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Multiselect
 import Html.Events exposing (onInput)
-import App.Constants as Constants
+import Multiselect
 
 
 viewColumnTitle : String -> Html msg
@@ -61,6 +61,6 @@ viewFormCheckbox label sublabel checked msg =
         ]
 
 
-initRegionsMultiselect: Multiselect.Model
-initRegionsMultiselect = 
-    Multiselect.initModel (List.map (\region -> (region.regionName, region.displayName))  Constants.allRegions) "mselect"
+initRegionsMultiselect : Multiselect.Model
+initRegionsMultiselect =
+    Multiselect.initModel (List.map (\region -> ( region.regionName, region.displayName )) Constants.allRegions) "mselect"
