@@ -1,4 +1,4 @@
-module App.Util exposing (determineContainerMemStep, initRegionsMultiselect, determineMaxContainerMemory, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
+module App.Util exposing (initRegionsMultiselect, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
 
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
@@ -60,23 +60,6 @@ viewFormCheckbox label sublabel checked msg =
             ]
         ]
 
-
-determineMaxContainerMemory : Bool -> Int
-determineMaxContainerMemory useMoreMem =
-    if useMoreMem then
-        24576000
-
-    else
-        32000
-
-
-determineContainerMemStep : Bool -> Int
-determineContainerMemStep extraMemEnabled =
-    if extraMemEnabled then
-        1000
-
-    else
-        250
 
 initRegionsMultiselect: Multiselect.Model
 initRegionsMultiselect = 

@@ -63,8 +63,8 @@ view id service containers =
             |> Card.block []
                 [ Block.custom <|
                     Form.form []
-                        [ Util.viewFormRowSlider "Min. Tasks" ((String.fromInt <| service.minTasks) ++ " Tasks") service.minTasks 0 100 1 (UpdateMinTasks id)
-                        , Util.viewFormRowSlider "Max. Tasks" ((String.fromInt <| service.maxTasks) ++ " Tasks") service.maxTasks 0 100 1 (UpdateMaxTasks id)
+                        [ Util.viewFormRowSlider "Min. Tasks" ((String.fromInt <| service.minTasks) ++ " Tasks") service.minTasks 1 service.maxTasks 1 (UpdateMinTasks id)
+                        , Util.viewFormRowSlider "Max. Tasks" ((String.fromInt <| service.maxTasks) ++ " Tasks") service.maxTasks service.minTasks 100 1 (UpdateMaxTasks id)
                         ]
                 ]
             |> Card.view
@@ -98,6 +98,7 @@ sumBandwidth containers =
 sumIoops: Configuration.Containers -> String
 sumIoops containers = 
     let
+        -- This feels like a lot of duplicated code
         containersWithEBS = List.filter (\container -> container.useEBS == True) (Dict.values containers)
         containersWoEBS = List.filter (\container -> container.useEBS == False) (Dict.values containers)
         otherSum = List.sum( List.map (\container -> container.ioops) containersWoEBS)

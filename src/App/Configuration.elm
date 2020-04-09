@@ -1,5 +1,7 @@
 module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), PackingStrategy(..), Service, getContainers, init, update, view)
 
+-- This is probably the only real "messy" file, could do with some refactoring and clean up
+
 import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -18,9 +20,11 @@ import Tuple exposing (first, second)
 
 init : Model
 init =
+    -- Instead of using the record constructor, we should just write out the full record initialization, because I don't know what
+    -- half of these numbers mean
     { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" Util.initRegionsMultiselect ) ]
-    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
-    , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
+    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 2 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 2) ]
+    , containers = Dict.fromList [ ( 0, Container "Tomcat Container" 0 250 250 20 False 20 False ), ( 1, Container "MariaDB Container" 0 250 250 20 False 20 False ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
     }
 
@@ -100,7 +104,7 @@ update msg model =
             { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster" Util.initRegionsMultiselect), autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 2), autoIncrement = generateId model }
 
         AddContainer serviceId ->
             { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 4000 128 True 20 False), autoIncrement = generateId model }
@@ -116,6 +120,7 @@ update msg model =
             { newModel | services = model.services |> Dict.remove serviceId }
 
         DeleteCluster clusterId ->
+            -- This mess could use a refactor
             let
                 servicesToRemove =
                     model.services |> Dict.filter (\_ service -> service.clusterId == clusterId)
@@ -192,7 +197,7 @@ viewClusterItem model clusterTuple =
         , viewServices model (getServices id model.services)
         ]
 
-
+-- Has to be a better way to do fetch services
 getServices : Int -> Services -> Services
 getServices clusterId services =
     let

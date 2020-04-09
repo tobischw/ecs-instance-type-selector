@@ -26,6 +26,7 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        -- Maybe there's a better way to do this
         UpdateClusterRegions id multiSelectMsg ->
             let 
                 (regionsModel, _, _) = 
