@@ -61,10 +61,10 @@ view id service containers =
             |> Card.block []
                 [ Block.custom <|
                     Form.form []
-                        [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
-                        , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
-                        , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
-                        , Util.viewFormLabel "IO Total" "IO requirements for all containers in one task" (sumIoops containers)
+                        [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers * toFloat service.nominalTasks) ++ " GiB")
+                        , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers * service.nominalTasks) ++ "/1024")
+                        , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers * service.nominalTasks) ++ " GiB/sec")
+                        , Util.viewFormLabel "IO Total" "IO requirements for all containers in one task" (sumIoops service containers)
                         ]
                 ]
             |> Card.view
@@ -86,8 +86,8 @@ sumBandwidth containers =
     List.sum (List.map (\container -> container.bandwidth) (Dict.values containers))
 
 
-sumIoops : Configuration.Containers -> String
-sumIoops containers =
+sumIoops : Configuration.Service -> Configuration.Containers -> String
+sumIoops service containers =
     let
         -- This feels like a lot of duplicated code
         containersWithEBS =
@@ -109,7 +109,7 @@ sumIoops containers =
         "All containers using EBS"
 
     else if someUseEBS then
-        String.fromInt (List.length containersWithEBS) ++ " container/s using EBS. " ++ String.fromInt (List.length containersWoEBS) ++ " container/s not using EBS, totalling: " ++ String.fromInt otherSum ++ "MiB/sec"
+        String.fromInt (List.length containersWithEBS) ++ " container/s using EBS. " ++ String.fromInt (List.length containersWoEBS) ++ " container/s not using EBS, totalling: " ++ String.fromInt (otherSum * service.nominalTasks) ++ "MiB/sec"
 
     else
-        String.fromInt otherSum ++ " MiB/sec"
+        String.fromInt (otherSum * service.nominalTasks) ++ " MiB/sec"
