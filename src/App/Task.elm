@@ -22,6 +22,7 @@ type alias Model =
 type Msg
     = UpdateMinTasks Int String
     | UpdateMaxTasks Int String
+    | UpdateNominalTasks Int String
 
 
 
@@ -37,6 +38,9 @@ update msg model =
         UpdateMaxTasks id value ->
             { model | services = Dict.update id (Maybe.map (\service -> { service | maxTasks = Util.toInt value })) model.services }
 
+        UpdateNominalTasks id value ->
+            { model | services = Dict.update id (Maybe.map (\service -> { service | nominalTasks = Util.toInt value })) model.services }
+
 
 view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
 view id service containers =
@@ -47,6 +51,7 @@ view id service containers =
                 [ Block.custom <|
                     Form.form []
                         [ Util.viewFormRowSlider "Min. Tasks" ((String.fromInt <| service.minTasks) ++ " Tasks") service.minTasks 1 service.maxTasks 1 (UpdateMinTasks id)
+                        , Util.viewFormRowSlider "Nom. Tasks" ((String.fromInt <| service.nominalTasks) ++ " Tasks") service.nominalTasks service.minTasks service.maxTasks 1 (UpdateNominalTasks id)
                         , Util.viewFormRowSlider "Max. Tasks" ((String.fromInt <| service.maxTasks) ++ " Tasks") service.maxTasks service.minTasks 100 1 (UpdateMaxTasks id)
                         ]
                 ]

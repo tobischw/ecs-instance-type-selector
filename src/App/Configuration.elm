@@ -21,7 +21,7 @@ import Tuple exposing (first, second)
 init : Model
 init =
     { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
-    , services = Dict.fromList [ ( 0, { name = "Service 1", clusterId = 0, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 } ) ]
+    , services = Dict.fromList [ ( 0, { name = "Service 1", clusterId = 0, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks=1 } ) ]
     , containers = Dict.fromList [ ( 0, { name = "Tomcat Container", serviceId = 0, cpuShare = 250, memory = 250, ioops = 20, useEBS = False, bandwidth = 20, showExtraMemory = False } ) ]
     , autoIncrement = 3 -- Set this to 0 once we get rid of sample data
     }
@@ -69,6 +69,7 @@ type alias Service =
     , packingStrategy : PackingStrategy
     , minTasks : Int
     , maxTasks : Int
+    , nominalTasks: Int
     }
 
 
@@ -101,7 +102,7 @@ update msg model =
             { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 }, autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks=1 }, autoIncrement = generateId model }
 
         AddContainer serviceId ->
             { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, autoIncrement = generateId model }
