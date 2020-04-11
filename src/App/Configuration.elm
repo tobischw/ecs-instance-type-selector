@@ -23,10 +23,13 @@ init =
     , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
     , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
     , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
-    , labelName = "Cluster"
-    , isEnabled = False
+    , componentLabel = ComponentLabel "No name given" False
     }
 
+type alias ComponentLabel = 
+    { value: String
+    , isEditable: Bool
+    }
 
 type alias Services =
     Dict Int Service
@@ -35,7 +38,7 @@ type alias Services =
 type alias Clusters =
     Dict Int Cluster
 
-
+ 
 type alias Containers =
     Dict Int Container
 
@@ -45,8 +48,7 @@ type alias Model =
     , services : Services
     , containers : Containers
     , autoIncrement : Int
-    , labelName : String
-    , isEnabled : Bool
+    , componentLabel : ComponentLabel
     }
 
 
@@ -58,6 +60,7 @@ type Msg
     | DeleteService Int
     | DeleteCluster Int
     | UpdateName String Bool
+    | InputChange String
 
 
 type alias Cluster =
@@ -136,8 +139,11 @@ update msg model =
             in
             { model | containers = newContainers, services = newServices, clusters = model.clusters |> Dict.remove clusterId }
 
-        UpdateName name enabled ->
-            {model | labelName = name, isEnabled = enabled}
+        UpdateName  value isEnabled ->
+            {model | componentLabel = ComponentLabel value isEnabled}
+
+        InputChange newInputValue ->
+            { model | componentLabel = ComponentLabel newInputValue True}
 
 view : Model -> Html Msg
 view model =
@@ -186,7 +192,7 @@ viewClusterItem model clusterTuple =
         [ [ ListGroup.anchor
                 [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], viewName (model)]
+                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], viewLabelComponent model]
                     ,
                     viewModifyDeleteButtonGroup id 
                     ]
@@ -195,18 +201,23 @@ viewClusterItem model clusterTuple =
         , viewServices model (getServices id model.services)
         ]
 
-newName { lblName, onInput, isEnabled} =
-    label [contenteditable isEnabled] [text lblName]
+viewLabelComponentInput : Model -> Html Msg
+viewLabelComponentInput model =
+    div [hidden (not model.componentLabel.isEditable), style "grid-area" "1/1"]
+    [ input [ placeholder "Enter Name", value model.componentLabel.value, Html.Events.onInput InputChange, onEnter(UpdateName model.componentLabel.value False)] []]
 
-viewName: Model -> Html Msg
-viewName model  =
-    label [] [newName {lblName = model.labelName, onInput = UpdateName, isEnabled = model.isEnabled}]
+viewLabelComponent : Model -> Html Msg
+viewLabelComponent model = 
+    div [style "display" "grid"] 
+    [ label [hidden model.componentLabel.isEditable, style "grid-area" "1/1"] [text model.componentLabel.value]
+    , viewLabelComponentInput model]
+
 
 viewModifyDeleteButtonGroup : Int -> Html Msg
 viewModifyDeleteButtonGroup id = 
     ButtonGroup.buttonGroup [ButtonGroup.small] 
     [ ButtonGroup.button [ Button.outlineSuccess, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ]
-    , ButtonGroup.button [ Button.outlineSecondary, Button.small, Button.attrs [Html.Events.Extra.onClickPreventDefaultAndStopPropagation (UpdateName "Enter new name" True)] ] [FeatherIcons.edit |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+    , ButtonGroup.button [ Button.outlineSecondary, Button.small, Button.attrs [Html.Events.Extra.onClickPreventDefaultAndStopPropagation (UpdateName  "" True)] ] [FeatherIcons.edit |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
     , ButtonGroup.button [ Button.outlineDanger, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] ] [FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
     ]
 
