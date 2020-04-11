@@ -190,7 +190,7 @@ viewDetail model =
             Html.map SettingsMsg (Settings.view model.settings)
 
         _ ->
-            viewNotFoundDetail
+            viewNoneDetail
 
 
 viewNoneDetail : Html Msg

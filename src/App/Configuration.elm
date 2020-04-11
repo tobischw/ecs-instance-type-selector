@@ -1,4 +1,6 @@
-module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), Service, getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), PackingStrategy(..), Service, getContainers, init, update, view)
+
+-- This is probably the only real "messy" file, could do with some refactoring and clean up
 
 import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
@@ -19,10 +21,10 @@ import Tuple exposing (first, second)
 
 init : Model
 init =
-    { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
-    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
-    , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
-    , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
+    { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
+    , services = Dict.fromList [ ( 0, { name = "Service 1", clusterId = 0, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 } ) ]
+    , containers = Dict.fromList [ ( 0, { name = "Tomcat Container", serviceId = 0, cpuShare = 250, memory = 250, ioops = 20, useEBS = False, bandwidth = 20, showExtraMemory = False } ) ]
+    , autoIncrement = 3 -- Set this to 0 once we get rid of sample data
     , componentLabel = ComponentLabel "No name given" False
     }
 
@@ -65,6 +67,7 @@ type Msg
 
 type alias Cluster =
     { name : String
+    , regions : Multiselect.Model
     }
 
 
@@ -73,7 +76,6 @@ type alias Service =
     , clusterId : Int
     , scalingTarget : Int
     , packingStrategy : PackingStrategy
-    , regions : Multiselect.Model
     , minTasks : Int
     , maxTasks : Int
     }
@@ -105,13 +107,13 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-            { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model }
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 }, autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 2000 128 True 1048 False), autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
@@ -124,6 +126,7 @@ update msg model =
             { newModel | services = model.services |> Dict.remove serviceId }
 
         DeleteCluster clusterId ->
+            -- This mess could use a refactor
             let
                 servicesToRemove =
                     model.services |> Dict.filter (\_ service -> service.clusterId == clusterId)
@@ -220,6 +223,10 @@ viewModifyDeleteButtonGroup id =
     , ButtonGroup.button [ Button.outlineSecondary, Button.small, Button.attrs [Html.Events.Extra.onClickPreventDefaultAndStopPropagation (UpdateName  "" True)] ] [FeatherIcons.edit |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
     , ButtonGroup.button [ Button.outlineDanger, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] ] [FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
     ]
+
+
+-- Has to be a better way to do fetch services
+
 
 getServices : Int -> Services -> Services
 getServices clusterId services =
