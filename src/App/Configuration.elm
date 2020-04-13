@@ -54,6 +54,7 @@ type Msg
     | DeleteContainer Int
     | DeleteService Int
     | DeleteCluster Int
+    | ChangeContainerName Int String
 
 
 type alias Cluster =
@@ -133,6 +134,8 @@ update msg model =
             in
             { model | containers = newContainers, services = newServices, clusters = model.clusters |> Dict.remove clusterId }
 
+        ChangeContainerName id value ->
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | name = value })) model.containers }
 
 view : Model -> Html Msg
 view model =
@@ -281,7 +284,7 @@ viewContainerItem containerTuple =
     in
     ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
         [ FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
-        , text container.name
+        , input [ type_ "text", value container.name, onChange (ChangeContainerName id)] []
         , span [ class "ml-3 text-danger float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
         ]
 
