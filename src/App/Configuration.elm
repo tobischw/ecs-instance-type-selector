@@ -156,7 +156,7 @@ view model =
         , viewClusters model
         , hr [] []
         , ListGroup.custom
-            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "/~tschwei/settings" ]
+            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "/settings" ]
             , simpleListItem "Export JSON" FeatherIcons.share [ href "#" ]
             , simpleListItem "Load JSON" FeatherIcons.download [ href "#" ]
             ]
@@ -181,7 +181,7 @@ viewClusterItem model clusterTuple =
     in
     List.concat
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/~tschwei/cluster/" ++ String.fromInt id) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], input [ type_ "text", class "editable-label", value cluster.name, onChange (ChangeClusterName id)] [] ]
                     , div []
@@ -229,7 +229,7 @@ viewServiceItem model serviceTuple =
     in
     List.concat
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/~tschwei/service/" ++ String.fromInt id), style "border-left" ("4px solid " ++ service.color) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id), style "border-left" ("4px solid " ++ service.color) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], input [ type_ "text", class "editable-label", value service.name, onChange (ChangeServiceName id)] []]
                     , span [ class "text-muted", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
@@ -244,7 +244,7 @@ viewServiceItem model serviceTuple =
 viewTaskItem : Int -> List (ListGroup.CustomItem Msg)
 viewTaskItem id =
     [ ListGroup.anchor
-        [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/~tschwei/task/" ++ String.fromInt id) ] ]
+        [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt id) ] ]
         [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
             [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
             , span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddContainer id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
@@ -280,7 +280,7 @@ viewContainerItem containerTuple =
         container =
             second containerTuple
     in
-    ListGroup.anchor [ ListGroup.attrs [ href ("/~tschwei/container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
+    ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
         [ FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
         , input [ type_ "text", class "editable-label", value container.name, onChange (ChangeContainerName id)] []
         , span [ class "ml-3 text-muted float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
