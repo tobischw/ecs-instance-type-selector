@@ -68,6 +68,7 @@ type Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
+    | ResultsMsg Results.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -119,10 +120,22 @@ update msg ({ flags, navigation } as model) =
             in
             ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
+        ResultsMsg resultsMsg ->
+            ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
+
 
 urlToDetail : String -> Url -> Detail
 urlToDetail basePath url =
-    { url | path = String.replace basePath "" url.path }
+    let
+        newUrl =
+            case basePath of
+                "/" ->
+                    url
+
+                _ ->
+                    { url | path = String.replace basePath "" url.path }
+    in
+    newUrl
         |> Url.parse urlParser
         |> Maybe.withDefault None
 
@@ -161,7 +174,9 @@ viewContent model =
                 [ Html.map ConfigurationMsg (Configuration.view model.configuration)
                 ]
             , viewDetailColumn model
-            , Results.view
+            , Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ]
+                [ Html.map ResultsMsg (Results.view model.configuration)
+                ]
             ]
         ]
 
@@ -227,7 +242,7 @@ viewNavbar model =
         |> Navbar.withAnimation
         |> Navbar.dark
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
-            [ img [ src "../ec2.svg", class "logo" ] [], text "Cluster Prophet" ]
+            [ img [ src (model.flags.basePath ++ "ec2.svg"), class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.view model.navigation.navbarState
 
 

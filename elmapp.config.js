@@ -1,3 +1,3 @@
 module.exports = {
-    homepage: "./demo/" //required to normalise path
+    homepage: "./" //required to normalise path
 }
