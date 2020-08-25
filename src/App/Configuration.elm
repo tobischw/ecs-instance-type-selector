@@ -1,5 +1,7 @@
 module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), PackingStrategy(..), Service, getContainers, init, update, view)
 
+-- This is probably the only real "messy" file, could do with some refactoring and clean up
+
 import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
 import Bootstrap.Button as Button
@@ -14,14 +16,14 @@ import Html.Attributes exposing (..)
 import Html.Events.Extra exposing (onChange, onEnter)
 import Multiselect
 import Tuple exposing (first, second)
-
+import Random
 
 init : Model
 init =
-    { clusters = Dict.fromList [ ( 0, Cluster "Cluster 1" ) ]
-    , services = Dict.fromList [ ( 0, Service "Service 1" 0 0 ByCPUShares (Multiselect.initModel [] "A") 1 1 ), ( 1, Service "Service 2" 0 0 ByMemory (Multiselect.initModel [] "A") 1 1 ) ]
-    , containers = Dict.fromList [ ( 0, Container "Container A" 0 250 250 20 False 20 False ), ( 1, Container "Container B" 0 250 250 20 False 20 False ) ]
-    , autoIncrement = 2 -- Set this to 0 once we get rid of sample data
+    { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
+    , services = Dict.fromList [ ( 0, { name = "Service 1", color = Util.randomColorString (Random.initialSeed 1998), clusterId = 0, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 } ) ]
+    , containers = Dict.fromList [ ( 0, { name = "Tomcat Container", serviceId = 0, cpuShare = 250, memory = 250, ioops = 20, useEBS = False, bandwidth = 20, showExtraMemory = False } ) ]
+    , autoIncrement = 3 -- Set this to 0 once we get rid of sample data
     }
 
 
@@ -52,19 +54,23 @@ type Msg
     | DeleteContainer Int
     | DeleteService Int
     | DeleteCluster Int
+    | ChangeContainerName Int String
+    | ChangeServiceName Int String
+    | ChangeClusterName Int String
 
 
 type alias Cluster =
     { name : String
+    , regions : Multiselect.Model
     }
 
 
 type alias Service =
     { name : String
+    , color : String
     , clusterId : Int
     , scalingTarget : Int
     , packingStrategy : PackingStrategy
-    , regions : Multiselect.Model
     , minTasks : Int
     , maxTasks : Int
     }
@@ -96,13 +102,13 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-            { model | clusters = model.clusters |> Dict.insert model.autoIncrement (Cluster "Cluster"), autoIncrement = generateId model }
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement (Service "Service" clusterId 0 ByCPUShares (Multiselect.initModel [] "A") 1 1), autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", color = Util.randomColorString (Random.initialSeed model.autoIncrement), clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 }, autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement (Container "Container" serviceId 128 4000 128 True 20 False), autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
@@ -115,6 +121,7 @@ update msg model =
             { newModel | services = model.services |> Dict.remove serviceId }
 
         DeleteCluster clusterId ->
+            -- This mess could use a refactor
             let
                 servicesToRemove =
                     model.services |> Dict.filter (\_ service -> service.clusterId == clusterId)
@@ -130,6 +137,14 @@ update msg model =
             in
             { model | containers = newContainers, services = newServices, clusters = model.clusters |> Dict.remove clusterId }
 
+        ChangeContainerName id value ->
+            { model | containers = Dict.update id (Maybe.map (\container -> { container | name = value })) model.containers }
+
+        ChangeServiceName id value ->
+            { model | services = Dict.update id (Maybe.map (\service -> { service | name = value })) model.services }
+            
+        ChangeClusterName id value ->
+            { model | clusters = Dict.update id (Maybe.map (\cluster -> { cluster | name = value })) model.clusters }
 
 view : Model -> Html Msg
 view model =
@@ -138,20 +153,10 @@ view model =
             [ Util.viewColumnTitle "Configuration"
             , hr [] []
             ]
-        , div []
-            [ Button.button
-                [ Button.outlineSuccess
-                , Button.onClick AddCluster
-                , Button.block
-                , Button.attrs [ class "mb-2" ]
-                ]
-                [ FeatherIcons.plus |> FeatherIcons.toHtml [], text "Add Cluster" ]
-            , hr [] []
-            ]
         , viewClusters model
         , hr [] []
         , ListGroup.custom
-            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "../../settings" ]
+            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "settings" ]
             , simpleListItem "Export JSON" FeatherIcons.share [ href "#" ]
             , simpleListItem "Load JSON" FeatherIcons.download [ href "#" ]
             ]
@@ -176,12 +181,12 @@ viewClusterItem model clusterTuple =
     in
     List.concat
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("/cluster/" ++ String.fromInt id) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, class "cluster-item", href ("cluster/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text cluster.name ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], input [ type_ "text", class "editable-label", value cluster.name, onChange (ChangeClusterName id)] [] ]
                     , div []
                         [ span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
-                        , span [ class "ml-3 text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                        , span [ class "ml-3 text-muted", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
 
                         -- needed to prevent the onClick of the list item from firing, and rerouting us to a non-existant thingy
                         ]
@@ -190,6 +195,9 @@ viewClusterItem model clusterTuple =
           ]
         , viewServices model (getServices id model.services)
         ]
+
+
+-- Has to be a better way to do fetch services
 
 
 getServices : Int -> Services -> Services
@@ -221,10 +229,10 @@ viewServiceItem model serviceTuple =
     in
     List.concat
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("/service/" ++ String.fromInt id) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("service/" ++ String.fromInt id), style "border-left" ("4px solid " ++ service.color) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
-                    [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text service.name ]
-                    , span [ class "text-danger", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+                    [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], input [ type_ "text", class "editable-label", value service.name, onChange (ChangeServiceName id)] []]
+                    , span [ class "text-muted", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
                     ]
                 ]
           ]
@@ -236,10 +244,10 @@ viewServiceItem model serviceTuple =
 viewTaskItem : Int -> List (ListGroup.CustomItem Msg)
 viewTaskItem id =
     [ ListGroup.anchor
-        [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("/task/" ++ String.fromInt id) ] ]
+        [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, style "padding-left" "40px", href ("task/" ++ String.fromInt id) ] ]
         [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
             [ span [ class "pt-1" ] [ FeatherIcons.clipboard |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], text "Tasks" ]
-            , span [] [ Button.button [ Button.outlineSuccess, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddContainer id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
+            , span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddContainer id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
             ]
         ]
     ]
@@ -272,10 +280,10 @@ viewContainerItem containerTuple =
         container =
             second containerTuple
     in
-    ListGroup.anchor [ ListGroup.attrs [ href ("/container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
+    ListGroup.anchor [ ListGroup.attrs [ href ("container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
         [ FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
-        , text container.name
-        , span [ class "ml-3 text-danger float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
+        , input [ type_ "text", class "editable-label", value container.name, onChange (ChangeContainerName id)] []
+        , span [ class "ml-3 text-muted float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
         ]
 
 

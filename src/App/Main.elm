@@ -26,10 +26,20 @@ import Url.Parser as Url exposing ((</>), Parser)
 ---- MODEL ----
 
 
-type alias Model =
-    { navbarState : Navbar.State
-    , navKey : Nav.Key
+type alias Flags =
+    { basePath : String }
+
+
+type alias Navigation =
+    { key : Nav.Key
+    , navbarState : Navbar.State
     , currentDetail : Detail
+    }
+
+
+type alias Model =
+    { flags : Flags
+    , navigation : Navigation
     , configuration : Configuration.Model
     , settings : Settings.Model
     }
@@ -58,19 +68,24 @@ type Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
+    | ResultsMsg Results.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ flags, navigation } as model) =
     case msg of
         NavbarMsg state ->
-            ( { model | navbarState = state }, Cmd.none )
+            ( { model
+                | navigation = { navigation | navbarState = state }
+              }
+            , Cmd.none
+            )
 
         LinkClicked urlRequest ->
             case urlRequest of
                 Internal url ->
                     ( model
-                    , Nav.pushUrl model.navKey (Url.toString url)
+                    , Nav.pushUrl model.navigation.key (Url.toString url)
                     )
 
                 External url ->
@@ -79,7 +94,7 @@ update msg model =
                     )
 
         UrlChanged url ->
-            ( { model | currentDetail = urlToDetail url }
+            ( { model | navigation = { navigation | currentDetail = urlToDetail flags.basePath url } }
             , Cmd.none
             )
 
@@ -105,10 +120,22 @@ update msg model =
             in
             ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
+        ResultsMsg resultsMsg ->
+            ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
 
-urlToDetail : Url -> Detail
-urlToDetail url =
-    url
+
+urlToDetail : String -> Url -> Detail
+urlToDetail basePath url =
+    let
+        newUrl =
+            case basePath of
+                "/" ->
+                    url
+
+                _ ->
+                    { url | path = String.replace basePath "" url.path }
+    in
+    newUrl
         |> Url.parse urlParser
         |> Maybe.withDefault None
 
@@ -147,7 +174,9 @@ viewContent model =
                 [ Html.map ConfigurationMsg (Configuration.view model.configuration)
                 ]
             , viewDetailColumn model
-            , Results.view
+            , Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ]
+                [ Html.map ResultsMsg (Results.view model.configuration)
+                ]
             ]
         ]
 
@@ -165,7 +194,7 @@ viewDetailColumn model =
 
 viewDetail : Model -> Html Msg
 viewDetail model =
-    case model.currentDetail of
+    case model.navigation.currentDetail of
         Cluster id ->
             Dict.get id model.configuration.clusters
                 |> Maybe.map (\value -> Html.map ClusterMsg (Cluster.view id value))
@@ -213,8 +242,8 @@ viewNavbar model =
         |> Navbar.withAnimation
         |> Navbar.dark
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
-            [ img [ src "../ec2.svg", class "logo" ] [], text "Cluster Prophet" ]
-        |> Navbar.view model.navbarState
+            [ img [ src (model.flags.basePath ++ "ec2.svg"), class "logo" ] [], text "Cluster Prophet" ]
+        |> Navbar.view model.navigation.navbarState
 
 
 
@@ -225,7 +254,7 @@ viewNavbar model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Navbar.subscriptions model.navbarState NavbarMsg
+        [ Navbar.subscriptions model.navigation.navbarState NavbarMsg
         , Sub.map SettingsMsg <| Settings.subscriptions model.settings
         ]
 
@@ -234,16 +263,26 @@ subscriptions model =
 ---- PROGRAM ----
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
+init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init ({ basePath } as flags) url key =
     let
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
     in
-    ( { navbarState = navbarState, navKey = key, currentDetail = urlToDetail url, configuration = Configuration.init, settings = Settings.init }, navbarCmd )
+    ( { flags = flags
+      , navigation =
+            { key = key
+            , navbarState = navbarState
+            , currentDetail = urlToDetail basePath url
+            }
+      , configuration = Configuration.init
+      , settings = Settings.init
+      }
+    , navbarCmd
+    )
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.application
         { init = init

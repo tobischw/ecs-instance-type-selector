@@ -1,11 +1,14 @@
-module App.Util exposing (determineContainerMemStep, determineMaxContainerMemory, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
+module App.Util exposing (initRegionsMultiselect, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider, randomColorString)
 
+import Random
+import App.Constants as Constants
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
+import Multiselect
 
 
 viewColumnTitle : String -> Html msg
@@ -59,19 +62,16 @@ viewFormCheckbox label sublabel checked msg =
         ]
 
 
-determineMaxContainerMemory : Bool -> Int
-determineMaxContainerMemory useMoreMem =
-    if useMoreMem then
-        24576000
-
-    else
-        32000
+initRegionsMultiselect : Multiselect.Model
+initRegionsMultiselect =
+    Multiselect.initModel (List.map (\region -> ( region.regionName, region.displayName )) Constants.allRegions) "mselect"
 
 
-determineContainerMemStep : Bool -> Int
-determineContainerMemStep extraMemEnabled =
-    if extraMemEnabled then
-        1000
-
-    else
-        250
+randomColorString : Random.Seed -> String
+randomColorString seed0 =
+    let
+        (red, seed1) = Random.step (Random.int 0 255) seed0 
+        (green, seed2) = Random.step (Random.int 0 255) seed1 
+        (blue, seed3) = Random.step (Random.int 0 255) seed2 
+    in
+        "rgb(" ++ String.fromInt red ++ ", " ++ String.fromInt green ++ ", " ++ String.fromInt blue ++ ", 1)"
