@@ -15,6 +15,12 @@ import Quantity exposing (Quantity(..))
 import Svg exposing (Svg, g, rect, svg, text_)
 import Svg.Attributes exposing (alignmentBaseline, fill, height, stroke, textAnchor, transform, width, x, y)
 
+widthScale : Float
+widthScale = 0.35
+
+heightScale : Float
+heightScale = 0.0175
+
 
 type alias Model =
     Configuration.Model
@@ -23,6 +29,10 @@ type alias Model =
 type alias ContainerData =
     { name : String
     }
+
+
+
+-- TODO: Figure out how to do fetching and integrating the previous AWS EC2 API/decoders
 
 
 type Msg
@@ -42,6 +52,7 @@ view model =
         [ Util.viewColumnTitle
             "Packing"
         , hr [] []
+        , span [] [ text "Make sure that we combine chart/for now, show chart for each service"]
         , viewChart model
         , hr [] []
         , Util.viewColumnTitle
@@ -75,8 +86,8 @@ viewChart model =
     in
     div []
         [ svg
-            [ width (packingData.width |> pxToString)
-            , height (packingData.height |> pxToString)
+            [ width (Quantity.multiplyBy widthScale packingData.width |> pxToString)
+            , height (Quantity.multiplyBy heightScale packingData.height |> pxToString)
             , style "background-color" "#eee"
             , style "border" "thin solid #a9a9a9"
             ]
@@ -91,20 +102,20 @@ viewChart model =
 viewChartItem : PackedBox Float Pixels ContainerData -> List (Svg Msg)
 viewChartItem box =
     [ g
-        [ transform ("translate(" ++ pxToString box.x ++ ", " ++ pxToString box.y ++ ")")
+        [ transform ("translate(" ++ pxToString (Quantity.multiplyBy widthScale box.x) ++ ", " ++ pxToString (Quantity.multiplyBy heightScale box.y) ++ ")")
         ]
         [ rect
             [ x "0"
             , y "0"
-            , width (pxToString box.width)
-            , height (pxToString box.height)
+            , width (pxToString (Quantity.multiplyBy widthScale box.width))
+            , height (pxToString (Quantity.multiplyBy heightScale box.height))
             , stroke "#a9a9a9"
             , fill "#c6ecff"
             ]
             []
         , Svg.text_
-            [ x (pxToString (Quantity.half box.width))
-            , y (pxToString (Quantity.half box.height))
+            [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale box.width)))
+            , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale box.height)))
             , textAnchor "middle"
             , alignmentBaseline "central"
             ]
