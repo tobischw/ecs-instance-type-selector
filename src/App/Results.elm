@@ -2,10 +2,6 @@ module App.Results exposing (..)
 
 import App.Configuration as Configuration
 import App.Util as Util
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Progress as Progress
-import Color
 import Dict exposing (Dict)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text)
 import Html.Attributes exposing (class, style)
