@@ -85,17 +85,6 @@ determineContainerMemStep extraMemEnabled =
 -- this function feels odd
 
 
-viewMemoryLabel : Int -> String
-viewMemoryLabel memoryInMB =
-    if memoryInMB < 999 then
-        String.fromInt memoryInMB ++ " MiB"
-
-    else if memoryInMB < 999999 then
-        String.fromFloat (toFloat memoryInMB / 1000) ++ " GiB"
-
-    else
-        String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
-
 
 view : Int -> Configuration.Container -> Html Msg
 view id container =
@@ -108,7 +97,7 @@ view id container =
                     [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
                     , hr [] []
                     , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Show more memory options" "" container.showExtraMemory (ToggleMoreMemory id))
-                    , Util.viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 250 (determineMaxContainerMemory container.showExtraMemory) (determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
+                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes container.memory) container.memory 250 (determineMaxContainerMemory container.showExtraMemory) (determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
                     , hr [] []
                     , Util.viewFormCheckbox "Use Elastic Block Storage" "" container.useEBS (UpdateEBS id)
                     , Util.viewFormRowSlider "IOOPs" ((String.fromInt <| container.ioops) ++ " MiB/sec") container.ioops 4750 19000 1000 (UpdateIoops id)

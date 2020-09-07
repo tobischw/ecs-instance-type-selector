@@ -1,4 +1,4 @@
-module App.PricingResponse exposing (Attributes, PriceListing, Product, ProductsResponse, productsResponseDecoder, PriceDimension, PricePerUnit)
+module App.ApiDecoders exposing (Attributes, PriceListing, Product, ProductsResponse, productsResponseDecoder, PriceDimension, PricePerUnit)
 
 import Json.Decode exposing (Decoder, map, list, string, succeed, keyValuePairs)
 import Json.Decode.Pipeline exposing (hardcoded, required, optional)

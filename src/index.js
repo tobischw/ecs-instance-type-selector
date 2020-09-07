@@ -16,12 +16,11 @@ let pricing = new AWS.Pricing({
   secretAccessKey: SERCRET_ACCESS_KEY
 });
 
-app.port.getProducts.subscribe(function ( message ) {
-  let nextToken = message[0];
-  let maxResults = message[1];
-  let params = {
-    Filters: [
-      {
+app.ports.requestInstances.subscribe(function ( message ) {
+   let nextToken = message[0];
+   let maxResults = message[1];
+   let params = { Filters: [
+         {
         Field: 'ServiceCode',
         Type: 'TERM_MATCH',
         Value: 'AmazonEC2'
@@ -36,7 +35,7 @@ app.port.getProducts.subscribe(function ( message ) {
     if (err) {
       console.log(err);
     } else { 
-      app.ports.receiveProducts.send(JSON.stringify(data));  // successful response -- DECIDE: send back string JSON or just object?
+      app.ports.receiveInstances.send(JSON.stringify(data));  // successful response -- DECIDE: send back string JSON or just object?
     }
   });
 });

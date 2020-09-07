@@ -1,4 +1,4 @@
-module App.Util exposing (initRegionsMultiselect, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider, randomColorString)
+module App.Util exposing (initRegionsMultiselect, showIf, toInt, formatMegabytes, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider, randomColorString)
 
 import Random
 import App.Constants as Constants
@@ -19,6 +19,18 @@ viewColumnTitle title =
 toInt : String -> Int
 toInt value =
     String.toInt value |> Maybe.withDefault 0
+
+formatMegabytes : Int -> String
+formatMegabytes memoryInMB =
+    if memoryInMB < 999 then
+        String.fromInt memoryInMB ++ " MiB"
+
+    else if memoryInMB < 999999 then
+        String.fromFloat (toFloat memoryInMB / 1000) ++ " GiB"
+
+    else
+        String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
+
 
 
 showIf : Bool -> Html msg -> Html msg
