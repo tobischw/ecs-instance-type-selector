@@ -91,6 +91,14 @@ type alias Container =
     , useEBS : Bool
     , bandwidth : Int
     , showExtraMemory : Bool
+    , deamons: Dict Int Daemon
+    }
+
+
+type alias Daemon = 
+    { memory: Int
+    , cpuShare: Int
+    , name: String
     }
 
 
@@ -106,10 +114,10 @@ update msg model =
             { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", color = Util.randomColorString (Random.initialSeed model.autoIncrement), clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 }, autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", color = Util.randomColorString (Random.initialSeed model.autoIncrement), clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks = 1 }, autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False, deamons = Dict.fromList [] }, autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
