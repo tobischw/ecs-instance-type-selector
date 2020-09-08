@@ -1,5 +1,6 @@
-module App.Util exposing (initRegionsMultiselect, showIf, toInt, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider)
+module App.Util exposing (initRegionsMultiselect, showIf, toInt, formatMegabytes, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider, randomColorString)
 
+import Random
 import App.Constants as Constants
 import Bootstrap.Form as Form
 import Bootstrap.Form.Checkbox as Checkbox
@@ -18,6 +19,18 @@ viewColumnTitle title =
 toInt : String -> Int
 toInt value =
     String.toInt value |> Maybe.withDefault 0
+
+formatMegabytes : Int -> String
+formatMegabytes memoryInMB =
+    if memoryInMB < 999 then
+        String.fromInt memoryInMB ++ " MiB"
+
+    else if memoryInMB < 999999 then
+        String.fromFloat (toFloat memoryInMB / 1000) ++ " GiB"
+
+    else
+        String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
+
 
 
 showIf : Bool -> Html msg -> Html msg
@@ -64,3 +77,13 @@ viewFormCheckbox label sublabel checked msg =
 initRegionsMultiselect : Multiselect.Model
 initRegionsMultiselect =
     Multiselect.initModel (List.map (\region -> ( region.regionName, region.displayName )) Constants.allRegions) "mselect"
+
+
+randomColorString : Random.Seed -> String
+randomColorString seed0 =
+    let
+        (red, seed1) = Random.step (Random.int 0 255) seed0 
+        (green, seed2) = Random.step (Random.int 0 255) seed1 
+        (blue, seed3) = Random.step (Random.int 0 255) seed2 
+    in
+        "rgb(" ++ String.fromInt red ++ ", " ++ String.fromInt green ++ ", " ++ String.fromInt blue ++ ", 1)"

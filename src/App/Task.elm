@@ -97,19 +97,13 @@ sumIoops service containers =
             List.filter (\container -> container.useEBS == False) (Dict.values containers)
 
         otherSum =
-            List.sum (List.map (\container -> container.ioops) containersWoEBS)
-
-        allUseEBS =
-            List.length containersWithEBS == List.length (Dict.values containers)
+            List.sum (List.map (\container -> container.ioops) (Dict.values containers))
 
         someUseEBS =
             List.length containersWithEBS > 0
     in
-    if allUseEBS == True then
-        "All containers using EBS"
-
-    else if someUseEBS then
-        String.fromInt (List.length containersWithEBS) ++ " container/s using EBS. " ++ String.fromInt (List.length containersWoEBS) ++ " container/s not using EBS, totalling: " ++ String.fromInt (otherSum * service.nominalTasks) ++ "MiB/sec"
+    if someUseEBS then
+        String.fromInt (List.length containersWithEBS) ++ " container(s) using EBS. Total: " ++ String.fromInt otherSum ++ "MiB/sec"
 
     else
         String.fromInt (otherSum * service.nominalTasks) ++ " MiB/sec"

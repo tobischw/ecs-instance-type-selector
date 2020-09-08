@@ -21,7 +21,7 @@ type Msg
     | UpdateIoops Int String
     | UpdateEBS Int Bool
     | UpdateBandwidth Int String
-    | UseMoreMemory Int Bool
+    | ToggleMoreMemory Int Bool
 
 
 update : Msg -> Model -> Model
@@ -42,7 +42,7 @@ update msg model =
         UpdateBandwidth id value ->
             { model | containers = Dict.update id (Maybe.map (\container -> { container | bandwidth = Util.toInt value })) model.containers }
 
-        UseMoreMemory id checked ->
+        ToggleMoreMemory id checked ->
             { model
                 | containers =
                     Dict.update id
@@ -85,17 +85,6 @@ determineContainerMemStep extraMemEnabled =
 -- this function feels odd
 
 
-viewMemoryLabel : Int -> String
-viewMemoryLabel memoryInMB =
-    if memoryInMB < 999 then
-        String.fromInt memoryInMB ++ " MiB"
-
-    else if memoryInMB < 999999 then
-        String.fromFloat (toFloat memoryInMB / 1000) ++ " GiB"
-
-    else
-        String.fromFloat (toFloat memoryInMB / 1000000) ++ " TiB"
-
 
 view : Int -> Configuration.Container -> Html Msg
 view id container =
@@ -107,11 +96,11 @@ view id container =
                     -- these Util calls are a bit odd, but do make the code a bit more organized.
                     [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
                     , hr [] []
-                    , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Show more memory options" "" container.showExtraMemory (UseMoreMemory id))
-                    , Util.viewFormRowSlider "Memory" (viewMemoryLabel container.memory) container.memory 250 (determineMaxContainerMemory container.showExtraMemory) (determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
+                    , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Show more memory options" "" container.showExtraMemory (ToggleMoreMemory id))
+                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes container.memory) container.memory 250 (determineMaxContainerMemory container.showExtraMemory) (determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
                     , hr [] []
                     , Util.viewFormCheckbox "Use Elastic Block Storage" "" container.useEBS (UpdateEBS id)
-                    , Util.showIf (not container.useEBS) (Util.viewFormRowSlider "IOOPs" ((String.fromInt <| container.ioops) ++ " MiB/sec") container.ioops 4750 19000 1000 (UpdateIoops id))
+                    , Util.viewFormRowSlider "IOOPs" ((String.fromInt <| container.ioops) ++ " MiB/sec") container.ioops 4750 19000 1000 (UpdateIoops id)
                     , hr [] []
                     , Util.viewFormRowSlider "Bandwidth" ((String.fromInt <| container.bandwidth) ++ " GiB/sec") container.bandwidth 1 25 1 (UpdateBandwidth id)
                     ]
