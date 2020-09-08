@@ -21,9 +21,9 @@ import Random
 init : Model
 init =
     { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
-    , services = Dict.fromList [ ( 0, { name = "Service 1", color = Util.randomColorString (Random.initialSeed 1998), clusterId = 0, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 } ) ]
-    , containers = Dict.fromList [ ( 0, { name = "Tomcat Container", serviceId = 0, cpuShare = 250, memory = 250, ioops = 20, useEBS = False, bandwidth = 20, showExtraMemory = False } ) ]
-    , autoIncrement = 3 -- Set this to 0 once we get rid of sample data
+    , services = Dict.fromList [ ] 
+    , containers = Dict.fromList [ ] 
+    , autoIncrement = 0 -- Set this to 0 once we get rid of sample data
     }
 
 
@@ -186,7 +186,6 @@ viewClusterItem model clusterTuple =
                     [ span [ class "pt-1" ] [ FeatherIcons.share2 |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], input [ type_ "text", class "editable-label", value cluster.name, onChange (ChangeClusterName id)] [] ]
                     , div []
                         [ span [] [ Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (AddService id) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text "" ] ]
-                        , span [ class "ml-3 text-muted", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteCluster id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
 
                         -- needed to prevent the onClick of the list item from firing, and rerouting us to a non-existant thingy
                         ]

@@ -2,10 +2,6 @@ module App.Results exposing (..)
 
 import App.Configuration as Configuration
 import App.Util as Util
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Progress as Progress
-import Color
 import Dict exposing (Dict)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text)
 import Html.Attributes exposing (class, style)
@@ -52,18 +48,14 @@ view model =
         [ Util.viewColumnTitle
             "Packing"
         , hr [] []
-        , span [] [ text "Make sure that we combine chart/for now, show chart for each service"]
         , viewChart model
-        , hr [] []
-        , Util.viewColumnTitle
-            "Suggested Instance Types"
-        , span [ class "text-muted" ] [ text "Suggestions do not work yet, but it would look like:" ]
         ]
 
 
 pxToString : Quantity Float Pixels -> String
 pxToString pixel =
     String.fromFloat (inPixels pixel)
+
 
 
 convertContainerToBox : Configuration.Container -> { data : ContainerData, height : Quantity Float Pixels, width : Quantity Float Pixels }
@@ -83,6 +75,7 @@ viewChart model =
         packingData =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
+
     in
     div []
         [ svg
@@ -93,9 +86,11 @@ viewChart model =
             ]
             (List.concatMap viewChartItem packingData.boxes)
         , br [] []
-        , text ("Ideal width (cpu): " ++ (packingData.width |> pxToString))
+        , strong [] [ text "Instance Type for Service:"]
         , br [] []
-        , text ("Ideal height (mem): " ++ (packingData.height |> pxToString))
+        , text ("Ideal CPU share: " ++ (packingData.width |> pxToString) ++ " vCPUs")
+        , br [] []
+        , text ("Ideal memory: " ++ (packingData.height |> pxToString) ++ " MiB") -- use Util.formatMegabytes for this
         ]
 
 

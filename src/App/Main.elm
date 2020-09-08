@@ -1,5 +1,6 @@
-module App.Main exposing (..)
+port module App.Main exposing (receiveInstances, requestInstances)
 
+import App.ApiDecoders as ApiDecoders
 import App.Cluster as Cluster
 import App.Configuration as Configuration
 import App.Container as Container
@@ -8,18 +9,31 @@ import App.Service as Service
 import App.Settings as Settings
 import App.Task as Task
 import App.Util as Util
+import Bootstrap.Alert as Alert
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
+import Bootstrap.Utilities.Spacing as Spacing
 import Browser exposing (UrlRequest(..), application, document)
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Json.Decode exposing (Error(..), decodeString)
 import Tuple exposing (first, second)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
+
+
+
+---- PORTS ----
+
+
+port requestInstances : ( String, Int ) -> Cmd msg
+
+
+port receiveInstances : (String -> msg) -> Sub msg
 
 
 
@@ -41,6 +55,8 @@ type alias Model =
     { flags : Flags
     , navigation : Navigation
     , configuration : Configuration.Model
+    , error : Maybe String
+    , instances : List ApiDecoders.PriceListing
     , settings : Settings.Model
     }
 
@@ -69,6 +85,7 @@ type Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
     | ResultsMsg Results.Msg
+    | LoadInstances (Result Json.Decode.Error ApiDecoders.ProductsResponse)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -123,6 +140,13 @@ update msg ({ flags, navigation } as model) =
         ResultsMsg resultsMsg ->
             ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
 
+        LoadInstances (Ok response) ->
+            ( { model | instances = model.instances ++ response.priceList }, requestInstances ( response.nextToken, numInstancesBatched ) )
+
+        LoadInstances (Err err) ->
+            -- Do this better - show error as a toast or popup somehow.
+            ( model, Cmd.none )
+
 
 urlToDetail : String -> Url -> Detail
 urlToDetail basePath url =
@@ -175,7 +199,8 @@ viewContent model =
                 ]
             , viewDetailColumn model
             , Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ]
-                [ Html.map ResultsMsg (Results.view model.configuration)
+                [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
+                , Html.map ResultsMsg (Results.view model.configuration)
                 ]
             ]
         ]
@@ -234,6 +259,12 @@ viewNotFoundDetail =
         [ text "Whatever you are looking for does not exist." ]
 
 
+viewError : String -> Html Msg
+viewError error =
+    div []
+        [ Alert.simpleDanger [] [ text error ] ]
+
+
 viewNavbar : Model -> Html Msg
 viewNavbar model =
     Navbar.config NavbarMsg
@@ -243,6 +274,9 @@ viewNavbar model =
         |> Navbar.dark
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
             [ img [ src (model.flags.basePath ++ "ec2.svg"), class "logo" ] [], text "Cluster Prophet" ]
+        |> Navbar.customItems
+            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances) ++ " possible instances") ]
+            ]
         |> Navbar.view model.navigation.navbarState
 
 
@@ -256,11 +290,17 @@ subscriptions model =
     Sub.batch
         [ Navbar.subscriptions model.navigation.navbarState NavbarMsg
         , Sub.map SettingsMsg <| Settings.subscriptions model.settings
+        , receiveInstances (LoadInstances << decodeString ApiDecoders.productsResponseDecoder)
         ]
 
 
 
 ---- PROGRAM ----
+
+
+numInstancesBatched : Int
+numInstancesBatched =
+    90
 
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -276,9 +316,11 @@ init ({ basePath } as flags) url key =
             , currentDetail = urlToDetail basePath url
             }
       , configuration = Configuration.init
+      , instances = []
+      , error = Nothing
       , settings = Settings.init
       }
-    , navbarCmd
+    , Cmd.batch [ navbarCmd, requestInstances ( "", numInstancesBatched ) ]
     )
 
 
