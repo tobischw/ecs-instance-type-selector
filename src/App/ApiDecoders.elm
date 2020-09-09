@@ -67,25 +67,12 @@ type alias Term =
 
 ---- DECODERS ----
 
-log : String -> Decoder a -> Decoder a
-log message =
-    map (Debug.log message)
-
-
 productsResponseDecoder : Decoder ProductsResponse
 productsResponseDecoder =
     succeed ProductsResponse
         |> required "FormatVersion" string
         |> required "PriceList" (list priceListingDecoder)
         |> required "NextToken" string
-
-
-priceListingDecoder : Decoder PriceListing
-priceListingDecoder =
-    succeed PriceListing
-        |> required "product" productDecoder
-        |> required "terms" termsDecoder
-        |> log "Term"
 
 
 productDecoder : Decoder Product
