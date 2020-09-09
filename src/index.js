@@ -1,6 +1,5 @@
 import { Elm } from './App/Main.elm';
 import registerServiceWorker from './registerServiceWorker';
-import { ACCESS_KEY_ID, SERCRET_ACCESS_KEY } from './keys';
 
 const basePath = new URL(document.baseURI).pathname;
 
@@ -12,8 +11,8 @@ let app = Elm.App.Main.init({
 let pricing = new AWS.Pricing({
   region: 'us-east-1',
   apiVersion: '2017-10-15',
-  accessKeyId: ACCESS_KEY_ID,
-  secretAccessKey: SERCRET_ACCESS_KEY
+  accessKeyId: ELM_APP_ACCESS_KEY_ID,
+  secretAccessKey: ELM_APP_SERCRET_ACCESS_KEY
 });
 
 app.ports.requestInstances.subscribe(function ( message ) {
