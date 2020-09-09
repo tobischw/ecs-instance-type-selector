@@ -15,3 +15,5 @@ node_modules
 
 ngrok.exe
 src/keys.js
+
+.env
