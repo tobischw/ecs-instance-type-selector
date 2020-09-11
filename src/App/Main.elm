@@ -137,6 +137,7 @@ update msg ({ flags, navigation } as model) =
             in
             ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
+
         
 urlToDetail : String -> Url -> Detail
 urlToDetail basePath url =

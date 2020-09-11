@@ -19,6 +19,7 @@
             "elm/url": "1.0.0",
             "elm-community/dict-extra": "2.4.0",
             "elm-community/html-extra": "3.3.0",
+            "elm-community/maybe-extra": "5.2.0",
             "feathericons/elm-feather": "1.4.0",
             "ianmackenzie/elm-units": "2.5.0",
             "inkuzmin/elm-multiselect": "3.0.3",

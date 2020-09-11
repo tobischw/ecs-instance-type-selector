@@ -53,8 +53,8 @@ sumDaemonResources allDaemons containerId =
     in
         (cpuShares, memory)
 
-viewDaemon : (Int, Configuration.Daemon) -> Html Msg
-viewDaemon (daemonid, daemon) = 
+viewDaemon : Configuration.Container -> (Int, Configuration.Daemon) -> Html Msg
+viewDaemon container (daemonid, daemon) = 
         Card.config [ Card.attrs [Html.Attributes.class "mt-3"]]
         |> Card.header [] [ Html.map ConfigurationMsg (input [ type_ "text", class "editable-label", value daemon.name, onChange (Configuration.ChangeDaemonName daemonid)] [])
         , Html.map ConfigurationMsg (span [ class "ml-3 text-muted float-right clickable", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (Configuration.DeleteDaemon daemonid) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]) ]
@@ -62,19 +62,19 @@ viewDaemon (daemonid, daemon) =
             [ Block.custom <|
                 Form.form []
                     -- these Util calls are a bit odd, but do make the code a bit more organized.
-                    [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| daemon.cpuShare) ++ "/1024 CPU Share") daemon.cpuShare 0 1024 10 (UpdateCPUShare daemonid)
+                    [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| daemon.cpuShare) ++ "/" ++ (container.cpuShare |> String.fromInt) ++ " CPU Share") daemon.cpuShare 0 container.cpuShare 2 (UpdateCPUShare daemonid)
                     , hr [] []
-                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes daemon.memory) daemon.memory 50 8000 50 (UpdateMemory daemonid)
+                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes daemon.memory) daemon.memory 50 container.memory 50 (UpdateMemory daemonid)
                     ]
             ]
         |> Card.view
 
 
-view : Configuration.Daemons -> Int -> Html Msg
-view daemons containerId = 
+view : Configuration.Daemons -> Int -> Configuration.Container -> Html Msg
+view daemons containerId container = 
     let
         kvPairs = daemonsForContainer daemons containerId
-        data = List.map viewDaemon kvPairs
+        data = List.map (viewDaemon container) kvPairs
     in
         div [] [ Html.map ConfigurationMsg (
                     Button.button [ 
