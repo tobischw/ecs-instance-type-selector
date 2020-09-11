@@ -27,10 +27,6 @@ type alias ContainerData =
     }
 
 
-
--- TODO: Figure out how to do fetching and integrating the previous AWS EC2 API/decoders
-
-
 type Msg
     = PlaceHolderMsg
 
