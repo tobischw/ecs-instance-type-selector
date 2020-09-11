@@ -8,6 +8,9 @@ let app = Elm.App.Main.init({
   flags : { basePath }
 });
 
+console.log(process.env)
+console.log(process.env.ELM_APP_ACCESS_KEY_ID)
+
 let pricing = new AWS.Pricing({
   region: 'us-east-1',
   apiVersion: '2017-10-15',

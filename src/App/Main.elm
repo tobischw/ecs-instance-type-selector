@@ -1,8 +1,8 @@
-port module App.Main exposing (receiveInstances, requestInstances)
+module App.Main exposing (..)
 
-import App.ApiDecoders as ApiDecoders
 import App.Cluster as Cluster
 import App.Configuration as Configuration
+import App.Instances as Instances
 import App.Container as Container
 import App.Results as Results
 import App.Service as Service
@@ -27,15 +27,6 @@ import Url.Parser as Url exposing ((</>), Parser)
 
 
 
----- PORTS ----
-
-
-port requestInstances : ( String, Int ) -> Cmd msg
-
-
-port receiveInstances : (String -> msg) -> Sub msg
-
-
 
 ---- MODEL ----
 
@@ -55,39 +46,14 @@ type alias Model =
     { flags : Flags
     , navigation : Navigation
     , configuration : Configuration.Model
+    , instances : Instances.Model
     , error : Maybe String
-    , instances : List ApiDecoders.PriceListing 
     , settings : Settings.Model
     }
 
 
 -- These Instances model should probably moved in to their own files
 -- at some point
-type alias Instances = List Instance
-type alias Instance = 
-     { sku: String                 -- The SKU (ID) of the EC2 instance
-     , instanceType: String        -- The instance type (e.g. "m5ad.12xlarge")
-     , location: String            -- This relates to the region, but for now, probably a good idea to store this (e.g. "EU (Ireland)")
-     , operatingSystem: String     -- Probably a good idea to have this for future purposes
-     , memory: Int                 -- The memory available, in MB. Make sure we convert to MB from whatever the API gives us.
-     , vCPU: Int                   -- Number of vCPUs that this instance has available
-     , prices: List PricingInfo
-     }
-
-type Price         -- Filter out any non-USD data
-     = Upfront Float
-     | Hourly Float
-
-type PricingType 
-    = OnDemand 
-    | Reserved
-
-type alias PricingInfo = 
-     { pricingType: PricingType
-     , offerTermCode: String    -- The code we need to show for pricing
-     , price: Price
-     }
-
 
 type Detail
     = None
@@ -107,13 +73,13 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | ConfigurationMsg Configuration.Msg
+    | InstancesMsg Instances.Msg
     | ClusterMsg Cluster.Msg
     | ServiceMsg Service.Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
     | ResultsMsg Results.Msg
-    | LoadInstances (Result Json.Decode.Error ApiDecoders.ProductsResponse)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -143,6 +109,13 @@ update msg ({ flags, navigation } as model) =
             , Cmd.none
             )
 
+        InstancesMsg instancesMsg ->
+            let
+                msgWithCmd =
+                    Instances.update instancesMsg model.instances
+            in
+            ( { model | instances = first msgWithCmd }, Cmd.map InstancesMsg (second msgWithCmd))
+
         ConfigurationMsg configurationMsg ->
             ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
 
@@ -168,13 +141,7 @@ update msg ({ flags, navigation } as model) =
         ResultsMsg resultsMsg ->
             ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
 
-        LoadInstances (Ok response) ->
-            ( { model | instances = model.instances ++ response.priceList }, requestInstances ( response.nextToken, numInstancesBatched ) )
-
-        LoadInstances (Err err) ->
-            ( model, Cmd.none )
-
-
+        
 urlToDetail : String -> Url -> Detail
 urlToDetail basePath url =
     let
@@ -317,7 +284,8 @@ subscriptions model =
     Sub.batch
         [ Navbar.subscriptions model.navigation.navbarState NavbarMsg
         , Sub.map SettingsMsg <| Settings.subscriptions model.settings
-        , receiveInstances (LoadInstances << decodeString ApiDecoders.productsResponseDecoder)
+        , Sub.map InstancesMsg <| Instances.subscriptions model.instances
+        --, receiveInstances (LoadInstances << decodeString ApiDecoders.productsResponseDecoder)
         ]
 
 
@@ -325,9 +293,6 @@ subscriptions model =
 ---- PROGRAM ----
 
 
-numInstancesBatched : Int
-numInstancesBatched =
-    90
 
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -343,11 +308,11 @@ init ({ basePath } as flags) url key =
             , currentDetail = urlToDetail basePath url
             }
       , configuration = Configuration.init
-      , instances = []
+      , instances = Instances.init
       , error = Nothing
       , settings = Settings.init
       }
-    , Cmd.batch [ navbarCmd, requestInstances ( "", numInstancesBatched ) ]
+    , Cmd.batch [ navbarCmd, Instances.requestInstances ( "", Instances.numInstancesBatched ) ]
     )
 
 
