@@ -75,6 +75,13 @@ productsResponseDecoder =
         |> required "NextToken" string
 
 
+priceListingDecoder : Decoder PriceListing
+priceListingDecoder =
+    succeed PriceListing
+        |> required "product" productDecoder
+        |> required "terms" termsDecoder
+
+
 productDecoder : Decoder Product
 productDecoder =
     succeed Product

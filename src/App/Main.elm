@@ -56,9 +56,37 @@ type alias Model =
     , navigation : Navigation
     , configuration : Configuration.Model
     , error : Maybe String
-    , instances : List ApiDecoders.PriceListing
+    , instances : List ApiDecoders.PriceListing 
     , settings : Settings.Model
     }
+
+
+-- These Instances model should probably moved in to their own files
+-- at some point
+type alias Instances = List Instance
+type alias Instance = 
+     { sku: String                 -- The SKU (ID) of the EC2 instance
+     , instanceType: String        -- The instance type (e.g. "m5ad.12xlarge")
+     , location: String            -- This relates to the region, but for now, probably a good idea to store this (e.g. "EU (Ireland)")
+     , operatingSystem: String     -- Probably a good idea to have this for future purposes
+     , memory: Int                 -- The memory available, in MB. Make sure we convert to MB from whatever the API gives us.
+     , vCPU: Int                   -- Number of vCPUs that this instance has available
+     , prices: List PricingInfo
+     }
+
+type Price         -- Filter out any non-USD data
+     = Upfront Float
+     | Hourly Float
+
+type PricingType 
+    = OnDemand 
+    | Reserved
+
+type alias PricingInfo = 
+     { pricingType: PricingType
+     , offerTermCode: String    -- The code we need to show for pricing
+     , price: Price
+     }
 
 
 type Detail
@@ -144,7 +172,6 @@ update msg ({ flags, navigation } as model) =
             ( { model | instances = model.instances ++ response.priceList }, requestInstances ( response.nextToken, numInstancesBatched ) )
 
         LoadInstances (Err err) ->
-            -- Do this better - show error as a toast or popup somehow.
             ( model, Cmd.none )
 
 
