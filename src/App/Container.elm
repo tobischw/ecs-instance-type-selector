@@ -109,7 +109,7 @@ view id container daemons =
                     , hr [] []
                     , Util.viewFormRowSlider "Bandwidth" ((String.fromInt <| container.bandwidth) ++ " GiB/sec") container.bandwidth 1 25 1 (UpdateBandwidth id)
                     , hr [] []
-                    , Daemon.view daemons id
+                    , Html.map DaemonMsg (Daemon.view daemons id)
                     ]
             ]
 
