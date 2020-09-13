@@ -1,6 +1,7 @@
 module App.Container exposing (Model, Msg(..), update, view)
 
 import App.Configuration as Configuration
+import App.Daemon as Daemon
 import App.Util as Util
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
@@ -22,11 +23,15 @@ type Msg
     | UpdateEBS Int Bool
     | UpdateBandwidth Int String
     | ToggleMoreMemory Int Bool
+    | DaemonMsg Daemon.Msg
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        DaemonMsg daemonMsg ->
+            Daemon.update daemonMsg model
+
         UpdateCPUShare id value ->
             { model | containers = Dict.update id (Maybe.map (\container -> { container | cpuShare = Util.toInt value })) model.containers }
 
@@ -86,8 +91,8 @@ determineContainerMemStep extraMemEnabled =
 
 
 
-view : Int -> Configuration.Container -> Html Msg
-view id container =
+view : Int -> Configuration.Container -> Configuration.Daemons -> Html Msg
+view id container daemons =
     Card.config []
         |> Card.header [] [ text container.name ]
         |> Card.block []
@@ -103,6 +108,10 @@ view id container =
                     , Util.viewFormRowSlider "IOOPs" ((String.fromInt <| container.ioops) ++ " MiB/sec") container.ioops 4750 19000 1000 (UpdateIoops id)
                     , hr [] []
                     , Util.viewFormRowSlider "Bandwidth" ((String.fromInt <| container.bandwidth) ++ " GiB/sec") container.bandwidth 1 25 1 (UpdateBandwidth id)
+                    , hr [] []
+                    , Daemon.view daemons id
                     ]
             ]
+
         |> Card.view
+        
