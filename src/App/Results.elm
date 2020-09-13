@@ -42,7 +42,6 @@ type alias DaemonBOX =
     }
 
 
-
 view : Model -> Html msg
 view model =
     div [ class "pt-1", class "px-3" ]
