@@ -45,8 +45,9 @@ type alias Product =
 type alias Attributes =
     { memory : String
     , instanceType : String
-    , operatingSystem: String
-    , physicalProcessor : String
+    , location : String
+    , operatingSystem : String
+    , vCPU : String
     }
 
 type alias Terms = 
@@ -94,6 +95,7 @@ attributesDecoder =
     succeed Attributes
         |> required "memory" string
         |> required "instanceType" string
+        |> required "location" string
         |> required "operatingSystem" string
         |> required "vcpu" string
 

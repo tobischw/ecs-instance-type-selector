@@ -2,6 +2,7 @@ module App.Results exposing (..)
 
 import App.Configuration as Configuration
 import App.Util as Util
+import App.Instances as Instances exposing (Instance, Instances)
 import Dict exposing (Dict)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text)
 import Html.Attributes exposing (class, style)
@@ -18,8 +19,11 @@ heightScale : Float
 heightScale = 0.0175
 
 
-type alias Model =
-    Configuration.Model
+type alias Model = 
+    {
+     configuration : Configuration.Model
+    , instances: Instances.Model
+    }
 
 
 type alias ContainerData =
@@ -27,24 +31,14 @@ type alias ContainerData =
     }
 
 
-type Msg
-    = PlaceHolderMsg
 
-
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        PlaceHolderMsg ->
-            model
-
-
-view : Model -> Html Msg
+view : Model -> Html msg
 view model =
     div [ class "pt-1", class "px-3" ]
         [ Util.viewColumnTitle
             "Packing"
         , hr [] []
-        , viewChart model
+        , viewResults model
         ]
 
 
@@ -62,15 +56,21 @@ convertContainerToBox container =
     }
 
 
-viewChart : Model -> Html Msg
-viewChart model =
+viewResults : Model -> Html msg
+viewResults model =
     let
         convertedContainers =
-            List.map convertContainerToBox (Dict.values model.containers)
+            List.map convertContainerToBox (Dict.values model.configuration.containers)
 
         packingData =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
+
+        vCPUs = inPixels packingData.width |> round
+
+        memory = inPixels packingData.height |> round
+
+        suggestions = model.instances |> List.filter (suitableInstance memory) |> List.sortBy .memory
 
     in
     div []
@@ -84,13 +84,31 @@ viewChart model =
         , br [] []
         , strong [] [ text "Instance Type for Service:"]
         , br [] []
-        , text ("Ideal CPU share: " ++ (packingData.width |> pxToString) ++ " vCPUs")
+        , text ("Ideal CPU share: " ++ String.fromInt vCPUs ++ " vCPUs")
         , br [] []
-        , text ("Ideal memory: " ++ (packingData.height |> pxToString) ++ " MiB") -- use Util.formatMegabytes for this
+        , text ("Ideal memory: " ++ String.fromInt memory ++ " MiB") -- use Util.formatMegabytes for this
+        , hr [] []
+        , viewSuggestions suggestions
         ]
 
 
-viewChartItem : PackedBox Float Pixels ContainerData -> List (Svg Msg)
+suitableInstance : Int -> Instance -> Bool
+suitableInstance memory instance =
+    instance.memory >= memory
+
+
+viewSuggestions : Instances -> Html msg 
+viewSuggestions instances = 
+    div []
+        (List.map viewInstance instances)
+
+viewInstance : Instance -> Html msg
+viewInstance instance =
+    div [] [
+        text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB")
+    ]
+
+viewChartItem : PackedBox Float Pixels ContainerData -> List (Svg msg)
 viewChartItem box =
     [ g
         [ transform ("translate(" ++ pxToString (Quantity.multiplyBy widthScale box.x) ++ ", " ++ pxToString (Quantity.multiplyBy heightScale box.y) ++ ")")

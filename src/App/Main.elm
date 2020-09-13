@@ -79,7 +79,7 @@ type Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
-    | ResultsMsg Results.Msg
+   -- | ResultsMsg Results.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -138,8 +138,8 @@ update msg ({ flags, navigation } as model) =
             in
             ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
-        ResultsMsg resultsMsg ->
-            ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
+       -- ResultsMsg resultsMsg ->
+        --    ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
 
         
 urlToDetail : String -> Url -> Detail
@@ -194,7 +194,7 @@ viewContent model =
             , viewDetailColumn model
             , Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ]
                 [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
-                , Html.map ResultsMsg (Results.view model.configuration)
+                , Results.view (Results.Model model.configuration model.instances)
                 ]
             ]
         ]
