@@ -24,9 +24,9 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         UpdateCPUShare daemonid val ->
-            model
+            { model | daemons = Dict.update daemonid (Maybe.map (\daemon -> {daemon | cpuShare = Util.toInt val})) model.daemons}
         UpdateMemory daemonid val ->
-            model
+            { model | daemons = Dict.update daemonid (Maybe.map (\daemon -> {daemon | memory = Util.toInt val})) model.daemons}
 
 daemonsForContainer : Configuration.Daemons -> Int -> List (Int, Configuration.Daemon)
 daemonsForContainer daemons containerid =
