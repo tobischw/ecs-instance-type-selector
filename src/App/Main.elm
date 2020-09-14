@@ -79,7 +79,6 @@ type Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
-   -- | ResultsMsg Results.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -138,9 +137,6 @@ update msg ({ flags, navigation } as model) =
             in
             ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
-       -- ResultsMsg resultsMsg ->
-        --    ( { model | configuration = Results.update resultsMsg model.configuration }, Cmd.none )
-
         
 urlToDetail : String -> Url -> Detail
 urlToDetail basePath url =
@@ -192,7 +188,7 @@ viewContent model =
                 [ Html.map ConfigurationMsg (Configuration.view model.configuration)
                 ]
             , viewDetailColumn model
-            , Grid.col [ Col.md3, Col.attrs [ class "p-0" ] ]
+            , Grid.col [ Col.md4, Col.attrs [ class "p-0" ] ]
                 [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
                 , Results.view (Results.Model model.configuration model.instances)
                 ]
@@ -285,7 +281,6 @@ subscriptions model =
         [ Navbar.subscriptions model.navigation.navbarState NavbarMsg
         , Sub.map SettingsMsg <| Settings.subscriptions model.settings
         , Sub.map InstancesMsg <| Instances.subscriptions model.instances
-        --, receiveInstances (LoadInstances << decodeString ApiDecoders.productsResponseDecoder)
         ]
 
 

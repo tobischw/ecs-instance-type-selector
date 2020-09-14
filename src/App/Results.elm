@@ -4,9 +4,11 @@ import App.Configuration as Configuration
 import App.Util as Util
 import App.Instances as Instances exposing (Instance, Instances)
 import Dict exposing (Dict)
-import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text)
+import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li)
 import Html.Attributes exposing (class, style)
 import Pack exposing (..)
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
 import Pixels exposing (..)
 import Quantity exposing (Quantity(..))
 import Svg exposing (Svg, g, rect, svg, text_)
@@ -36,7 +38,7 @@ view : Model -> Html msg
 view model =
     div [ class "pt-1", class "px-3" ]
         [ Util.viewColumnTitle
-            "Packing"
+            "Results"
         , hr [] []
         , viewResults model
         ]
@@ -70,7 +72,7 @@ viewResults model =
 
         memory = inPixels packingData.height |> round
 
-        suggestions = model.instances |> List.filter (suitableInstance memory) |> List.sortBy .memory
+        suggestions = model.instances |> List.filter (suitableInstance memory) |> List.sortBy .memory |> List.take 3
 
     in
     div []
@@ -88,6 +90,8 @@ viewResults model =
         , br [] []
         , text ("Ideal memory: " ++ String.fromInt memory ++ " MiB") -- use Util.formatMegabytes for this
         , hr [] []
+        , strong [] [ text "Top 3 suggestions:"]
+        , br [] []
         , viewSuggestions suggestions
         ]
 
@@ -105,7 +109,10 @@ viewSuggestions instances =
 viewInstance : Instance -> Html msg
 viewInstance instance =
     div [] [
-        text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB")
+        Card.config []
+        |> Card.block []
+            [ Block.text [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB") ] ]
+        |> Card.view
     ]
 
 viewChartItem : PackedBox Float Pixels ContainerData -> List (Svg msg)
