@@ -3,8 +3,7 @@ FROM node:14.10.0-stretch-slim
 WORKDIR /ecs-instance-type-selector
 COPY . .
 
-RUN npm install elm
-RUN npm install create-elm-app
+RUN npm install -g serve --unsafe-perm=true
 
 EXPOSE 3000
-CMD elm-app start
+CMD serve -s build --port 3000
