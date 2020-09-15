@@ -6,4 +6,4 @@ COPY . .
 RUN npm install -g serve --unsafe-perm=true
 
 EXPOSE 3000
-CMD serve -s build --port 3000
+CMD serve -s build -port 3000
