@@ -93,11 +93,11 @@ productDecoder =
 attributesDecoder : Decoder Attributes
 attributesDecoder =
     succeed Attributes
-        |> required "memory" string
-        |> required "instanceType" string
-        |> required "location" string
-        |> required "operatingSystem" string
-        |> required "vcpu" string
+        |> optional "memory" string ""
+        |> optional "instanceType" string "Unknown"
+        |> optional "location" string "Unknown"
+        |> optional "operatingSystem" string "Unknown"
+        |> optional "vcpu" string ""
 
 
 termsDecoder : Decoder Terms

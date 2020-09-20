@@ -30,7 +30,7 @@ type alias Instance =
      , operatingSystem: String     -- Probably a good idea to have this for future purposes
      , memory: Int                 -- The memory available, in MB. Make sure we convert to MB from whatever the API gives us.
      , vCPU: Int                   -- Number of vCPUs that this instance has available
-     --, prices: List PricingInfo
+     , prices: List PricingInfo
      }
 
 type Price         -- Filter out any non-USD data
@@ -61,8 +61,12 @@ subscriptions model =
 
 numInstancesBatched : Int
 numInstancesBatched =
-    90
+    100
 
+
+maxInstancesTesting : Int 
+maxInstancesTesting =
+    2000
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -70,10 +74,21 @@ update msg model =
         LoadInstances (Ok response) ->
             let
                 simplified = mapToInstances response.priceList
+                totalCount = List.length model
+
+                nextCommand =
+                -- Ensure we do not exceed our max limit of instances
+                    if totalCount < maxInstancesTesting - numInstancesBatched then
+                        requestInstances ( response.nextToken, numInstancesBatched )
+                    else
+                        Cmd.none
             in
-            ( model ++ simplified, requestInstances ( response.nextToken, numInstancesBatched ) )
+            ( model ++ simplified, nextCommand )
 
         LoadInstances (Err err) ->
+            let
+                _ = Debug.log "Instance Load Error" err
+            in
             ( model, Cmd.none )
 
 
@@ -82,6 +97,11 @@ update msg model =
 mapToInstances : List ApiDecoders.PriceListing -> Instances
 mapToInstances original =
     List.map priceListingToInstance original 
+
+
+isSuitableInstance : Int -> Int -> Instance -> Bool
+isSuitableInstance vcpu memory instance =
+    instance.memory >= memory
 
 
 priceListingToInstance : ApiDecoders.PriceListing -> Instance
@@ -95,8 +115,10 @@ priceListingToInstance original =
         operatingSystem = attributes.operatingSystem
         memory = attributes.memory |> convertMemoryStringToMiB
         vCPU = attributes.vCPU |> String.toInt |> Maybe.withDefault 0
+
+        prices = [] 
     in 
-        (Instance sku instanceType location operatingSystem memory vCPU)
+        (Instance sku instanceType location operatingSystem memory vCPU prices)
 
 
 convertMemoryStringToMiB : String -> Int

@@ -2,7 +2,7 @@ module App.Results exposing (..)
 
 import App.Configuration as Configuration
 import App.Util as Util
-import App.Instances as Instances exposing (Instance, Instances)
+import App.Instances as Instances exposing (Instance, Instances, isSuitableInstance)
 import Dict exposing (Dict)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li)
 import Html.Attributes exposing (class, style)
@@ -40,7 +40,7 @@ view model =
         [ Util.viewColumnTitle
             "Results"
         , hr [] []
-        , viewResults model
+        , viewResultsForService model
         ]
 
 
@@ -58,8 +58,8 @@ convertContainerToBox container =
     }
 
 
-viewResults : Model -> Html msg
-viewResults model =
+viewResultsForService : Model -> Html msg
+viewResultsForService model =
     let
         convertedContainers =
             List.map convertContainerToBox (Dict.values model.configuration.containers)
@@ -68,37 +68,43 @@ viewResults model =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
 
-        vCPUs = inPixels packingData.width |> round
+        vcpu = inPixels packingData.width |> round
 
         memory = inPixels packingData.height |> round
 
-        suggestions = model.instances |> List.filter (suitableInstance memory) |> List.sortBy .memory |> List.take 3
-
+        showSuggestions = Dict.isEmpty model.configuration.containers == False
+        suggestions = 
+            if showSuggestions then
+                model.instances |> List.filter (isSuitableInstance vcpu memory) |> List.sortBy .memory |> List.take 3
+            else
+                []
     in
     div []
-        [ svg
+        [ 
+          if showSuggestions then 
+          div [] [  
+          strong [] [ text "Service:"]
+        , br [] []
+        , svg
             [ width (Quantity.multiplyBy widthScale packingData.width |> pxToString)
             , height (Quantity.multiplyBy heightScale packingData.height |> pxToString)
             , style "background-color" "#eee"
             , style "border" "thin solid #a9a9a9"
             ]
-            (List.concatMap viewChartItem packingData.boxes)
+            (List.concatMap viewChartSlice packingData.boxes)
         , br [] []
-        , strong [] [ text "Instance Type for Service:"]
-        , br [] []
-        , text ("Ideal CPU share: " ++ String.fromInt vCPUs ++ " vCPUs")
+        , text ("Ideal CPU share: " ++ String.fromInt vcpu ++ " vCPUs")
         , br [] []
         , text ("Ideal memory: " ++ String.fromInt memory ++ " MiB") -- use Util.formatMegabytes for this
         , hr [] []
-        , strong [] [ text "Top 3 suggestions:"]
+        , strong [] [ text "Top 3 Suggestions:"]
         , br [] []
-        , viewSuggestions suggestions
+        , viewSuggestions suggestions 
+        , hr [] [] ]
+        else
+            span [] [ text "No results or suggestions available yet."]
         ]
 
-
-suitableInstance : Int -> Instance -> Bool
-suitableInstance memory instance =
-    instance.memory >= memory
 
 
 viewSuggestions : Instances -> Html msg 
@@ -108,15 +114,15 @@ viewSuggestions instances =
 
 viewInstance : Instance -> Html msg
 viewInstance instance =
-    div [] [
+    div [ style "margin-top" "10px"] [
         Card.config []
         |> Card.block []
             [ Block.text [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB") ] ]
         |> Card.view
     ]
 
-viewChartItem : PackedBox Float Pixels ContainerData -> List (Svg msg)
-viewChartItem box =
+viewChartSlice : PackedBox Float Pixels ContainerData -> List (Svg msg)
+viewChartSlice box =
     [ g
         [ transform ("translate(" ++ pxToString (Quantity.multiplyBy widthScale box.x) ++ ", " ++ pxToString (Quantity.multiplyBy heightScale box.y) ++ ")")
         ]
