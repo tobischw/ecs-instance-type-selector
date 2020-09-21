@@ -2,7 +2,6 @@ port module App.Instances exposing (..)
 
 import App.ApiDecoders as ApiDecoders
 import Json.Decode exposing (Error(..), decodeString)
-import Html exposing (input)
 import Array
 
 ---- PORTS ----
@@ -30,23 +29,13 @@ type alias Instance =
      , operatingSystem: String     -- Probably a good idea to have this for future purposes
      , memory: Int                 -- The memory available, in MB. Make sure we convert to MB from whatever the API gives us.
      , vCPU: Int                   -- Number of vCPUs that this instance has available
-     , prices: List PricingInfo
+     , prices: List Price
      }
 
 type Price         -- Filter out any non-USD data
      = Upfront Float
      | Hourly Float
 
-type PricingType 
-    = OnDemand 
-    | Reserved
-
-type alias PricingInfo = 
-     { pricingType: PricingType
-     , offerTermCode: String    -- The code we need to show for pricing
-     , price: Price
-     }
- 
 
 -- Setup
 
@@ -115,10 +104,26 @@ priceListingToInstance original =
         operatingSystem = attributes.operatingSystem
         memory = attributes.memory |> convertMemoryStringToMiB
         vCPU = attributes.vCPU |> String.toInt |> Maybe.withDefault 0
-
-        prices = [] 
+        priceDimensions = termsToPriceDimensions original.terms.onDemand
+        prices = List.map priceDimensionToPriceInfo priceDimensions
     in 
         (Instance sku instanceType location operatingSystem memory vCPU prices)
+
+
+termsToPriceDimensions : List ApiDecoders.Term -> List ApiDecoders.PriceDimension 
+termsToPriceDimensions terms =
+    List.concatMap (\term -> term.priceDimensions) terms
+
+
+priceDimensionToPriceInfo : ApiDecoders.PriceDimension -> Price
+priceDimensionToPriceInfo dimension =
+    let 
+        unitPrice = String.toFloat dimension.pricePerUnit.usd |> Maybe.withDefault 0
+    in
+        if dimension.unit == "Hrs" then
+            Hourly unitPrice
+        else
+            Upfront unitPrice
 
 
 convertMemoryStringToMiB : String -> Int

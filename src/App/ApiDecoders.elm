@@ -1,4 +1,4 @@
-module App.ApiDecoders exposing (Attributes, PriceListing, Product, ProductsResponse, productsResponseDecoder, PriceDimension, PricePerUnit)
+module App.ApiDecoders exposing (Attributes, PriceListing, Product, ProductsResponse, productsResponseDecoder, PriceDimension, PricePerUnit, Term)
 
 import Json.Decode exposing (Decoder, map, list, string, succeed, keyValuePairs)
 import Json.Decode.Pipeline exposing (hardcoded, required, optional)
@@ -17,10 +17,6 @@ type alias ProductsResponse =
 type alias PriceListing =
     { product : Product
     , terms: Terms
-    }
-
-type alias PriceDimensions =
-    { priceDimensions: List PriceDimension
     }
 
 type alias PriceDimension =
@@ -51,18 +47,14 @@ type alias Attributes =
     }
 
 type alias Terms = 
-    { onDemand: TermsCollection
+    { onDemand: List Term
    -- , reserved: List Term
-    }
-
-type alias TermsCollection = 
-    { terms: List Term
     }
 
     
 type alias Term =
     { name: String,
-      priceDimensions: PriceDimensions,
+      priceDimensions: List PriceDimension,
       offerTermCode: String 
     }
 
@@ -103,18 +95,18 @@ attributesDecoder =
 termsDecoder : Decoder Terms
 termsDecoder =
     succeed Terms
-        |> optional "OnDemand" unknownTermsKeyDecoder (TermsCollection [])
+        |> optional "OnDemand" unknownTermsKeyDecoder []
 
 
-unknownTermsKeyDecoder : Decoder TermsCollection
+unknownTermsKeyDecoder : Decoder (List Term)
 unknownTermsKeyDecoder =
     keyValuePairs termDecoder
         |> map buildTerms
 
 
-buildTerms : List ( String, Term ) -> TermsCollection
+buildTerms : List ( String, Term ) -> (List Term)
 buildTerms terms =
-    TermsCollection (List.map (\(name, term) -> { term | name = name }) terms)
+    List.map (\(name, term) -> { term | name = name }) terms
 
 
 termDecoder : Decoder Term
@@ -127,12 +119,12 @@ termDecoder =
 
 -- Price Dimensions
 
-buildPriceDimensions : List ( String, PriceDimension ) -> PriceDimensions
+buildPriceDimensions : List ( String, PriceDimension ) -> List PriceDimension
 buildPriceDimensions priceDimensions =
-    PriceDimensions (List.map (\(name, priceDimension) -> { priceDimension | name = name }) priceDimensions)
+    List.map (\(name, priceDimension) -> { priceDimension | name = name }) priceDimensions
 
 
-unknownPriceDimensionsKeyDecoder : Decoder PriceDimensions
+unknownPriceDimensionsKeyDecoder : Decoder (List PriceDimension)
 unknownPriceDimensionsKeyDecoder =
    keyValuePairs priceDimensionDecoder
         |> map buildPriceDimensions

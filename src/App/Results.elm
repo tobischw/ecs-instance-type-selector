@@ -63,15 +63,11 @@ viewResultsForService model =
     let
         convertedContainers =
             List.map convertContainerToBox (Dict.values model.configuration.containers)
-
         packingData =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
-
         vcpu = inPixels packingData.width |> round
-
         memory = inPixels packingData.height |> round
-
         showSuggestions = Dict.isEmpty model.configuration.containers == False
         suggestions = 
             if showSuggestions then
@@ -106,20 +102,33 @@ viewResultsForService model =
         ]
 
 
-
 viewSuggestions : Instances -> Html msg 
 viewSuggestions instances = 
     div []
         (List.map viewInstance instances)
+
 
 viewInstance : Instance -> Html msg
 viewInstance instance =
     div [ style "margin-top" "10px"] [
         Card.config []
         |> Card.block []
-            [ Block.text [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB") ] ]
+            [ Block.text [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB") ] 
+            , Block.custom <| div [] (List.map viewPrice instance.prices)
+            ]
         |> Card.view
     ]
+
+
+viewPrice : Instances.Price -> Html msg
+viewPrice price =
+    case price of
+        Instances.Upfront value ->
+            span [] [ text <| "$" ++ String.fromFloat value ++ " upfront" ]
+
+        Instances.Hourly value ->
+            span [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
+
 
 viewChartSlice : PackedBox Float Pixels ContainerData -> List (Svg msg)
 viewChartSlice box =
