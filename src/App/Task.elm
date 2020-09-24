@@ -22,6 +22,7 @@ type alias Model =
 type Msg
     = UpdateMinTasks Int String
     | UpdateMaxTasks Int String
+    | UpdateNominalTasks Int String
 
 
 
@@ -37,6 +38,9 @@ update msg model =
         UpdateMaxTasks id value ->
             { model | services = Dict.update id (Maybe.map (\service -> { service | maxTasks = Util.toInt value })) model.services }
 
+        UpdateNominalTasks id value ->
+            { model | services = Dict.update id (Maybe.map (\service -> { service | nominalTasks = Util.toInt value })) model.services }
+
 
 view : Int -> Configuration.Service -> Configuration.Containers -> Html Msg
 view id service containers =
@@ -47,6 +51,7 @@ view id service containers =
                 [ Block.custom <|
                     Form.form []
                         [ Util.viewFormRowSlider "Min. Tasks" ((String.fromInt <| service.minTasks) ++ " Tasks") service.minTasks 1 service.maxTasks 1 (UpdateMinTasks id)
+                        , Util.viewFormRowSlider "Nom. Tasks" ((String.fromInt <| service.nominalTasks) ++ " Tasks") service.nominalTasks service.minTasks service.maxTasks 1 (UpdateNominalTasks id)
                         , Util.viewFormRowSlider "Max. Tasks" ((String.fromInt <| service.maxTasks) ++ " Tasks") service.maxTasks service.minTasks 100 1 (UpdateMaxTasks id)
                         ]
                 ]
@@ -56,10 +61,10 @@ view id service containers =
             |> Card.block []
                 [ Block.custom <|
                     Form.form []
-                        [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers) ++ " GiB")
-                        , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers) ++ "/1024")
-                        , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers) ++ " GiB/sec")
-                        , Util.viewFormLabel "IO Total" "IO requirements for all containers in one task" (sumIoops containers)
+                        [ Util.viewFormLabel "Total Memory" "Total memory of all containers in this service combined." ((String.fromFloat <| sumMemory containers * toFloat service.nominalTasks) ++ " GiB")
+                        , Util.viewFormLabel "Total CPU Shares" "CPU Shares required for all containers in one task" ((String.fromInt <| sumCPUShare containers * service.nominalTasks) ++ "/1024")
+                        , Util.viewFormLabel "Total Bandwidth" "Bandwidth required for all containers in one task" ((String.fromInt <| sumBandwidth containers * service.nominalTasks) ++ " GiB/sec")
+                        , Util.viewFormLabel "IO Total" "IO requirements for all containers in one task" (sumIoops service containers)
                         ]
                 ]
             |> Card.view
@@ -81,8 +86,8 @@ sumBandwidth containers =
     List.sum (List.map (\container -> container.bandwidth) (Dict.values containers))
 
 
-sumIoops : Configuration.Containers -> String
-sumIoops containers =
+sumIoops : Configuration.Service -> Configuration.Containers -> String
+sumIoops service containers =
     let
         -- This feels like a lot of duplicated code
         containersWithEBS =
@@ -101,4 +106,4 @@ sumIoops containers =
         String.fromInt (List.length containersWithEBS) ++ " container(s) using EBS. Total: " ++ String.fromInt otherSum ++ "MiB/sec"
 
     else
-        String.fromInt otherSum ++ " MiB/sec"
+        String.fromInt (otherSum * service.nominalTasks) ++ " MiB/sec"

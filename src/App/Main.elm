@@ -264,7 +264,7 @@ viewDetail model =
 
         Container id ->
             Dict.get id model.configuration.containers
-                |> Maybe.map (\value -> Html.map ContainerMsg (Container.view id value))
+                |> Maybe.map (\value -> Html.map ContainerMsg (Container.view id value model.configuration.daemons))
                 |> Maybe.withDefault viewNotFoundDetail
 
         Settings ->
