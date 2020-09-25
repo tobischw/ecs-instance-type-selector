@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Containers, Model, Msg(..), PackingStrategy(..), Service, getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, getContainers, init, update, view)
 
 -- This is probably the only real "messy" file, could do with some refactoring and clean up
 
@@ -23,6 +23,7 @@ init =
     { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
     , services = Dict.fromList [ ] 
     , containers = Dict.fromList [ ] 
+    , daemons = Dict.fromList [ ]
     , autoIncrement = 0 -- Set this to 0 once we get rid of sample data
     }
 
@@ -38,25 +39,32 @@ type alias Clusters =
 type alias Containers =
     Dict Int Container
 
+type alias Daemons = 
+    Dict Int Daemon
+
 
 type alias Model =
     { clusters : Clusters
     , services : Services
     , containers : Containers
+    , daemons: Daemons
     , autoIncrement : Int
     }
 
 
 type Msg
     = AddCluster
-    | AddService Int
-    | AddContainer Int
-    | DeleteContainer Int
-    | DeleteService Int
-    | DeleteCluster Int
-    | ChangeContainerName Int String
-    | ChangeServiceName Int String
-    | ChangeClusterName Int String
+    | AddService Int -- ClusterId
+    | AddContainer Int -- ServiceId
+    | AddDaemon Int -- ContainerId
+    | DeleteContainer Int -- ContainerId
+    | DeleteService Int -- ServiceId
+    | DeleteCluster Int -- ClusterId
+    | DeleteDaemon Int -- DaemonId
+    | ChangeContainerName Int String -- ContainerId Name
+    | ChangeDaemonName Int String -- DaemonId Name
+    | ChangeServiceName Int String -- ServiceId Name
+    | ChangeClusterName Int String -- ClusterId Name
 
 
 type alias Cluster =
@@ -73,6 +81,7 @@ type alias Service =
     , packingStrategy : PackingStrategy
     , minTasks : Int
     , maxTasks : Int
+    , nominalTasks: Int
     }
 
 
@@ -93,6 +102,14 @@ type alias Container =
     }
 
 
+type alias Daemon = 
+    { memory: Int
+    , cpuShare: Int
+    , name: String
+    , containerId: Int
+    }
+
+
 generateId : Model -> Int
 generateId model =
     model.autoIncrement + 1
@@ -105,13 +122,24 @@ update msg model =
             { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", color = Util.randomColorString (Random.initialSeed model.autoIncrement), clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2 }, autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", color = Util.randomColorString (Random.initialSeed model.autoIncrement), clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks = 1 }, autoIncrement = generateId model }
 
         AddContainer serviceId ->
-            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, autoIncrement = generateId model }
+            let
+                daemonId = generateId model
+                daemons = model.daemons |> Dict.insert daemonId {name = "Daemon", containerId = model.autoIncrement, cpuShare = 0, memory = 0}
+            in
+            
+            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, daemons = daemons, autoIncrement = generateId model }
+
+        AddDaemon containerId -> 
+            { model | daemons = model.daemons |> Dict.insert model.autoIncrement {name = "Daemon", containerId = containerId, cpuShare = 0, memory = 0}, autoIncrement = generateId model }
 
         DeleteContainer containerId ->
             { model | containers = model.containers |> Dict.remove containerId }
+
+        DeleteDaemon daemonId -> 
+            { model | daemons = model.daemons |> Dict.remove daemonId }
 
         DeleteService serviceId ->
             let
@@ -139,6 +167,9 @@ update msg model =
 
         ChangeContainerName id value ->
             { model | containers = Dict.update id (Maybe.map (\container -> { container | name = value })) model.containers }
+
+        ChangeDaemonName id value -> 
+            { model | daemons = Dict.update id (Maybe.map (\daemon -> { daemon | name = value })) model.daemons}
 
         ChangeServiceName id value ->
             { model | services = Dict.update id (Maybe.map (\service -> { service | name = value })) model.services }
