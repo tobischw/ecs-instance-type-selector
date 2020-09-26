@@ -85,6 +85,7 @@ viewResultsForService model =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
         vcpu = inPixels packingData.width |> round
+        share = round <| (toFloat vcpu) / 1024
         memory = inPixels packingData.height |> round
         showSuggestions = Dict.isEmpty model.configuration.containers == False
         suggestions = 
@@ -110,7 +111,7 @@ viewResultsForService model =
             ]
             (List.concatMap viewChartSlice packingData.boxes)
         , br [] []
-        , text ("Ideal CPU share: " ++ String.fromInt vcpu ++ " vCPUs")
+        , text ("Ideal CPU share: " ++ String.fromInt share)
         , br [] []
         , text ("Ideal memory: " ++ String.fromInt memory ++ " MiB") -- use Util.formatMegabytes for this
         , hr [] []

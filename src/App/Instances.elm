@@ -3,6 +3,7 @@ port module App.Instances exposing (..)
 import App.ApiDecoders as ApiDecoders
 import Json.Decode exposing (Error(..), decodeString)
 import Array
+import Bootstrap.Utilities.Border exposing (rounded)
 
 ---- PORTS ----
 
@@ -90,7 +91,10 @@ mapToInstances original =
 
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =
-    instance.memory >= memory
+    let
+        share = round <| toFloat vcpu / 1024
+    in
+    instance.memory >= memory && instance.vCPU >= share
 
 
 priceListingToInstance : ApiDecoders.PriceListing -> Instance
