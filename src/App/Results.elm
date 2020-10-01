@@ -74,6 +74,9 @@ viewResultsForService model =
                 model.instances |> List.filter (isSuitableInstance vcpu memory) |> List.sortBy .memory |> List.take 3
             else
                 []
+
+        topSuggestion =
+            List.head suggestions
     in
     div []
         [ 

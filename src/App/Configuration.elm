@@ -126,11 +126,12 @@ update msg model =
 
         AddContainer serviceId ->
             let
+                containerId = generateId model
                 daemonId = generateId model
-                daemons = model.daemons |> Dict.insert daemonId {name = "Daemon", containerId = model.autoIncrement, cpuShare = 0, memory = 0}
+                daemons = model.daemons |> Dict.insert daemonId {name = "Daemon", containerId = containerId, cpuShare = 0, memory = 0}
             in
             
-            { model | containers = model.containers |> Dict.insert model.autoIncrement { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, daemons = daemons, autoIncrement = generateId model }
+            { model | containers = model.containers |> Dict.insert containerId { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, daemons = daemons, autoIncrement = containerId + 1 }
 
         AddDaemon containerId -> 
             { model | daemons = model.daemons |> Dict.insert model.autoIncrement {name = "Daemon", containerId = containerId, cpuShare = 0, memory = 0}, autoIncrement = generateId model }
