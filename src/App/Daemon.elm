@@ -1,4 +1,4 @@
-module App.Daemon exposing (Model, Msg(..), update, view)
+module App.Daemon exposing (Model, Msg(..), update, view, sumDaemonResources)
 
 import App.Configuration as Configuration
 import App.Util as Util
@@ -42,7 +42,16 @@ daemonsForContainer daemons containerid =
         filtered = Dict.filter (\_ daemon -> daemon.containerId == containerid) daemons
     in
         Dict.toList filtered
-    
+
+-- sumDeamonResources: allDaemons, containerId -> (cpuShares, memory)
+sumDaemonResources : Configuration.Daemons -> Int -> (Int, Int)
+sumDaemonResources allDaemons containerId =
+    let
+        daemons = daemonsForContainer allDaemons containerId
+        cpuShares = List.sum (List.map (\daemonTuple -> (Tuple.second daemonTuple).cpuShare) daemons)
+        memory = List.sum (List.map (\daemonTuple -> (Tuple.second daemonTuple).memory) daemons)
+    in
+        (cpuShares, memory)
 
 viewDaemon : (Int, Configuration.Daemon) -> Html Msg
 viewDaemon (daemonid, daemon) = 

@@ -109,6 +109,9 @@ view id container daemons =
                     , hr [] []
                     , Util.viewFormRowSlider "Bandwidth" ((String.fromInt <| container.bandwidth) ++ " GiB/sec") container.bandwidth 1 25 1 (UpdateBandwidth id)
                     , hr [] []
+                    , span [] [text (String.fromInt (Tuple.first (Daemon.sumDaemonResources daemons id)) ++ " Total Daemon CPU Shares")]
+                    , br [] []
+                    , span [] [text (String.fromInt (Tuple.second (Daemon.sumDaemonResources daemons id)) ++ "Mb Total Daemon Memory")]
                     , Html.map DaemonMsg (Daemon.view daemons id)
                     ]
             ]
