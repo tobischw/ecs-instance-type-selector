@@ -112,6 +112,7 @@ view id container daemons =
                     , span [] [text (String.fromInt (Tuple.first (Daemon.sumDaemonResources daemons id)) ++ " Total Daemon CPU Shares")]
                     , br [] []
                     , span [] [text (String.fromInt (Tuple.second (Daemon.sumDaemonResources daemons id)) ++ "Mb Total Daemon Memory")]
+                    , hr [] []
                     , Html.map DaemonMsg (Daemon.view daemons id)
                     ]
             ]
