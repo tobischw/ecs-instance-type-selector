@@ -47,7 +47,8 @@ daemonsForContainer daemons containerid =
 viewDaemon : (Int, Configuration.Daemon) -> Html Msg
 viewDaemon (daemonid, daemon) = 
         Card.config [ Card.attrs [Html.Attributes.class "mt-3"]]
-        |> Card.header [] [ text daemon.name ]
+        |> Card.header [] [ text daemon.name
+        , Html.map ConfigurationMsg (span [ class "ml-3 text-muted float-right clickable", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (Configuration.DeleteDaemon daemonid) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]) ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
@@ -66,7 +67,18 @@ view daemons containerId =
         kvPairs = daemonsForContainer daemons containerId
         data = List.map viewDaemon kvPairs
     in
-        div [] [ Html.map ConfigurationMsg (Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (Configuration.AddDaemon containerId) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text ""])
+        div [] [ Html.map ConfigurationMsg (
+                    Button.button [ 
+                            Button.outlineSecondary, Button.small, Button.attrs [ 
+                                    Html.Events.Extra.onClickPreventDefaultAndStopPropagation (
+                                            Configuration.AddDaemon containerId
+                                        ) 
+                                    ] 
+                                ]
+                                 [ 
+                                     FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text ""
+                                ]
+                    )
             , div [] data
         ]
         
