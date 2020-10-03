@@ -47,7 +47,7 @@ daemonsForContainer daemons containerid =
 viewDaemon : (Int, Configuration.Daemon) -> Html Msg
 viewDaemon (daemonid, daemon) = 
         Card.config [ Card.attrs [Html.Attributes.class "mt-3"]]
-        |> Card.header [] [ text daemon.name
+        |> Card.header [] [ Html.map ConfigurationMsg (input [ type_ "text", class "editable-label", value daemon.name, onChange (Configuration.ChangeDaemonName daemonid)] [])
         , Html.map ConfigurationMsg (span [ class "ml-3 text-muted float-right clickable", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (Configuration.DeleteDaemon daemonid) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]) ]
         |> Card.block []
             [ Block.custom <|
