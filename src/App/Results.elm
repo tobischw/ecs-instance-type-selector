@@ -13,11 +13,11 @@ import Bootstrap.Card.Block as Block
 import Pixels exposing (..)
 import Quantity exposing (Quantity(..))
 import Svg exposing (Svg, g, rect, svg, text_)
-import Svg.Attributes exposing (alignmentBaseline, fill, height, stroke, textAnchor, transform, width, x, y)
+import Svg.Attributes exposing (alignmentBaseline, fontSize, fill, height, stroke, textAnchor, transform, width, x, y)
 import App.Configuration exposing (Daemons)
 
 widthScale : Float
-widthScale = 0.35
+widthScale = 0.15
 
 heightScale : Float
 heightScale = 0.0175
@@ -87,14 +87,15 @@ viewResultsForService model =
         share = round <| toFloat vcpu / 1024
         memory = inPixels packingData.height |> round
         showSuggestions = Dict.isEmpty model.configuration.containers == False
-        suggestions = 
+
+        (topSuggestion, remainingSuggestions) = 
             if showSuggestions then
                 Instances.findOptimalSuggestions model.instances share memory 5
             else
-                []
+               (Instances.defaultInstance, []) 
 
-        topSuggestion =
-            List.head suggestions
+        topWidth = Quantity (toFloat topSuggestion.vCPU * 1024)
+        topHeight = Quantity (toFloat topSuggestion.memory)
     in
     div []
         [ 
@@ -103,8 +104,8 @@ viewResultsForService model =
           strong [] [ text "Service:"]
         , br [] []
         , svg
-            [ width (Quantity.multiplyBy widthScale packingData.width |> pxToString)
-            , height (Quantity.multiplyBy heightScale packingData.height |> pxToString)
+            [ width (Quantity.multiplyBy widthScale topWidth |> pxToString)
+            , height (Quantity.multiplyBy heightScale topHeight |> pxToString)
             , style "background-color" "#eee"
             , style "border" "thin solid #a9a9a9"
             ]
@@ -114,9 +115,11 @@ viewResultsForService model =
         , br [] []
         , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
         , hr [] []
-        , strong [] [ text "Top 5 Suggestions:"]
-        , br [] []
-        , viewSuggestions suggestions 
+        , strong [] [ text "Top Suggestion:"]
+        , viewInstance topSuggestion
+        , hr [] []
+        , strong [] [ text "Other Suggestions:"]
+        , viewSuggestions remainingSuggestions 
         , hr [] [] ]
         else
             span [] [ text "No results or suggestions available yet."]
@@ -190,6 +193,7 @@ viewDaemonSlice daemon =
             [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale daemon.width)))
             , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale daemon.height)))
             , textAnchor "middle"
+            , fontSize "12px"
             , alignmentBaseline "central"
             ]
             [ Svg.text daemon.name]

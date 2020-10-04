@@ -64,7 +64,7 @@ viewDaemon container (daemonid, daemon) =
                     -- these Util calls are a bit odd, but do make the code a bit more organized.
                     [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| daemon.cpuShare) ++ "/" ++ (container.cpuShare |> String.fromInt) ++ " CPU Share") daemon.cpuShare 0 container.cpuShare 2 (UpdateCPUShare daemonid)
                     , hr [] []
-                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes daemon.memory) daemon.memory 50 container.memory 50 (UpdateMemory daemonid)
+                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes daemon.memory ++ "/"  ++ Util.formatMegabytes container.memory) daemon.memory 50 container.memory 50 (UpdateMemory daemonid)
                     ]
             ]
         |> Card.view

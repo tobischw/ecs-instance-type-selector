@@ -5,6 +5,8 @@ import Json.Decode exposing (Error(..), decodeString)
 import Array
 import Bootstrap.Utilities.Border exposing (rounded)
 import Maybe.Extra exposing (..)
+import List.Extra exposing (..)
+import Html exposing (i)
 
 ---- PORTS ----
 
@@ -45,6 +47,19 @@ init : Model
 init = []
 
 
+defaultInstance : Instance
+defaultInstance =
+    {
+        sku = ""
+       , instanceType = ""
+       , location = ""
+       , operatingSystem = ""
+       , memory = 0
+       , vCPU = 0
+       , prices = []
+    }
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     receiveInstances (LoadInstances << decodeString ApiDecoders.productsResponseDecoder)
@@ -57,7 +72,7 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    2000
+    3000
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -91,13 +106,17 @@ mapToInstances original =
     values <| List.map priceListingToInstance original 
 
 
-findOptimalSuggestions: Instances -> Int -> Int -> Int -> Instances
+findOptimalSuggestions: Instances -> Int -> Int -> Int -> (Instance, Instances)
 findOptimalSuggestions instances vcpu memory numSuggestions =
-   instances 
-   |> List.filter (isSuitableInstance vcpu memory) 
-   |> List.sortBy .memory
-   |> List.sortBy .vCPU
-   |> List.take numSuggestions 
+   let 
+        suggestions = instances 
+            |> List.filter (isSuitableInstance vcpu memory) 
+            |> List.sortBy .memory
+            |> List.sortBy .vCPU
+            |> List.take numSuggestions
+        top = List.head suggestions |> Maybe.withDefault defaultInstance
+   in
+        (top, removeAt 0 suggestions)
 
 
 isSuitableInstance : Int -> Int -> Instance -> Bool
