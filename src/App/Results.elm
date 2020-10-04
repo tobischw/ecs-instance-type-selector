@@ -156,29 +156,42 @@ viewChartSlice box =
     [ g
         [ transform ("translate(" ++ pxToString (Quantity.multiplyBy widthScale box.x) ++ ", " ++ pxToString (Quantity.multiplyBy heightScale box.y) ++ ")")
         ]
-        [ rect
+        ([ rect
             [ x "0"
             , y "0"
             , width (pxToString (Quantity.multiplyBy widthScale box.width))
             , height (pxToString (Quantity.multiplyBy heightScale box.height))
             , stroke "#a9a9a9"
             , fill "#c6ecff"
-            ]
-            [
-                rect [ x "0"
-                    , y "0"
-                    , width "25px"
-                    , height "45px"
-                    , stroke "#a9a9a9"
-                    , fill "#c6ecff"
-                    ] []
-            ]
+            ] []
         , Svg.text_
             [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale box.width)))
             , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale box.height)))
             , textAnchor "middle"
             , alignmentBaseline "central"
             ]
-            [ Svg.text (box.data.name ++ List.foldl (\last item -> last ++ " " ++ item) "" (List.map (\item -> item.name) box.data.daemonBoxes))]
+            [ Svg.text box.data.name]
         ]
+        ++ List.map viewDaemonSlice box.data.daemonBoxes)
     ]
+
+viewDaemonSlice : DaemonBOX -> Svg msg 
+viewDaemonSlice daemon =
+    g [] [ 
+        rect [
+          x "0"
+        , y "0"
+        , width (pxToString (Quantity.multiplyBy widthScale daemon.width))
+        , height (pxToString (Quantity.multiplyBy heightScale daemon.height))
+        , stroke "red"
+        , fill "orange"
+        ] [] 
+        , Svg.text_
+            [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale daemon.width)))
+            , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale daemon.height)))
+            , textAnchor "middle"
+            , alignmentBaseline "central"
+            ]
+            [ Svg.text daemon.name]
+        ]
+      
