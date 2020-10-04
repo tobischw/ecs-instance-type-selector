@@ -3,6 +3,8 @@ port module App.Instances exposing (..)
 import App.ApiDecoders as ApiDecoders
 import Json.Decode exposing (Error(..), decodeString)
 import Array
+import Bootstrap.Utilities.Border exposing (rounded)
+import Maybe.Extra exposing (..)
 
 ---- PORTS ----
 
@@ -57,6 +59,7 @@ maxInstancesTesting : Int
 maxInstancesTesting =
     2000
 
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
@@ -85,15 +88,27 @@ update msg model =
 
 mapToInstances : List ApiDecoders.PriceListing -> Instances
 mapToInstances original =
-    List.map priceListingToInstance original 
+    values <| List.map priceListingToInstance original 
+
+
+findOptimalSuggestions: Instances -> Int -> Int -> Int -> Instances
+findOptimalSuggestions instances vcpu memory numSuggestions =
+   instances 
+   |> List.filter (isSuitableInstance vcpu memory) 
+   |> List.sortBy .memory
+   |> List.sortBy .vCPU
+   |> List.take numSuggestions 
 
 
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =
-    instance.memory >= memory
+    let
+        share = round <| toFloat vcpu / 1024
+    in
+    instance.memory >= memory && instance.vCPU >= share
 
 
-priceListingToInstance : ApiDecoders.PriceListing -> Instance
+priceListingToInstance : ApiDecoders.PriceListing -> Maybe Instance
 priceListingToInstance original =
     let
         product = original.product
@@ -107,7 +122,27 @@ priceListingToInstance original =
         priceDimensions = termsToPriceDimensions original.terms.onDemand
         prices = List.map priceDimensionToPriceInfo priceDimensions
     in 
-        (Instance sku instanceType location operatingSystem memory vCPU prices)
+        if memory > 0 && vCPU >= 0 && areValidPrices prices then
+            Just (Instance sku instanceType location operatingSystem memory vCPU prices)
+        else
+            Nothing
+
+
+areValidPrices : List Price -> Bool 
+areValidPrices prices =
+    if List.length prices > 0 then
+        List.all isValidPrice prices
+    else
+        False
+
+-- We should probably filter these out when we do the decoding, not here
+isValidPrice : Price -> Bool 
+isValidPrice price =
+    case price of
+        Upfront value ->
+            value > 0
+        Hourly value ->
+            value > 0
 
 
 termsToPriceDimensions : List ApiDecoders.Term -> List ApiDecoders.PriceDimension 

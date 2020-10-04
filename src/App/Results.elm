@@ -42,7 +42,6 @@ type alias DaemonBOX =
     }
 
 
-
 view : Model -> Html msg
 view model =
     div [ class "pt-1", class "px-3" ]
@@ -68,9 +67,9 @@ convertDaemonToBox daemon =
 convertContainerToBox : Model -> (Int, Configuration.Container) -> { data : ContainerData, height : Quantity Float Pixels, width : Quantity Float Pixels }
 convertContainerToBox model (containerId, container) =
     let 
-        deeeeeemons = Daemon.daemonsForContainer model.configuration.daemons containerId
+        daemons = Daemon.daemonsForContainer model.configuration.daemons containerId
     in
-        { data = { name = container.name, daemonBoxes = List.map (\tupl -> convertDaemonToBox (Tuple.second tupl)) deeeeeemons }
+        { data = { name = container.name, daemonBoxes = List.map (\tupl -> convertDaemonToBox (Tuple.second tupl)) daemons }
         , height = pixels (toFloat container.memory)
         , width = pixels (toFloat container.cpuShare)
         }
@@ -85,11 +84,12 @@ viewResultsForService model =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
         vcpu = inPixels packingData.width |> round
+        share = round <| toFloat vcpu / 1024
         memory = inPixels packingData.height |> round
         showSuggestions = Dict.isEmpty model.configuration.containers == False
         suggestions = 
             if showSuggestions then
-                model.instances |> List.filter (isSuitableInstance vcpu memory) |> List.sortBy .memory |> List.take 3
+                Instances.findOptimalSuggestions model.instances share memory 5
             else
                 []
 
@@ -110,11 +110,11 @@ viewResultsForService model =
             ]
             (List.concatMap viewChartSlice packingData.boxes)
         , br [] []
-        , text ("Ideal CPU share: " ++ String.fromInt vcpu ++ " vCPUs")
+        , text ("Ideal CPU share: " ++ String.fromInt share)
         , br [] []
-        , text ("Ideal memory: " ++ String.fromInt memory ++ " MiB") -- use Util.formatMegabytes for this
+        , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
         , hr [] []
-        , strong [] [ text "Top 3 Suggestions:"]
+        , strong [] [ text "Top 5 Suggestions:"]
         , br [] []
         , viewSuggestions suggestions 
         , hr [] [] ]
@@ -134,7 +134,7 @@ viewInstance instance =
     div [ style "margin-top" "10px"] [
         Card.config []
         |> Card.block []
-            [ Block.text [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> String.fromInt) ++ "MiB") ] 
+            [ Block.text [] [ strong [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> Util.formatMegabytes) ++ " (" ++ instance.operatingSystem ++")") ] ] 
             , Block.custom <| div [] (List.map viewPrice instance.prices)
             ]
         |> Card.view
@@ -145,10 +145,10 @@ viewPrice : Instances.Price -> Html msg
 viewPrice price =
     case price of
         Instances.Upfront value ->
-            span [] [ text <| "$" ++ String.fromFloat value ++ " upfront" ]
+            span [] [ text <| "OnDemand: $" ++ String.fromFloat value ++ " upfront" ]
 
         Instances.Hourly value ->
-            span [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
+            span [] [ text <| "OnDemand: $" ++ String.fromFloat value ++ "/hr" ]
 
 
 viewChartSlice : PackedBox Float Pixels ContainerData -> List (Svg msg)
