@@ -1,4 +1,4 @@
-module App.Daemon exposing (Model, Msg(..), update, view, sumDaemonResources)
+module App.Daemon exposing (Model, Msg(..), update, view, sumDaemonResources, daemonsForContainer)
 
 import App.Configuration as Configuration
 import App.Util as Util

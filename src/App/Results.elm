@@ -1,6 +1,7 @@
 module App.Results exposing (..)
 
 import App.Configuration as Configuration
+import App.Daemon as Daemon exposing (sumDaemonResources, daemonsForContainer)
 import App.Util as Util
 import App.Instances as Instances exposing (Instance, Instances, isSuitableInstance)
 import Dict exposing (Dict)
@@ -13,6 +14,7 @@ import Pixels exposing (..)
 import Quantity exposing (Quantity(..))
 import Svg exposing (Svg, g, rect, svg, text_)
 import Svg.Attributes exposing (alignmentBaseline, fill, height, stroke, textAnchor, transform, width, x, y)
+import App.Configuration exposing (Daemons)
 
 widthScale : Float
 widthScale = 0.35
@@ -30,6 +32,13 @@ type alias Model =
 
 type alias ContainerData =
     { name : String
+    , daemonBoxes: List DaemonBOX
+    }
+
+type alias DaemonBOX = 
+    { name: String
+    , height: Quantity Float Pixels
+    , width: Quantity Float Pixels
     }
 
 
@@ -49,20 +58,29 @@ pxToString pixel =
     String.fromFloat (inPixels pixel)
 
 
-
-convertContainerToBox : Configuration.Container -> { data : ContainerData, height : Quantity Float Pixels, width : Quantity Float Pixels }
-convertContainerToBox container =
-    { data = { name = container.name }
-    , height = pixels (toFloat container.memory)
-    , width = pixels (toFloat container.cpuShare)
+convertDaemonToBox : Configuration.Daemon -> DaemonBOX
+convertDaemonToBox daemon =
+    { name = daemon.name
+    , height = pixels (toFloat daemon.memory)
+    , width = pixels (toFloat daemon.cpuShare)
     }
+
+convertContainerToBox : Model -> (Int, Configuration.Container) -> { data : ContainerData, height : Quantity Float Pixels, width : Quantity Float Pixels }
+convertContainerToBox model (containerId, container) =
+    let 
+        deeeeeemons = Daemon.daemonsForContainer model.configuration.daemons containerId
+    in
+        { data = { name = container.name, daemonBoxes = List.map (\tupl -> convertDaemonToBox (Tuple.second tupl)) deeeeeemons }
+        , height = pixels (toFloat container.memory)
+        , width = pixels (toFloat container.cpuShare)
+        }
 
 
 viewResultsForService : Model -> Html msg
 viewResultsForService model =
     let
         convertedContainers =
-            List.map convertContainerToBox (Dict.values model.configuration.containers)
+            List.map (convertContainerToBox model) (Dict.toList model.configuration.containers)
         packingData =
             convertedContainers
                 |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
@@ -146,13 +164,21 @@ viewChartSlice box =
             , stroke "#a9a9a9"
             , fill "#c6ecff"
             ]
-            []
+            [
+                rect [ x "0"
+                    , y "0"
+                    , width "25px"
+                    , height "45px"
+                    , stroke "#a9a9a9"
+                    , fill "#c6ecff"
+                    ] []
+            ]
         , Svg.text_
             [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale box.width)))
             , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale box.height)))
             , textAnchor "middle"
             , alignmentBaseline "central"
             ]
-            [ Svg.text box.data.name ]
+            [ Svg.text (box.data.name ++ List.foldl (\last item -> last ++ " " ++ item) "" (List.map (\item -> item.name) box.data.daemonBoxes))]
         ]
     ]
