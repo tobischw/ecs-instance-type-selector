@@ -145,10 +145,10 @@ viewPrice : Instances.Price -> Html msg
 viewPrice price =
     case price of
         Instances.Upfront value ->
-            span [] [ text <| "$" ++ String.fromFloat value ++ " upfront" ]
+            span [] [ text <| "OnDemand: $" ++ String.fromFloat value ++ " upfront" ]
 
         Instances.Hourly value ->
-            span [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
+            span [] [ text <| "OnDemand: $" ++ String.fromFloat value ++ "/hr" ]
 
 
 viewChartSlice : PackedBox Float Pixels ContainerData -> List (Svg msg)
