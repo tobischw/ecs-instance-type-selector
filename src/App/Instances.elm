@@ -3,10 +3,14 @@ port module App.Instances exposing (..)
 import App.ApiDecoders as ApiDecoders
 import Json.Decode exposing (Error(..), decodeString)
 import Array
+import Bootstrap.Utilities.Border exposing (rounded)
+import Maybe.Extra exposing (..)
+import List.Extra exposing (..)
+import Html exposing (i)
 
 ---- PORTS ----
 
-port requestInstances : ( String, Int ) -> Cmd msg
+port requestInstances : ( String, String, Int ) -> Cmd msg
 
 
 port receiveInstances : (String -> msg) -> Sub msg
@@ -36,11 +40,27 @@ type Price         -- Filter out any non-USD data
      = Upfront Float
      | Hourly Float
 
+defaultRegion : String 
+defaultRegion =
+    "us-east-1"
 
 -- Setup
 
 init : Model
 init = []
+
+
+defaultInstance : Instance
+defaultInstance =
+    {
+        sku = ""
+       , instanceType = ""
+       , location = ""
+       , operatingSystem = ""
+       , memory = 0
+       , vCPU = 0
+       , prices = []
+    }
 
 
 subscriptions : Model -> Sub Msg
@@ -55,7 +75,8 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    2000
+    3000
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -65,10 +86,12 @@ update msg model =
                 simplified = mapToInstances response.priceList
                 totalCount = List.length model
 
+                region = defaultRegion
+
                 nextCommand =
                 -- Ensure we do not exceed our max limit of instances
                     if totalCount < maxInstancesTesting - numInstancesBatched then
-                        requestInstances ( response.nextToken, numInstancesBatched )
+                        requestInstances ( region, response.nextToken, numInstancesBatched )
                     else
                         Cmd.none
             in
@@ -85,15 +108,31 @@ update msg model =
 
 mapToInstances : List ApiDecoders.PriceListing -> Instances
 mapToInstances original =
-    List.map priceListingToInstance original 
+    values <| List.map priceListingToInstance original 
+
+
+findOptimalSuggestions: Instances -> Int -> Int -> Int -> (Instance, Instances)
+findOptimalSuggestions instances vcpu memory numSuggestions =
+   let 
+        suggestions = instances 
+            |> List.filter (isSuitableInstance vcpu memory) 
+            |> List.sortBy .memory
+            |> List.sortBy .vCPU
+            |> List.take numSuggestions
+        top = List.head suggestions |> Maybe.withDefault defaultInstance
+   in
+        (top, removeAt 0 suggestions)
 
 
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =
-    instance.memory >= memory
+    let
+        share = round <| toFloat vcpu / 1024
+    in
+    instance.memory >= memory && instance.vCPU >= share
 
 
-priceListingToInstance : ApiDecoders.PriceListing -> Instance
+priceListingToInstance : ApiDecoders.PriceListing -> Maybe Instance
 priceListingToInstance original =
     let
         product = original.product
@@ -107,7 +146,27 @@ priceListingToInstance original =
         priceDimensions = termsToPriceDimensions original.terms.onDemand
         prices = List.map priceDimensionToPriceInfo priceDimensions
     in 
-        (Instance sku instanceType location operatingSystem memory vCPU prices)
+        if memory > 0 && vCPU >= 0 && areValidPrices prices then
+            Just (Instance sku instanceType location operatingSystem memory vCPU prices)
+        else
+            Nothing
+
+
+areValidPrices : List Price -> Bool 
+areValidPrices prices =
+    if List.length prices > 0 then
+        List.all isValidPrice prices
+    else
+        False
+
+-- We should probably filter these out when we do the decoding, not here
+isValidPrice : Price -> Bool 
+isValidPrice price =
+    case price of
+        Upfront value ->
+            value > 0
+        Hourly value ->
+            value > 0
 
 
 termsToPriceDimensions : List ApiDecoders.Term -> List ApiDecoders.PriceDimension 

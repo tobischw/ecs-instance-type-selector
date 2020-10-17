@@ -130,3 +130,7 @@ body {
     padding-top: 3px;
     margin-right: 0px;
 }
+
+.clickable {
+  cursor: pointer;
+}
