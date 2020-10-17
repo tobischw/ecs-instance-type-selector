@@ -22,10 +22,8 @@ type alias PriceListing =
 type alias PriceDimension =
     { name: String
     , unit: String
-    , endRange: String
     , description: String
     , rateCode: String
-    , beginRange: String
     , pricePerUnit: PricePerUnit
     }
 
@@ -48,7 +46,7 @@ type alias Attributes =
 
 type alias Terms = 
     { onDemand: List Term
-   -- , reserved: List Term
+    , reserved: List Term
     }
 
     
@@ -96,6 +94,7 @@ termsDecoder : Decoder Terms
 termsDecoder =
     succeed Terms
         |> optional "OnDemand" unknownTermsKeyDecoder []
+        |> optional "Reserved" unknownTermsKeyDecoder []
 
 
 unknownTermsKeyDecoder : Decoder (List Term)
@@ -135,10 +134,8 @@ priceDimensionDecoder =
     succeed PriceDimension
         |> hardcoded ""
         |> required "unit" string
-        |> required "endRange" string
         |> required "description" string
         |> required "rateCode" string
-        |> required "beginRange" string
         |> required "pricePerUnit" pricePerUnitDecoder
 
 

@@ -45,12 +45,18 @@ type alias Instance =
      , operatingSystem: String     -- Probably a good idea to have this for future purposes
      , memory: Int                 -- The memory available, in MB. Make sure we convert to MB from whatever the API gives us.
      , vCPU: Int                   -- Number of vCPUs that this instance has available
-     , prices: List Price
+     , onDemandPrices: PriceTerm 
+     , reservedPrices: PriceTerm
      }
 
 type Price         -- Filter out any non-USD data
      = Upfront Float
      | Hourly Float
+
+
+type PriceTerm
+    = OnDemand (List Price)
+    | Reserved (List Price)
 
 defaultRegion : String 
 defaultRegion =
@@ -64,14 +70,14 @@ init = {instances=[], test = "", filters={os=[], instanceType=[]}}
 
 defaultInstance : Instance
 defaultInstance =
-    {
-        sku = ""
-       , instanceType = ""
-       , location = ""
-       , operatingSystem = ""
-       , memory = 0
-       , vCPU = 0
-       , prices = []
+    { sku = ""
+      , instanceType = ""
+      , location = ""
+      , operatingSystem = ""
+      , memory = 0
+      , vCPU = 0
+      , onDemandPrices = (OnDemand [])
+      , reservedPrices = (Reserved [])
     }
 
 
@@ -87,7 +93,7 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    3000
+    1000
 
 
 --updateWithFilters : 
@@ -102,7 +108,6 @@ update msg model =
                 totalCount = List.length model.instances
 
                 region = defaultRegion
-
                 nextCommand =
                 -- Ensure we do not exceed our max limit of instances
                     if totalCount < maxInstancesTesting - numInstancesBatched then
@@ -181,11 +186,13 @@ priceListingToInstance original =
         operatingSystem = attributes.operatingSystem
         memory = attributes.memory |> convertMemoryStringToMiB
         vCPU = attributes.vCPU |> String.toInt |> Maybe.withDefault 0
-        priceDimensions = termsToPriceDimensions original.terms.onDemand
-        prices = List.map priceDimensionToPriceInfo priceDimensions
+        onDemandDimensions = termsToPriceDimensions original.terms.onDemand
+        onDemandPrices = List.map priceDimensionToPriceInfo onDemandDimensions
+        reservedDimensions = termsToPriceDimensions original.terms.reserved
+        reservedPrices = List.map priceDimensionToPriceInfo reservedDimensions
     in 
-        if memory > 0 && vCPU >= 0 && areValidPrices prices then
-            Just (Instance sku instanceType location operatingSystem memory vCPU prices)
+        if memory > 0 && vCPU >= 0 && (areValidPrices onDemandPrices || areValidPrices reservedPrices) then
+            Just (Instance sku instanceType location operatingSystem memory vCPU (OnDemand onDemandPrices) (Reserved reservedPrices))
         else
             Nothing
 
