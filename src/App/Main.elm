@@ -314,7 +314,7 @@ init ({ basePath } as flags) url key =
       , error = Nothing
       , settings = Settings.init
       }
-    , Cmd.batch [ navbarCmd, Instances.requestInstances ( "", Instances.numInstancesBatched ) ]
+    , Cmd.batch [ navbarCmd, Instances.requestInstances ( Instances.defaultRegion, "", Instances.numInstancesBatched ) ]
     )
 
 
