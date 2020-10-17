@@ -140,20 +140,37 @@ viewInstance instance =
         Card.config []
         |> Card.block []
             [ Block.text [] [ strong [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> Util.formatMegabytes) ++ " (" ++ instance.operatingSystem ++")") ] ] 
-            , Block.custom <| div [] (List.map viewPrice instance.prices)
+            , Block.custom <| div [] [ viewPriceList instance.onDemandPrices ]
+            , Block.custom <| div [] [ viewPriceList instance.reservedPrices ]
             ]
         |> Card.view
     ]
 
 
-viewPrice : Instances.Price -> Html msg
+viewPriceList : Instances.PriceTerm -> Html msg 
+viewPriceList priceTerm =
+    case priceTerm of
+        Instances.OnDemand prices ->
+            if List.length prices > 0 then
+                div [] [ text "OnDemand:", ul [] (List.map viewPrice prices) ]
+            else
+                span [] []
+
+        Instances.Reserved prices ->
+            if List.length prices > 0 then
+                div [] [ text "Reserved:", ul [] (List.map viewPrice prices) ]
+            else
+                span [] []
+
+
+viewPrice :  Instances.Price -> Html msg
 viewPrice price =
     case price of
         Instances.Upfront value ->
-            span [] [ text <| "OnDemand: $" ++ String.fromFloat value ++ " upfront" ]
+            li [] [ text <| "$" ++ String.fromFloat value ++ " upfront" ]
 
         Instances.Hourly value ->
-            span [] [ text <| "OnDemand: $" ++ String.fromFloat value ++ "/hr" ]
+            li [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
 
 
 viewChartSlice : PackedBox Float Pixels ContainerData -> List (Svg msg)
@@ -191,13 +208,13 @@ viewDaemonSlice daemon =
         , stroke "red"
         , fill "orange"
         ] [] 
-        , Svg.text_
+       {-- , Svg.text_
             [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale daemon.width)))
             , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale daemon.height)))
             , textAnchor "middle"
             , fontSize "12px"
             , alignmentBaseline "central"
             ]
-            [ Svg.text daemon.name]
+            [ Svg.text daemon.name]--}
         ]
       

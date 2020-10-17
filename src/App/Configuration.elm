@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Containers, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, PricingFilter(..), getContainers, init, update, view)
 
 -- This is probably the only real "messy" file, could do with some refactoring and clean up
 
@@ -20,7 +20,7 @@ import Random
 
 init : Model
 init =
-    { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
+    { clusters = Dict.fromList [ ( 0, { name = "Cluster", regions = Util.initRegionsMultiselect, pricingFilter = Reserved } ) ]
     , services = Dict.fromList [ ] 
     , containers = Dict.fromList [ ] 
     , daemons = Dict.fromList [ ]
@@ -66,10 +66,14 @@ type Msg
     | ChangeServiceName Int String -- ServiceId Name
     | ChangeClusterName Int String -- ClusterId Name
 
+type PricingFilter
+    = Reserved
+    | OnDemand
 
 type alias Cluster =
     { name : String
     , regions : Multiselect.Model
+    , pricingFilter : PricingFilter
     }
 
 
@@ -119,7 +123,7 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect, pricingFilter = Reserved }, autoIncrement = generateId model }
 
         AddService clusterId ->
             { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks = 1 }, autoIncrement = generateId model }
