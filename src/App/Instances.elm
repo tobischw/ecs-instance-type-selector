@@ -10,7 +10,7 @@ import Html exposing (i)
 
 ---- PORTS ----
 
-port requestInstances : ( String, Int ) -> Cmd msg
+port requestInstances : ( String, String, Int ) -> Cmd msg
 
 
 port receiveInstances : (String -> msg) -> Sub msg
@@ -40,6 +40,9 @@ type Price         -- Filter out any non-USD data
      = Upfront Float
      | Hourly Float
 
+defaultRegion : String 
+defaultRegion =
+    "us-east-1"
 
 -- Setup
 
@@ -83,10 +86,12 @@ update msg model =
                 simplified = mapToInstances response.priceList
                 totalCount = List.length model
 
+                region = defaultRegion
+
                 nextCommand =
                 -- Ensure we do not exceed our max limit of instances
                     if totalCount < maxInstancesTesting - numInstancesBatched then
-                        requestInstances ( response.nextToken, numInstancesBatched )
+                        requestInstances ( region, response.nextToken, numInstancesBatched )
                     else
                         Cmd.none
             in

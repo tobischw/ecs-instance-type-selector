@@ -32,6 +32,7 @@ type alias Model =
 
 type alias ContainerData =
     { name : String
+    , color: String
     , daemonBoxes: List DaemonBOX
     }
 
@@ -64,12 +65,13 @@ convertDaemonToBox daemon =
     , width = pixels (toFloat daemon.cpuShare)
     }
 
+
 convertContainerToBox : Model -> (Int, Configuration.Container) -> { data : ContainerData, height : Quantity Float Pixels, width : Quantity Float Pixels }
 convertContainerToBox model (containerId, container) =
     let 
         daemons = Daemon.daemonsForContainer model.configuration.daemons containerId
     in
-        { data = { name = container.name, daemonBoxes = List.map (\tupl -> convertDaemonToBox (Tuple.second tupl)) daemons }
+        { data = { name = container.name, color = container.color, daemonBoxes = List.map (\tupl -> convertDaemonToBox (Tuple.second tupl)) daemons }
         , height = pixels (toFloat container.memory)
         , width = pixels (toFloat container.cpuShare)
         }
@@ -101,7 +103,7 @@ viewResultsForService model =
         [ 
           if showSuggestions then 
           div [] [  
-          strong [] [ text "Service:"]
+          strong [] [ text "Instance:"]
         , br [] []
         , svg
             [ width (Quantity.multiplyBy widthScale topWidth |> pxToString)
@@ -111,7 +113,7 @@ viewResultsForService model =
             ]
             (List.concatMap viewChartSlice packingData.boxes)
         , br [] []
-        , text ("Ideal CPU share: " ++ String.fromInt share)
+        , text ("Ideal CPU share: " ++ String.fromInt share ++ " (Something still wrong with this)")
         , br [] []
         , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
         , hr [] []
@@ -165,16 +167,16 @@ viewChartSlice box =
             , width (pxToString (Quantity.multiplyBy widthScale box.width))
             , height (pxToString (Quantity.multiplyBy heightScale box.height))
             , stroke "#a9a9a9"
-            , fill "#c6ecff"
+            , fill box.data.color 
             ] []
-        , Svg.text_
+        {--, Svg.text_
             [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale box.width)))
             , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale box.height)))
             , textAnchor "middle"
             , alignmentBaseline "central"
             ]
             [ Svg.text box.data.name]
-        ]
+        --}]
         ++ List.map viewDaemonSlice box.data.daemonBoxes)
     ]
 
