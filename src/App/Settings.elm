@@ -13,6 +13,7 @@ import Multiselect
 
 type alias Model =
     { excludedInstances : Multiselect.Model
+    , excludedSystems: Multiselect.Model
     , enableLiveResults : Bool
     }
 
@@ -20,6 +21,7 @@ type alias Model =
 init : Model
 init =
     { excludedInstances = Multiselect.initModel instanceTypes "A"
+    , excludedSystems = Multiselect.initModel [("One", "The first"), ("Two", "The sec"), ("Three", "The 3rd")] "B"
     , enableLiveResults = True
     }
 
@@ -30,6 +32,7 @@ init =
 
 type Msg
     = UpdateExcludedInstances Multiselect.Msg
+    | UpdateExcludedOS Multiselect.Msg
     | UpdateEnableLiveResults Bool
 
 
@@ -46,10 +49,21 @@ update msg model =
         UpdateEnableLiveResults value ->
             ( { model | enableLiveResults = value }, Cmd.none )
 
+        UpdateExcludedOS osChangedMessage ->
+            let
+                ( newExcludedos, subCmd, _ ) =
+                    Multiselect.update osChangedMessage model.excludedSystems
+            in
+            ( { model | excludedSystems = newExcludedos}, Cmd.map UpdateExcludedOS subCmd )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map UpdateExcludedInstances <| Multiselect.subscriptions model.excludedInstances
+    Sub.batch 
+    [ Sub.map UpdateExcludedInstances <| Multiselect.subscriptions model.excludedInstances
+    , Sub.map UpdateExcludedOS <| Multiselect.subscriptions model.excludedSystems
+    ]
+    
 
 
 view : Model -> Html Msg
@@ -64,6 +78,14 @@ view model =
                         , Form.col [ Col.sm9 ]
                             [ Html.map UpdateExcludedInstances <| Multiselect.view model.excludedInstances
                             , Form.help [] [ text "Exclude specific ECS instances. These will be ignored during the cluster optimization calculation." ]
+                            ]
+                        ]
+                    , hr [] []
+                    , Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Excluded Operating System Types" ]
+                        , Form.col [ Col.sm9 ]
+                            [ Html.map UpdateExcludedOS <| Multiselect.view model.excludedSystems
+                            , Form.help [] [ text "Exclude specific operating systems from the EC2 instances." ]
                             ]
                         ]
                     , hr [] []
