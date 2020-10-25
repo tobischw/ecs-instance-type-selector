@@ -34,6 +34,7 @@ type Msg
     = UpdateExcludedInstances Multiselect.Msg
     | UpdateExcludedOS Multiselect.Msg
     | UpdateEnableLiveResults Bool
+    | AddSystemExcludeOptions (List String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -55,6 +56,12 @@ update msg model =
                     Multiselect.update osChangedMessage model.excludedSystems
             in
             ( { model | excludedSystems = newExcludedos}, Cmd.map UpdateExcludedOS subCmd )
+
+        AddSystemExcludeOptions systemsList ->
+            let
+                systemsTuples = List.map (\item -> (item, item)) systemsList
+            in
+                ({model | excludedSystems = Multiselect.initModel systemsTuples "B"}, Cmd.none)
 
 
 subscriptions : Model -> Sub Msg
