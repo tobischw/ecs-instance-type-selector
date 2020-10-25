@@ -90,7 +90,7 @@ viewResultsForService model =
 
         (topSuggestion, remainingSuggestions) = 
             if showSuggestions then
-                Instances.findOptimalSuggestions model.instances share memory 5
+                Instances.findOptimalSuggestions model.instances.filters model.instances.instances share memory 5
             else
                (Instances.defaultInstance, []) 
 

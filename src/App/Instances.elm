@@ -19,8 +19,18 @@ port receiveInstances : (String -> msg) -> Sub msg
 -- Model
 
 type alias Model =
-     Instances
+     { instances: Instances
+     , filters: Filters
+     }
     
+type alias Filters = 
+    { os: List String
+    , instanceType: List String
+    }
+
+type FilterType
+    = OS
+    | InstanceType
 
 type Msg 
     = LoadInstances (Result Json.Decode.Error ApiDecoders.ProductsResponse)
@@ -44,7 +54,7 @@ type Price         -- Filter out any non-USD data
 -- Setup
 
 init : Model
-init = []
+init = {instances=[], filters={os=[], instanceType=[]}}
 
 
 defaultInstance : Instance
@@ -81,7 +91,7 @@ update msg model =
         LoadInstances (Ok response) ->
             let
                 simplified = mapToInstances response.priceList
-                totalCount = List.length model
+                totalCount = List.length model.instances
 
                 nextCommand =
                 -- Ensure we do not exceed our max limit of instances
@@ -90,7 +100,7 @@ update msg model =
                     else
                         Cmd.none
             in
-            ( model ++ simplified, nextCommand )
+            ( {model | instances = model.instances ++ simplified}, nextCommand )
 
         LoadInstances (Err err) ->
             let
@@ -106,11 +116,12 @@ mapToInstances original =
     values <| List.map priceListingToInstance original 
 
 
-findOptimalSuggestions: Instances -> Int -> Int -> Int -> (Instance, Instances)
-findOptimalSuggestions instances vcpu memory numSuggestions =
+findOptimalSuggestions: Filters -> Instances -> Int -> Int -> Int -> (Instance, Instances)
+findOptimalSuggestions filters instances vcpu memory numSuggestions =
    let 
         suggestions = instances 
-            |> List.filter (isSuitableInstance vcpu memory) 
+            |> List.filter (isSuitableInstance vcpu memory)
+            |> List.filter (isNotExludedInstance filters)
             |> List.sortBy .memory
             |> List.sortBy .vCPU
             |> List.take numSuggestions
@@ -118,6 +129,14 @@ findOptimalSuggestions instances vcpu memory numSuggestions =
    in
         (top, removeAt 0 suggestions)
 
+
+isNotExludedInstance: Filters -> Instance -> Bool 
+isNotExludedInstance filters instance =
+    let
+        osExcluded = List.member instance.operatingSystem filters.os
+        typeExcluded = List.member instance.instanceType filters.instanceType
+    in
+        not osExcluded && not typeExcluded
 
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =

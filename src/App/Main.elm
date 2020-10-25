@@ -265,7 +265,7 @@ viewNavbar model =
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
             [ img [ src (model.flags.basePath ++ "ec2.svg"), class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.customItems
-            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances) ++ " possible instances") ]
+            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances.instances) ++ " possible instances") ]
             ]
         |> Navbar.view model.navigation.navbarState
 
