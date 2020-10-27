@@ -6,7 +6,7 @@ import App.Instances as Instances
 import App.Container as Container
 import App.Results as Results
 import App.Service as Service
-import App.Settings as Settings
+import App.Settings as Settings exposing (update, Msg)
 import App.Task as Task
 import App.Util as Util
 import Bootstrap.Alert as Alert

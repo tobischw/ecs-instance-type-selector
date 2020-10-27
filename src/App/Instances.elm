@@ -34,6 +34,7 @@ type FilterType
 
 type Msg 
     = LoadInstances (Result Json.Decode.Error ApiDecoders.ProductsResponse)
+    | SetFilters FilterType (List String)
 
 type alias Instances = List Instance
 type alias Instance = 
@@ -108,6 +109,9 @@ update msg model =
             in
             ( model, Cmd.none )
 
+        SetFilters filterType filterData ->
+            (model, Cmd.none)
+
 
 -- Mapping
 
@@ -134,7 +138,7 @@ isNotExludedInstance: Filters -> Instance -> Bool
 isNotExludedInstance filters instance =
     let
         osExcluded = List.member instance.operatingSystem filters.os
-        typeExcluded = List.member instance.instanceType filters.instanceType
+        typeExcluded = List.member instance.instanceType filters.instanceType -- TODO: Fix and actually make this work
     in
         not osExcluded && not typeExcluded
 

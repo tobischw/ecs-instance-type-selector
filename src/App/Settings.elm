@@ -1,5 +1,5 @@
 module App.Settings exposing (Model, Msg(..), init, subscriptions, update, view)
-
+import App.Instances as Instances exposing (FilterType, Model, Filters, update, Msg(..))
 import App.Constants exposing (instanceTypes)
 import App.Util as Util
 import Bootstrap.Card as Card
@@ -9,6 +9,7 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Multiselect
+import App.Instances exposing (Instances)
 
 
 type alias Model =
@@ -21,7 +22,7 @@ type alias Model =
 init : Model
 init =
     { excludedInstances = Multiselect.initModel instanceTypes "A"
-    , excludedSystems = Multiselect.initModel [("SUSE", "SUSE"), ("Windows", "Windows"), ("Linux", "Linux")] "B"
+    , excludedSystems = Multiselect.initModel [("SUSE", "SUSE"), ("Windows", "Windows"), ("Linux", "Linux"), ("RHEL", "RHEL")] "B"
     , enableLiveResults = True
     }
 
@@ -53,6 +54,8 @@ update msg model =
             let
                 ( newExcludedos, subCmd, _ ) =
                     Multiselect.update osChangedMessage model.excludedSystems
+                values = List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues newExcludedos)
+                newM = Instances.update (SetFilters Instances.OS values)
             in
             ( { model | excludedSystems = newExcludedos}, Cmd.map UpdateExcludedOS subCmd )
 
