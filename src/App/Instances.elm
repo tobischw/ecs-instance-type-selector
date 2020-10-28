@@ -21,6 +21,7 @@ port receiveInstances : (String -> msg) -> Sub msg
 type alias Model =
      { instances: Instances
      , filters: Filters
+     , test: String
      }
     
 type alias Filters = 
@@ -55,7 +56,7 @@ type Price         -- Filter out any non-USD data
 -- Setup
 
 init : Model
-init = {instances=[], filters={os=[], instanceType=[]}}
+init = {instances=[], test = "", filters={os=[], instanceType=[]}}
 
 
 defaultInstance : Instance
@@ -86,6 +87,9 @@ maxInstancesTesting =
     3000
 
 
+--updateWithFilters : 
+
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
@@ -110,8 +114,17 @@ update msg model =
             ( model, Cmd.none )
 
         SetFilters filterType filterData ->
-            (model, Cmd.none)
-
+            case filterType of
+                OS -> 
+                    let
+                        filters = model.filters
+                        _ = Debug.log "Filters" filters
+                        _ = Debug.log "FilterData" filterData
+                    in
+                    ({model | filters = { filters | os = filterData}}, Cmd.none)
+                _ ->
+                    (model, Cmd.none)
+                
 
 -- Mapping
 
@@ -123,6 +136,7 @@ mapToInstances original =
 findOptimalSuggestions: Filters -> Instances -> Int -> Int -> Int -> (Instance, Instances)
 findOptimalSuggestions filters instances vcpu memory numSuggestions =
    let 
+        _ = Debug.log "Filters" filters
         suggestions = instances 
             |> List.filter (isSuitableInstance vcpu memory)
             |> List.filter (isNotExludedInstance filters)
@@ -132,6 +146,7 @@ findOptimalSuggestions filters instances vcpu memory numSuggestions =
         top = List.head suggestions |> Maybe.withDefault defaultInstance
    in
         (top, removeAt 0 suggestions)
+
 
 
 isNotExludedInstance: Filters -> Instance -> Bool 

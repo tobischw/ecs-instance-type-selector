@@ -54,8 +54,6 @@ update msg model =
             let
                 ( newExcludedos, subCmd, _ ) =
                     Multiselect.update osChangedMessage model.excludedSystems
-                values = List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues newExcludedos)
-                newM = Instances.update (SetFilters Instances.OS values)
             in
             ( { model | excludedSystems = newExcludedos}, Cmd.map UpdateExcludedOS subCmd )
 

@@ -24,7 +24,7 @@ import Json.Decode exposing (Error(..), decodeString)
 import Tuple exposing (first, second)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
-
+import Multiselect
 
 
 
@@ -134,8 +134,15 @@ update msg ({ flags, navigation } as model) =
             let
                 msgWithCmd =
                     Settings.update settingsMsg model.settings
+
+                settingsState = first msgWithCmd     
+
+                oses = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedSystems))
+                instances2 = Instances.update (Instances.SetFilters (Instances.OS) oses) model.instances
+                instances = Tuple.first instances2
+                --instances = Instances.updateWithFilters model.settings
             in
-            ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
+            ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
 
         
 urlToDetail : String -> Url -> Detail
