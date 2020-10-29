@@ -5,16 +5,15 @@ import App.Daemon as Daemon exposing (sumDaemonResources, daemonsForContainer)
 import App.Util as Util
 import App.Instances as Instances exposing (Instance, Instances, isSuitableInstance)
 import Dict exposing (Dict)
-import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li)
+import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h2)
 import Html.Attributes exposing (class, style)
-import Pack exposing (..)
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
-import Pixels exposing (..)
-import Quantity exposing (Quantity(..))
 import Svg exposing (Svg, g, rect, svg, text_)
 import Svg.Attributes exposing (alignmentBaseline, fontSize, fill, height, stroke, textAnchor, transform, width, x, y)
 import App.Configuration exposing (Daemons)
+import List.Extra exposing (scanl, scanl1)
+
 
 widthScale : Float
 widthScale = 0.15
@@ -33,15 +32,24 @@ type alias Model =
 type alias ContainerData =
     { name : String
     , color: String
-    , daemonBoxes: List DaemonBOX
     }
 
-type alias DaemonBOX = 
-    { name: String
-    , height: Quantity Float Pixels
-    , width: Quantity Float Pixels
+
+type alias Box =
+    { name : String
+    , color : String
+    , x : Float
+    , y : Float
+    , width : Float
+    , height : Float
     }
 
+
+type alias Visualization =
+    { width : Float
+    , height : Float 
+    , boxes : List Box
+    }
 
 view : Model -> Html msg
 view model =
@@ -53,42 +61,14 @@ view model =
         ]
 
 
-pxToString : Quantity Float Pixels -> String
-pxToString pixel =
-    String.fromFloat (inPixels pixel)
-
-
-convertDaemonToBox : Configuration.Daemon -> DaemonBOX
-convertDaemonToBox daemon =
-    { name = daemon.name
-    , height = pixels (toFloat daemon.memory)
-    , width = pixels (toFloat daemon.cpuShare)
-    }
-
-
-convertContainerToBox : Model -> (Int, Configuration.Container) -> { data : ContainerData, height : Quantity Float Pixels, width : Quantity Float Pixels }
-convertContainerToBox model (containerId, container) =
-    let 
-        daemons = Daemon.daemonsForContainer model.configuration.daemons containerId
-    in
-        { data = { name = container.name, color = container.color, daemonBoxes = List.map (\tupl -> convertDaemonToBox (Tuple.second tupl)) daemons }
-        , height = pixels (toFloat container.memory)
-        , width = pixels (toFloat container.cpuShare)
-        }
-
-
 viewResultsForService : Model -> Html msg
 viewResultsForService model =
     let
-        convertedContainers =
-            List.map (convertContainerToBox model) (Dict.toList model.configuration.containers)
-        packingData =
-            convertedContainers
-                |> Pack.pack { powerOfTwoSize = False, spacing = Quantity.zero }
-        vcpu = inPixels packingData.width |> round
-        share = round <| toFloat vcpu / 1024
-        memory = inPixels packingData.height |> round
-        showSuggestions = Dict.isEmpty model.configuration.containers == False
+        boxes = List.map convertToBox (Dict.toList model.configuration.containers)
+        visualization = prepareVisualization boxes 
+        share = round <| visualization.width / 1024
+        memory = round <| visualization.height
+        showSuggestions = (Dict.isEmpty model.configuration.containers == False)
 
         (topSuggestion, remainingSuggestions) = 
             if showSuggestions then
@@ -96,29 +76,22 @@ viewResultsForService model =
             else
                (Instances.defaultInstance, []) 
 
-        topWidth = Quantity (toFloat topSuggestion.vCPU * 1024)
-        topHeight = Quantity (toFloat topSuggestion.memory)
+        topWidth = (toFloat topSuggestion.vCPU * 1024)
+        topHeight = (toFloat topSuggestion.memory)
     in
     div []
         [ 
           if showSuggestions then 
           div [] [  
-          strong [] [ text "Instance:"]
-        , br [] []
-        , svg
-            [ width (Quantity.multiplyBy widthScale topWidth |> pxToString)
-            , height (Quantity.multiplyBy heightScale topHeight |> pxToString)
-            , style "background-color" "#eee"
-            , style "border" "thin solid #a9a9a9"
-            ]
-            (List.concatMap viewChartSlice packingData.boxes)
-        , br [] []
-        , text ("Ideal CPU share: " ++ String.fromInt share ++ " (Something still wrong with this)")
+          viewVisualization visualization (topWidth, topHeight)
+        , hr [] []
+        , h2 [] [ text "Total: $0/mo"]
+        , text ("Ideal CPU share: " ++ String.fromInt share)
         , br [] []
         , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
         , hr [] []
         , strong [] [ text "Top Suggestion:"]
-        , viewInstance topSuggestion
+        , viewInstanceListing topSuggestion
         , hr [] []
         , strong [] [ text "Other Suggestions:"]
         , viewSuggestions remainingSuggestions 
@@ -131,11 +104,11 @@ viewResultsForService model =
 viewSuggestions : Instances -> Html msg 
 viewSuggestions instances = 
     div []
-        (List.map viewInstance instances)
+        (List.map viewInstanceListing instances)
 
 
-viewInstance : Instance -> Html msg
-viewInstance instance =
+viewInstanceListing : Instance -> Html msg
+viewInstanceListing instance =
     div [ style "margin-top" "10px"] [
         Card.config []
         |> Card.block []
@@ -173,48 +146,74 @@ viewPrice price =
             li [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
 
 
-viewChartSlice : PackedBox Float Pixels ContainerData -> List (Svg msg)
-viewChartSlice box =
+convertToBox : (Int, Configuration.Container) -> Box
+convertToBox (_, container) =
+    (Box container.name container.color 0 0 (toFloat container.cpuShare) (toFloat container.memory))
+
+
+prepareVisualization : List Box -> Visualization
+prepareVisualization boxes =
+    let 
+        sortedBoxes = List.sortBy calculateBoxArea boxes 
+        arrangedBoxes = arrangeDiagonally sortedBoxes 
+        maxWidth = visualizationWidth arrangedBoxes 
+        maxHeight = visualizationHeight arrangedBoxes 
+    in
+    (Visualization maxWidth maxHeight arrangedBoxes)
+
+
+viewVisualization: Visualization -> (Float, Float) -> Html msg
+viewVisualization visualization (suggestedWidth, suggestedHeight) =
+    svg
+        [ width (String.fromFloat (suggestedWidth * widthScale) ++ "px")
+        , height (String.fromFloat (suggestedHeight * heightScale) ++ "px")
+        , style "background-color" "#eee"
+        , style "border" "#a9a9a9"
+         ] (List.concatMap viewBox visualization.boxes)
+
+
+viewBox: Box -> List (Svg msg)
+viewBox box =
     [ g
-        [ transform ("translate(" ++ pxToString (Quantity.multiplyBy widthScale box.x) ++ ", " ++ pxToString (Quantity.multiplyBy heightScale box.y) ++ ")")
-        ]
-        ([ rect
-            [ x "0"
-            , y "0"
-            , width (pxToString (Quantity.multiplyBy widthScale box.width))
-            , height (pxToString (Quantity.multiplyBy heightScale box.height))
-            , stroke "#a9a9a9"
-            , fill box.data.color 
-            ] []
-        {--, Svg.text_
-            [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale box.width)))
-            , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale box.height)))
-            , textAnchor "middle"
-            , alignmentBaseline "central"
+        [ transform ("translate(" ++ String.fromFloat (box.x * widthScale) ++ ", " ++ String.fromFloat (box.y * heightScale) ++ ")")]
+        (
+            [ rect
+                [ x "0"
+                , y "0"
+                , width (String.fromFloat (box.width * widthScale) ++ "px")
+                , height (String.fromFloat (box.height * heightScale) ++ "px")
+                , stroke "#a9a9a9"
+                , fill box.color
+                ] []
             ]
-            [ Svg.text box.data.name]
-        --}]
-        ++ List.map viewDaemonSlice box.data.daemonBoxes)
+        )
     ]
 
-viewDaemonSlice : DaemonBOX -> Svg msg 
-viewDaemonSlice daemon =
-    g [] [ 
-        rect [
-          x "0"
-        , y "0"
-        , width (pxToString (Quantity.multiplyBy widthScale daemon.width))
-        , height (pxToString (Quantity.multiplyBy heightScale daemon.height))
-        , stroke "red"
-        , fill "orange"
-        ] [] 
-       {-- , Svg.text_
-            [ x (pxToString (Quantity.half (Quantity.multiplyBy widthScale daemon.width)))
-            , y (pxToString (Quantity.half (Quantity.multiplyBy heightScale daemon.height)))
-            , textAnchor "middle"
-            , fontSize "12px"
-            , alignmentBaseline "central"
-            ]
-            [ Svg.text daemon.name]--}
-        ]
-      
+
+visualizationWidth: List Box -> Float
+visualizationWidth boxes =
+    List.sum (List.map (\box -> box.width) boxes)
+
+
+visualizationHeight: List Box -> Float
+visualizationHeight boxes =
+    List.sum (List.map (\box -> box.height) boxes)
+
+
+arrangeDiagonally: List Box -> List Box
+arrangeDiagonally boxes =
+    scanl1 (calculateNewPosition) boxes
+
+
+calculateNewPosition: Box -> Box -> Box
+calculateNewPosition current previous =
+    let
+        newX = previous.x + previous.width 
+        newY = previous.y + previous.height 
+    in
+        { current | x = newX, y = newY }
+     
+
+calculateBoxArea: Box -> Float
+calculateBoxArea box =
+    box.width * box.height

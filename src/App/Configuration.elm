@@ -66,9 +66,11 @@ type Msg
     | ChangeServiceName Int String -- ServiceId Name
     | ChangeClusterName Int String -- ClusterId Name
 
+
 type PricingFilter
     = Reserved
     | OnDemand
+
 
 type alias Cluster =
     { name : String
@@ -230,9 +232,6 @@ viewClusterItem model clusterTuple =
           ]
         , viewServices model (getServices id model.services)
         ]
-
-
--- Has to be a better way to do fetch services
 
 
 getServices : Int -> Services -> Services
