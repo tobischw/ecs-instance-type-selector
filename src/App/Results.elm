@@ -16,7 +16,7 @@ import List.Extra exposing (scanl, scanl1)
 
 
 widthScale : Float
-widthScale = 0.15
+widthScale = 0.25
 
 heightScale : Float
 heightScale = 0.0175

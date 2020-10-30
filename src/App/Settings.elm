@@ -89,8 +89,6 @@ view model =
                             , Form.help [] [ text "Exclude specific operating systems from the EC2 instances." ]
                             ]
                         ]
-                    , hr [] []
-                    , Util.viewFormCheckbox "Enable live results" "If enabled, the results are immediately updated when the configuration is modified." model.enableLiveResults UpdateEnableLiveResults
                     ]
             ]
         |> Card.view
