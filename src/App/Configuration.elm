@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Containers, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, PricingFilter(..), getContainers, init, update, view)
 
 -- This is probably the only real "messy" file, could do with some refactoring and clean up
 
@@ -20,7 +20,7 @@ import Random
 
 init : Model
 init =
-    { clusters = Dict.fromList [ ( 0, { name = "Cluster 1", regions = Util.initRegionsMultiselect } ) ]
+    { clusters = Dict.fromList [ ( 0, { name = "Cluster", regions = Util.initRegionsMultiselect, pricingFilter = Reserved } ) ]
     , services = Dict.fromList [ ] 
     , containers = Dict.fromList [ ] 
     , daemons = Dict.fromList [ ]
@@ -67,15 +67,20 @@ type Msg
     | ChangeClusterName Int String -- ClusterId Name
 
 
+type PricingFilter
+    = Reserved
+    | OnDemand
+
+
 type alias Cluster =
     { name : String
     , regions : Multiselect.Model
+    , pricingFilter : PricingFilter
     }
 
 
 type alias Service =
     { name : String
-    , color : String
     , clusterId : Int
     , scalingTarget : Int
     , packingStrategy : PackingStrategy
@@ -92,6 +97,7 @@ type PackingStrategy
 
 type alias Container =
     { name : String
+    , color : String
     , serviceId : Int
     , cpuShare : Int
     , memory : Int
@@ -119,10 +125,10 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect }, autoIncrement = generateId model }
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect, pricingFilter = Reserved }, autoIncrement = generateId model }
 
         AddService clusterId ->
-            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", color = Util.randomColorString (Random.initialSeed model.autoIncrement), clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks = 1 }, autoIncrement = generateId model }
+            { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks = 1 }, autoIncrement = generateId model }
 
         AddContainer serviceId ->
             let
@@ -131,7 +137,7 @@ update msg model =
                 daemons = model.daemons |> Dict.insert daemonId {name = "Daemon", containerId = containerId, cpuShare = 0, memory = 0}
             in
             
-            { model | containers = model.containers |> Dict.insert containerId { name = "Container", serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, daemons = daemons, autoIncrement = containerId + 1 }
+            { model | containers = model.containers |> Dict.insert containerId { name = "Container", color = Util.randomColorString (Random.initialSeed model.autoIncrement), serviceId = serviceId, cpuShare = 128, memory = 4000, ioops = 128, useEBS = True, bandwidth = 20, showExtraMemory = False }, daemons = daemons, autoIncrement = containerId + 1 }
 
         AddDaemon containerId -> 
             { model | daemons = model.daemons |> Dict.insert model.autoIncrement {name = "Daemon", containerId = containerId, cpuShare = 0, memory = 0}, autoIncrement = generateId model }
@@ -228,9 +234,6 @@ viewClusterItem model clusterTuple =
         ]
 
 
--- Has to be a better way to do fetch services
-
-
 getServices : Int -> Services -> Services
 getServices clusterId services =
     let
@@ -260,7 +263,7 @@ viewServiceItem model serviceTuple =
     in
     List.concat
         [ [ ListGroup.anchor
-                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("service/" ++ String.fromInt id), style "border-left" ("4px solid " ++ service.color) ] ]
+                [ ListGroup.attrs [ Flex.block, Flex.justifyBetween, href ("service/" ++ String.fromInt id) ] ]
                 [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
                     [ span [ class "pt-1" ] [ FeatherIcons.server |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml [], input [ type_ "text", class "editable-label", value service.name, onChange (ChangeServiceName id)] []]
                     , span [ class "text-muted", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteService id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]
@@ -311,7 +314,7 @@ viewContainerItem containerTuple =
         container =
             second containerTuple
     in
-    ListGroup.anchor [ ListGroup.attrs [ href ("container/" ++ String.fromInt id), style "padding-left" "60px" ] ]
+    ListGroup.anchor [ ListGroup.attrs [ href ("container/" ++ String.fromInt id), style "padding-left" "60px", style "border-left" ("4px solid " ++ container.color)] ]
         [ FeatherIcons.box |> FeatherIcons.withSize 19 |> FeatherIcons.toHtml []
         , input [ type_ "text", class "editable-label", value container.name, onChange (ChangeContainerName id)] []
         , span [ class "ml-3 text-muted float-right", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (DeleteContainer id) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]

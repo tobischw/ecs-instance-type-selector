@@ -8,16 +8,15 @@ let app = Elm.App.Main.init({
   flags : { basePath }
 });
 
-let pricing = new AWS.Pricing({
-  region: 'us-east-1',
-  apiVersion: '2017-10-15',
-  accessKeyId: process.env.ELM_APP_ACCESS_KEY_ID,
-  secretAccessKey: process.env.ELM_APP_SERCRET_ACCESS_KEY
-});
-
 app.ports.requestInstances.subscribe(function ( message ) {
-   let nextToken = message[0];
-   let maxResults = message[1];
+   let pricing = new AWS.Pricing({
+      region: message[0],
+      apiVersion: '2017-10-15',
+      accessKeyId: process.env.ELM_APP_ACCESS_KEY_ID,
+      secretAccessKey: process.env.ELM_APP_SERCRET_ACCESS_KEY
+   });
+   let nextToken = message[1];
+   let maxResults = message[2];
    let params = { Filters: [
          {
         Field: 'ServiceCode',

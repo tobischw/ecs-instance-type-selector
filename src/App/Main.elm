@@ -6,10 +6,11 @@ import App.Instances as Instances
 import App.Container as Container
 import App.Results as Results
 import App.Service as Service
-import App.Settings as Settings
+import App.Settings as Settings exposing (update, Msg)
 import App.Task as Task
 import App.Util as Util
 import Bootstrap.Alert as Alert
+import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -24,7 +25,8 @@ import Json.Decode exposing (Error(..), decodeString)
 import Tuple exposing (first, second)
 import Url exposing (..)
 import Url.Parser as Url exposing ((</>), Parser)
-
+import Multiselect
+import FeatherIcons
 
 
 
@@ -49,6 +51,7 @@ type alias Model =
     , instances : Instances.Model
     , error : Maybe String
     , settings : Settings.Model
+    , collapsedSidebar : Bool
     }
 
 
@@ -79,6 +82,7 @@ type Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
+    | ToggleSidebar
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -134,10 +138,20 @@ update msg ({ flags, navigation } as model) =
             let
                 msgWithCmd =
                     Settings.update settingsMsg model.settings
-            in
-            ( { model | settings = first msgWithCmd }, Cmd.map SettingsMsg (second msgWithCmd) )
 
-        
+                settingsState = first msgWithCmd     
+
+                oses = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedSystems))
+                instances2 = Instances.update (Instances.SetFilters (Instances.OS) oses) model.instances
+                instances = Tuple.first instances2
+                --instances = Instances.updateWithFilters model.settings
+            in
+            ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
+
+        ToggleSidebar ->
+            ( { model | collapsedSidebar = not model.collapsedSidebar }, Cmd.none )        
+
+
 urlToDetail : String -> Url -> Detail
 urlToDetail basePath url =
     let
@@ -176,35 +190,77 @@ view model =
     , body =
         [ viewNavbar model
         , viewContent model
+        , viewToggleButton model.collapsedSidebar
         ]
     }
 
 
+viewToggleButton : Bool -> Html Msg
+viewToggleButton collapsedSidebar =
+    let
+        (icon, offset) = 
+            case collapsedSidebar of
+                True -> (FeatherIcons.arrowRight, "0")
+                False -> (FeatherIcons.arrowLeft, "25%")
+    in
+    
+    div [ class "toggle-sidebar-container"
+        , style "left" offset ] 
+        [ Button.button 
+            [ Button.secondary, Button.onClick ToggleSidebar ] 
+            [ icon |> FeatherIcons.withSize 18 |> FeatherIcons.toHtml [] ] 
+        ]
+
+
 viewContent : Model -> Html Msg
 viewContent model =
+    let
+        columns = [ viewSidebarColumn model, 
+                    viewDetailColumn model,
+                    viewResultsColumn model
+                  ]
+
+        renderedColumns = 
+            case model.collapsedSidebar of
+                True -> Maybe.withDefault [] (List.tail columns) 
+                False -> columns
+    in
     Grid.containerFluid [ class "full-height" ]
         [ Grid.row [ Row.attrs [ class "h-100 pt-5" ] ]
-            [ Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
-                [ Html.map ConfigurationMsg (Configuration.view model.configuration)
-                ]
-            , viewDetailColumn model
-            , Grid.col [ Col.md4, Col.attrs [ class "p-0" ] ]
-                [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
-                , Results.view (Results.Model model.configuration model.instances)
-                ]
-            ]
+            renderedColumns
         ]
+
+
+viewSidebarColumn : Model -> Grid.Column Msg
+viewSidebarColumn model =
+    Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+     [ Html.map ConfigurationMsg (Configuration.view model.configuration) ]
 
 
 viewDetailColumn : Model -> Grid.Column Msg
 viewDetailColumn model =
-    Grid.col [ Col.md5, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+    Grid.col [ Col.md4, Col.attrs [ class "p-0 bg-light sidebar" ] ]
         [ div [ class "px-3", class "pt-1" ]
             [ Util.viewColumnTitle "Detail"
             , hr [] []
             , viewDetail model
             ]
         ]
+
+
+viewResultsColumn : Model -> Grid.Column Msg
+viewResultsColumn model =
+    let
+        gridSize = 
+            if model.collapsedSidebar then
+                Col.md8
+            else
+                Col.md5
+    in
+    Grid.col [ gridSize, Col.attrs [ class "p-0" ] ]
+             [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
+                , Results.view (Results.Model model.configuration model.instances)
+             ]
 
 
 viewDetail : Model -> Html Msg
@@ -265,7 +321,7 @@ viewNavbar model =
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
             [ img [ src (model.flags.basePath ++ "ec2.svg"), class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.customItems
-            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances) ++ " possible instances") ]
+            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances.instances) ++ " possible instances") ]
             ]
         |> Navbar.view model.navigation.navbarState
 
@@ -306,8 +362,9 @@ init ({ basePath } as flags) url key =
       , instances = Instances.init
       , error = Nothing
       , settings = Settings.init
+      , collapsedSidebar = False
       }
-    , Cmd.batch [ navbarCmd, Instances.requestInstances ( "", Instances.numInstancesBatched ) ]
+    , Cmd.batch [ navbarCmd, Instances.requestInstances ( Instances.defaultRegion, "", Instances.numInstancesBatched ) ]
     )
 
 

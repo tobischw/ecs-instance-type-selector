@@ -68,6 +68,18 @@ body {
   text-transform: uppercase;
 }
 
+.toggle-sidebar-container {
+  position: fixed;
+  z-index: 99;
+  bottom: 20px;
+}
+
+.toggle-sidebar-container button {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+
 /*
  * Content
  */
@@ -129,4 +141,8 @@ body {
 .empty-button {
     padding-top: 3px;
     margin-right: 0px;
+}
+
+.clickable {
+  cursor: pointer;
 }

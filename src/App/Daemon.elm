@@ -1,4 +1,4 @@
-module App.Daemon exposing (Model, Msg(..), update, view)
+module App.Daemon exposing (Model, Msg(..), update, view, sumDaemonResources, daemonsForContainer)
 
 import App.Configuration as Configuration
 import App.Util as Util
@@ -42,31 +42,52 @@ daemonsForContainer daemons containerid =
         filtered = Dict.filter (\_ daemon -> daemon.containerId == containerid) daemons
     in
         Dict.toList filtered
-    
 
-viewDaemon : (Int, Configuration.Daemon) -> Html Msg
-viewDaemon (daemonid, daemon) = 
+-- sumDeamonResources: allDaemons, containerId -> (cpuShares, memory)
+sumDaemonResources : Configuration.Daemons -> Int -> (Int, Int)
+sumDaemonResources allDaemons containerId =
+    let
+        daemons = daemonsForContainer allDaemons containerId
+        cpuShares = List.sum (List.map (\daemonTuple -> (Tuple.second daemonTuple).cpuShare) daemons)
+        memory = List.sum (List.map (\daemonTuple -> (Tuple.second daemonTuple).memory) daemons)
+    in
+        (cpuShares, memory)
+
+viewDaemon : Configuration.Container -> (Int, Configuration.Daemon) -> Html Msg
+viewDaemon container (daemonid, daemon) = 
         Card.config [ Card.attrs [Html.Attributes.class "mt-3"]]
-        |> Card.header [] [ text daemon.name ]
+        |> Card.header [] [ Html.map ConfigurationMsg (input [ type_ "text", class "editable-label", value daemon.name, onChange (Configuration.ChangeDaemonName daemonid)] [])
+        , Html.map ConfigurationMsg (span [ class "ml-3 text-muted float-right clickable", Html.Events.Extra.onClickPreventDefaultAndStopPropagation (Configuration.DeleteDaemon daemonid) ] [ FeatherIcons.trash2 |> FeatherIcons.withSize 16 |> FeatherIcons.toHtml [] ]) ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
                     -- these Util calls are a bit odd, but do make the code a bit more organized.
-                    [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| daemon.cpuShare) ++ "/1024 CPU Share") daemon.cpuShare 0 1024 10 (UpdateCPUShare daemonid)
+                    [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| daemon.cpuShare) ++ "/" ++ (container.cpuShare |> String.fromInt) ++ " CPU Share") daemon.cpuShare 0 container.cpuShare 2 (UpdateCPUShare daemonid)
                     , hr [] []
-                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes daemon.memory) daemon.memory 50 8000 50 (UpdateMemory daemonid)
+                    , Util.viewFormRowSlider "Memory" (Util.formatMegabytes daemon.memory ++ "/"  ++ Util.formatMegabytes container.memory) daemon.memory 50 container.memory 50 (UpdateMemory daemonid)
                     ]
             ]
         |> Card.view
 
 
-view : Configuration.Daemons -> Int -> Html Msg
-view daemons containerId = 
+view : Configuration.Daemons -> Int -> Configuration.Container -> Html Msg
+view daemons containerId container = 
     let
         kvPairs = daemonsForContainer daemons containerId
-        data = List.map viewDaemon kvPairs
+        data = List.map (viewDaemon container) kvPairs
     in
-        div [] [ Html.map ConfigurationMsg (Button.button [ Button.outlineSecondary, Button.small, Button.attrs [ Html.Events.Extra.onClickPreventDefaultAndStopPropagation (Configuration.AddDaemon containerId) ] ] [ FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text ""])
+        div [] [ Html.map ConfigurationMsg (
+                    Button.button [ 
+                            Button.outlineSecondary, Button.small, Button.attrs [ 
+                                    Html.Events.Extra.onClickPreventDefaultAndStopPropagation (
+                                            Configuration.AddDaemon containerId
+                                        ) 
+                                    ] 
+                                ]
+                                 [ 
+                                     FeatherIcons.plus |> FeatherIcons.withSize 16 |> FeatherIcons.withClass "empty-button" |> FeatherIcons.toHtml [], text ""
+                                ]
+                    )
             , div [] data
         ]
         
