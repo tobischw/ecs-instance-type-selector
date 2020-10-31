@@ -180,6 +180,16 @@ viewVisualization visualization (suggestedWidth, suggestedHeight) =
             (List.concatMap (drawAnnotation (suggestedWidth, suggestedHeight)) visualization.boxes)
            )
 
+calculateRemainingBox: Visualization -> Box
+calculateRemainingBox visualization =
+    let
+        x = 5
+        y = 5
+        width = 20
+        height = 20
+    in
+    (Box -1 "" "" x y width height)
+
 drawSuggestedBox: (Float, Float) -> List (Svg msg)
 drawSuggestedBox (suggestedWidth, suggestedHeight) =
     [ rect 
