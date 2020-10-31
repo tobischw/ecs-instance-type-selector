@@ -86,11 +86,11 @@ viewResultsForService model =
           div [] [  
           viewVisualization visualization (topWidth, topHeight)
         , hr [] []
-        , h2 [] [ text "Total: $0/mo"]
         , text ("Ideal CPU share: " ++ String.fromInt share)
         , br [] []
         , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
         , hr [] []
+        , h2 [] [ text "Total: $0/mo"]
         , strong [] [ text "Top Suggestion:"]
         , viewInstanceListing topSuggestion
         , hr [] []
@@ -165,15 +165,17 @@ prepareVisualization boxes =
 
 viewVisualization: Visualization -> (Float, Float) -> Html msg
 viewVisualization visualization (suggestedWidth, suggestedHeight) =
+    let
+        padding = 60
+    in
     svg
-        [ {-width (String.fromFloat (suggestedWidth * widthScale) ++ "px")
-        , height (String.fromFloat (suggestedHeight * heightScale) ++ "px")-}
-          width "100%"
-        , height "600px"
-        , style "background-color" "#e2e2e2"
+        [ width (String.fromFloat (suggestedWidth * widthScale + padding) ++ "px")
+        , height (String.fromFloat (suggestedHeight * heightScale + padding) ++ "px")
         , style "border" "#a9a9a9"
-         ] (
-              drawSuggestedBox (suggestedWidth, suggestedHeight) ++
+
+        -- Clean this up, this doesn't look too good
+         ] ( drawSuggestedBox (suggestedWidth, suggestedHeight) ++
+             drawAxisLabels (suggestedWidth, suggestedHeight) ++
             (List.concatMap drawBox visualization.boxes) ++
             (List.concatMap (drawAnnotation (suggestedWidth, suggestedHeight)) visualization.boxes)
            )
@@ -185,8 +187,7 @@ drawSuggestedBox (suggestedWidth, suggestedHeight) =
              height (String.fromFloat (suggestedHeight * heightScale) ++ "px"),
              stroke "#a9a9a9", 
              fill "#eee"
-           ]
-           []
+           ] []
     ]
 
 drawBox: Box -> List (Svg msg)
@@ -206,6 +207,15 @@ drawBox box =
         )
     ] 
 
+
+drawAxisLabels: (Float, Float) -> List (Svg msg)
+drawAxisLabels (suggestedWidth, suggestedHeight) = 
+    let
+        offset = 10
+    in
+    [ drawText (suggestedWidth * widthScale / 2, suggestedHeight * heightScale + offset * 2) "CPU" "middle"
+    , drawText (suggestedWidth * widthScale + offset, suggestedHeight * heightScale / 2) "Memory" "center"
+    ]
 
 drawAnnotation: (Float, Float) -> Box -> List (Svg msg)
 drawAnnotation (suggestedWidth, suggestedHeight) box =
@@ -228,20 +238,20 @@ drawAnnotation (suggestedWidth, suggestedHeight) box =
            , stroke "#a5a5a5"
            , strokeDasharray "10,10"
            , strokeWidth "1px" ] []
-      , drawText (xRight + offsetX, yTop + 20) box.name
-      , drawText (xRight + offsetX, yTop + 40) ("CPU: " ++ String.fromFloat box.width)
-      , drawText (xRight + offsetX, yTop + 60) ("Mem: " ++ String.fromFloat box.height)
+      , drawText (xRight + offsetX, yTop + 20) box.name "left"
+      , drawText (xRight + offsetX, yTop + 40) ("CPU: " ++ String.fromFloat box.width) "left"
+      , drawText (xRight + offsetX, yTop + 60) ("Mem: " ++ String.fromFloat box.height) "left"
        ]
     
-drawText: (Float, Float) -> String -> Svg msg
-drawText (xPos, yPos) text =
+drawText: (Float, Float) -> String -> String -> Svg msg
+drawText (xPos, yPos) text anchor =
     Svg.text_
             [ x (xPos |> String.fromFloat)
             , y (yPos |> String.fromFloat)
             , fontSize "12px"
-            , textAnchor "left"
+            , textAnchor anchor 
             , alignmentBaseline "central"
-            , fill "#a9a9a9"
+            , fill "#4e4e4e"
             ]
             [ Svg.text text]
 
