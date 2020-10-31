@@ -233,7 +233,7 @@ viewContent model =
 
 viewSidebarColumn : Model -> Grid.Column Msg
 viewSidebarColumn model =
-    Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar" ] ]
+    Grid.col [ Col.md3, Col.attrs [ class "p-0 bg-light sidebar"] ]
      [ Html.map ConfigurationMsg (Configuration.view model.configuration) ]
 
 

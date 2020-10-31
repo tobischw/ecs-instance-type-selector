@@ -99,7 +99,7 @@ view id container daemons =
             [ Block.custom <|
                 Form.form []
                     -- these Util calls are a bit odd, but do make the code a bit more organized.
-                    [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 0 1024 10 (UpdateCPUShare id)
+                    [ Util.viewFormRowSlider "CPU Share" ((String.fromInt <| container.cpuShare) ++ "/1024 CPU Share") container.cpuShare 8 1024 10 (UpdateCPUShare id)
                     , hr [] []
                     , Util.showIf (container.memory >= 32000 || container.showExtraMemory) (Util.viewFormCheckbox "Show more memory options" "" container.showExtraMemory (ToggleMoreMemory id))
                     , Util.viewFormRowSlider "Memory" (Util.formatMegabytes container.memory) container.memory 250 (determineMaxContainerMemory container.showExtraMemory) (determineContainerMemStep container.showExtraMemory) (UpdateMemory id)
