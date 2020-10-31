@@ -9,8 +9,8 @@ import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, u
 import Html.Attributes exposing (class, style)
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
-import Svg exposing (Svg, g, rect, svg, text_)
-import Svg.Attributes exposing (alignmentBaseline, fontSize, fill, height, stroke, textAnchor, transform, width, x, y)
+import Svg exposing (Svg, g, a, rect, svg, line, text_)
+import Svg.Attributes exposing (alignmentBaseline, xlinkHref, fontSize, fill, height, stroke, strokeWidth, strokeDasharray, textAnchor, transform, width, x, y, x1, x2, y1, y2)
 import App.Configuration exposing (Daemons)
 import List.Extra exposing (scanl, scanl1)
 
@@ -36,7 +36,8 @@ type alias ContainerData =
 
 
 type alias Box =
-    { name : String
+    { id : Int
+    , name : String
     , color : String
     , x : Float
     , y : Float
@@ -147,8 +148,8 @@ viewPrice price =
 
 
 convertToBox : (Int, Configuration.Container) -> Box
-convertToBox (_, container) =
-    (Box container.name container.color 0 0 (toFloat container.cpuShare) (toFloat container.memory))
+convertToBox (id, container) =
+    (Box id container.name container.color 0 0 (toFloat container.cpuShare) (toFloat container.memory))
 
 
 prepareVisualization : List Box -> Visualization
@@ -165,15 +166,31 @@ prepareVisualization boxes =
 viewVisualization: Visualization -> (Float, Float) -> Html msg
 viewVisualization visualization (suggestedWidth, suggestedHeight) =
     svg
-        [ width (String.fromFloat (suggestedWidth * widthScale) ++ "px")
-        , height (String.fromFloat (suggestedHeight * heightScale) ++ "px")
-        , style "background-color" "#eee"
+        [ {-width (String.fromFloat (suggestedWidth * widthScale) ++ "px")
+        , height (String.fromFloat (suggestedHeight * heightScale) ++ "px")-}
+          width "100%"
+        , height "600px"
+        , style "background-color" "#e2e2e2"
         , style "border" "#a9a9a9"
-         ] (List.concatMap viewBox visualization.boxes)
+         ] (
+              drawSuggestedBox (suggestedWidth, suggestedHeight) ++
+            (List.concatMap drawBox visualization.boxes) ++
+            (List.concatMap (drawAnnotation (suggestedWidth, suggestedHeight)) visualization.boxes)
+           )
 
+drawSuggestedBox: (Float, Float) -> List (Svg msg)
+drawSuggestedBox (suggestedWidth, suggestedHeight) =
+    [ rect 
+           [ width (String.fromFloat (suggestedWidth * widthScale) ++ "px"),
+             height (String.fromFloat (suggestedHeight * heightScale) ++ "px"),
+             stroke "#a9a9a9", 
+             fill "#eee"
+           ]
+           []
+    ]
 
-viewBox: Box -> List (Svg msg)
-viewBox box =
+drawBox: Box -> List (Svg msg)
+drawBox box =
     [ g
         [ transform ("translate(" ++ String.fromFloat (box.x * widthScale) ++ ", " ++ String.fromFloat (box.y * heightScale) ++ ")")]
         (
@@ -187,8 +204,46 @@ viewBox box =
                 ] []
             ]
         )
-    ]
+    ] 
 
+
+drawAnnotation: (Float, Float) -> Box -> List (Svg msg)
+drawAnnotation (suggestedWidth, suggestedHeight) box =
+    let
+        boxWidth = box.width * widthScale
+        boxHeight = box.height * heightScale
+        yTop = box.y * heightScale
+        yBottom = yTop + boxHeight 
+
+        xLeft = box.x * widthScale
+        xRight = xLeft + boxWidth
+
+        offsetX = 10
+
+    in
+    [ line [ x1 "0"
+           , y1 (yBottom |> String.fromFloat)
+           , x2 ((suggestedWidth * widthScale) |> String.fromFloat)
+           , y2 (yBottom |> String.fromFloat)
+           , stroke "#a5a5a5"
+           , strokeDasharray "10,10"
+           , strokeWidth "1px" ] []
+      , drawText (xRight + offsetX, yTop + 20) box.name
+      , drawText (xRight + offsetX, yTop + 40) ("CPU: " ++ String.fromFloat box.width)
+      , drawText (xRight + offsetX, yTop + 60) ("Mem: " ++ String.fromFloat box.height)
+       ]
+    
+drawText: (Float, Float) -> String -> Svg msg
+drawText (xPos, yPos) text =
+    Svg.text_
+            [ x (xPos |> String.fromFloat)
+            , y (yPos |> String.fromFloat)
+            , fontSize "12px"
+            , textAnchor "left"
+            , alignmentBaseline "central"
+            , fill "#a9a9a9"
+            ]
+            [ Svg.text text]
 
 visualizationWidth: List Box -> Float
 visualizationWidth boxes =

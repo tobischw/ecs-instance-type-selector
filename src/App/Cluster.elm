@@ -53,7 +53,7 @@ update msg model =
 view : Int -> Configuration.Cluster -> Html Msg
 view id cluster =
     Card.config []
-        |> Card.header [] [ text (cluster.name ++ "Settings") ]
+        |> Card.header [] [ text (cluster.name ++ " Settings") ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
@@ -61,20 +61,6 @@ view id cluster =
                         [ Form.colLabel [ Col.sm3 ] [ text "Regions" ]
                         , Form.col [ Col.sm9 ]
                             [ Html.map (UpdateClusterRegions id) <| Multiselect.view cluster.regions
-                            ]
-                        ]
-                    , Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Pricing" ]
-                        , Form.col [ Col.sm9 ]
-                            [ Fieldset.config
-                                |> Fieldset.asGroup
-                                |> Fieldset.children
-                                    (Radio.radioList "pricing"
-                                        [ Radio.create [ Radio.id "reserved", Radio.checked (cluster.pricingFilter == Configuration.Reserved), Radio.onClick (UpdatePricingFilter id Configuration.Reserved) ] "Reserved"
-                                        , Radio.create [ Radio.id "memory", Radio.checked (cluster.pricingFilter == Configuration.OnDemand), Radio.onClick (UpdatePricingFilter id Configuration.OnDemand)] "On Demand"
-                                        ]
-                                    )
-                                |> Fieldset.view
                             ]
                         ]
                     ]
