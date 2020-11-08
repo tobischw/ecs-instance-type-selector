@@ -132,8 +132,13 @@ update msg model =
                         _ = Debug.log "FilterData" filterData
                     in
                     ({model | filters = { filters | os = filterData}}, Cmd.none)
-                _ ->
-                    (model, Cmd.none)
+                InstanceType ->
+                    let
+                        filters = model.filters
+                        _ = Debug.log "Filters2" filters
+                        _ = Debug.log "FilterData2" filterData
+                    in
+                    ({model | filters = { filters | instanceType = filterData}}, Cmd.none)
                 
 
 -- Mapping
@@ -161,10 +166,19 @@ isNotExludedInstance: Filters -> Instance -> Bool
 isNotExludedInstance filters instance =
     let
         osExcluded = List.member instance.operatingSystem filters.os
-        typeExcluded = List.member instance.instanceType filters.instanceType -- TODO: Fix and actually make this work
+        typeExcluded = isNotExcludedInstanceType filters instance -- TODO: Fix and actually make this work
+
     in
         not osExcluded && not typeExcluded
 
+isNotExcludedInstanceType: Filters -> Instance -> Bool 
+isNotExcludedInstanceType filters instance =
+    let
+        itype = instance.instanceType
+        yeet = List.any (\item -> String.startsWith item itype) filters.instanceType
+    in
+        yeet
+    
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =
     let

@@ -8,6 +8,8 @@ import App.Visualization exposing (..)
 import Dict exposing (Dict)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h2)
 import Html.Attributes exposing (class, style)
+import FormatNumber.Locales exposing (usLocale, Locale, Decimals(..))
+import FormatNumber exposing (format)
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Svg exposing (Svg, g, a, rect, svg, line, text_)
@@ -28,7 +30,13 @@ type alias ContainerData =
     }
 
 
-
+sharesLocale : Locale
+sharesLocale =
+    { usLocale
+        | decimals = Exact 3
+        , negativePrefix = "("
+        , negativeSuffix = ")"
+    }
 
 view : Model -> Html msg
 view model =
@@ -70,7 +78,7 @@ viewResultsForService model =
         , br [] []
         , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
         , hr [] []
-        , h2 [] [ text "Total: $0/mo"]
+        , h2 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
         , strong [] [ text "Top Suggestion:"]
         , viewInstanceListing topSuggestion
         , hr [] []
@@ -81,6 +89,27 @@ viewResultsForService model =
             span [] [ text "No results or suggestions available yet."]
         ]
 
+
+getPriceForTopSuggestion: Model -> Instance -> Float 
+getPriceForTopSuggestion model topSuggestion =
+    let
+        pricesTmp = 
+            case topSuggestion.onDemandPrices of 
+                Instances.OnDemand lst ->
+                        lst
+                _ -> 
+                        []
+        prices = List.map mapPrices pricesTmp
+        output = List.maximum prices |> Maybe.withDefault 0
+        
+    in
+        output * 30 * 24
+
+mapPrices: Instances.Price -> Float 
+mapPrices price =
+    case price of
+       Instances.Hourly p -> p
+       _ -> 0
 
 viewSuggestions : Instances -> Html msg 
 viewSuggestions instances = 
