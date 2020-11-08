@@ -5,6 +5,7 @@ import Html.Attributes exposing (class, style)
 import Svg exposing (Svg, g, a, rect, svg, line, text_)
 import Svg.Attributes exposing (alignmentBaseline, xlinkHref, fontSize, fill, height, stroke, strokeWidth, strokeDasharray, textAnchor, transform, width, x, y, x1, x2, y1, y2)
 import List.Extra exposing (scanl, scanl1)
+import App.Util as Util
 
 widthScale : Float
 widthScale = 0.25
@@ -14,7 +15,7 @@ heightScale = 0.0175
 
 emptyBox : Box 
 emptyBox =
-    (Box -1 "" "" 0 0 0 0)
+    (Box -1 "" "" 0 0 0 0 0)
 
 type alias Box =
     { id : Int
@@ -24,6 +25,7 @@ type alias Box =
     , y : Float
     , width : Float
     , height : Float
+    , sortValue : Float
     }
 
 
@@ -36,7 +38,7 @@ type alias Visualization =
 prepareVisualization : List Box -> Visualization
 prepareVisualization boxes =
     let 
-        sortedBoxes = List.sortBy calculateBoxArea boxes 
+        sortedBoxes = List.sortBy .sortValue boxes 
         arrangedBoxes = arrangeDiagonally sortedBoxes 
         maxWidth = visualizationWidth arrangedBoxes 
         maxHeight = visualizationHeight arrangedBoxes 
@@ -56,20 +58,24 @@ viewVisualization visualization (suggestedWidth, suggestedHeight) =
         , style "border" "#a9a9a9"
         ] ( drawSuggestedInstance suggested ++
             drawAxisLabels suggested ++
-            drawBox (calculateRemainingBox visualization suggested) ++
+            drawFreeSpaceBox visualization suggested ++
             (List.concatMap drawBox visualization.boxes) ++
             (List.concatMap (drawAnnotation suggested) visualization.boxes)
            )
 
 
-drawRemainignBox: Visualization -> (Float, Float) -> List (Svg msg)
-drawRemainignBox visualization suggested =
+drawFreeSpaceBox: Visualization -> (Float, Float) -> List (Svg msg)
+drawFreeSpaceBox visualization suggested =
     let
-        calculatedBox = (calculateRemainingBox visualization suggested)
+        box = (calculateRemainingBox visualization suggested)
+
+        offset = 25
+        x = box.x * widthScale
+        y = box.y * heightScale
     in
-     -- [ drawText (calculatedBox.x * widthScale, calculatedBox.y * heightScale) "Free" "center"] ++
-      drawBox calculatedBox
-    
+      drawBox box ++
+      drawBoxInfo box x y offset
+
 
 calculateRemainingBox: Visualization -> (Float, Float) -> Box
 calculateRemainingBox visualization (suggestedWidth, suggestedHeight) =
@@ -81,7 +87,8 @@ calculateRemainingBox visualization (suggestedWidth, suggestedHeight) =
         width = suggestedWidth - visualization.width 
         height = suggestedHeight - visualization.height
     in
-    (Box -1 "" "#eee" x y width height)
+    (Box -1 "Remaining" "#eee" x y width height 0)
+
 
 drawSuggestedInstance: (Float, Float) -> List (Svg msg)
 drawSuggestedInstance (suggestedWidth, suggestedHeight) =
@@ -141,10 +148,19 @@ drawAnnotation (suggestedWidth, suggestedHeight) box =
            , stroke "#a5a5a5"
            , strokeDasharray "10,10"
            , strokeWidth "1px" ] []
-      , drawText (xRight + offsetX, yTop + 20) box.name "left"
-      , drawText (xRight + offsetX, yTop + 40) ("CPU: " ++ String.fromFloat box.width) "left"
-      , drawText (xRight + offsetX, yTop + 60) ("Mem: " ++ String.fromFloat box.height) "left"
-       ]
+       ] ++ drawBoxInfo box xRight yTop offsetX
+
+
+drawBoxInfo: Box -> Float -> Float -> Float -> List (Svg msg)
+drawBoxInfo box x y offsetX =
+    let
+        cpuLabel = String.fromFloat box.width
+        memLabel = Util.formatMegabytes (round box.height)
+    in
+    [ drawText (x + offsetX, y + 20) box.name "left"
+    , drawText (x + offsetX, y + 35) ("CPU: " ++ cpuLabel) "left"
+    , drawText (x + offsetX, y + 50) ("Mem: " ++ memLabel) "left" ]
+
     
 drawText: (Float, Float) -> String -> String -> Svg msg
 drawText (xPos, yPos) text anchor =
@@ -156,7 +172,7 @@ drawText (xPos, yPos) text anchor =
             , alignmentBaseline "central"
             , fill "#4e4e4e"
             ]
-            [ Svg.text text]
+            [ Svg.text text ]
 
 visualizationWidth: List Box -> Float
 visualizationWidth boxes =
@@ -181,7 +197,3 @@ calculateNewPosition current previous =
     in
         { current | x = newX, y = newY }
      
-
-calculateBoxArea: Box -> Float
-calculateBoxArea box =
-    box.width * box.height

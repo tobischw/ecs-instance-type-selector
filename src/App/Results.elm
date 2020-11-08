@@ -15,7 +15,6 @@ import Svg.Attributes exposing (alignmentBaseline, xlinkHref, fontSize, fill, he
 import App.Configuration exposing (Daemons)
 
 
-
 type alias Model = 
     {
      configuration : Configuration.Model
@@ -44,7 +43,9 @@ view model =
 viewResultsForService : Model -> Html msg
 viewResultsForService model =
     let
-        boxes = List.map convertToBox (Dict.toList model.configuration.containers)
+        services = model.configuration.services
+        containers = Dict.toList model.configuration.containers
+        boxes = List.map (convertToBox services) containers
         visualization = prepareVisualization boxes 
         share = round <| visualization.width / 1024
         memory = round <| visualization.height
@@ -126,8 +127,15 @@ viewPrice price =
             li [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
 
 
-convertToBox : (Int, Configuration.Container) -> Box
-convertToBox (id, container) =
-    (Box id container.name container.color 0 0 (toFloat container.cpuShare) (toFloat container.memory))
-
-
+convertToBox : Configuration.Services -> (Int, Configuration.Container) -> Box
+convertToBox services (id, container) =
+    let
+        service = Dict.get container.serviceId services |> Maybe.withDefault (Configuration.Service "" 0 0 App.Configuration.ByCPUShares 0 0 0)
+        cpuShare = (toFloat container.cpuShare)
+        memory = (toFloat container.memory)
+        sortValue =
+            case service.packingStrategy of
+                App.Configuration.ByCPUShares -> cpuShare
+                App.Configuration.ByMemory -> memory
+    in
+    (Box id container.name container.color 0 0 cpuShare memory sortValue)
