@@ -1,4 +1,6 @@
 # ecs-instance-type-selector
+![Heroku Deployment](https://github.com/tobischw/ecs-instance-type-selector/workflows/Heroku%20Deployment/badge.svg)
+
 Easily calculate AWS cluster pricing rates, in many different configurations. Written in Elm.
 
 
