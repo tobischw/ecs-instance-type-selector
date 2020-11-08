@@ -1,5 +1,3 @@
-# Distribution
-build/
 
 # elm-package generated files
 elm-stuff
@@ -12,3 +10,7 @@ node_modules
 
 # Desktop Services Store on macOS
 .DS_Store
+
+ngrok.exe
+
+.env

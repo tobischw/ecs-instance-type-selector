@@ -1,0 +1,15 @@
+{
+  "short_name": "ECS Instance Type Selector",
+  "name": "Identify cheapest AWS EC2 cluster instance configurations.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
