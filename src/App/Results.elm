@@ -138,4 +138,4 @@ convertToBox services (id, container) =
                 App.Configuration.ByCPUShares -> cpuShare
                 App.Configuration.ByMemory -> memory
     in
-    (Box id container.name container.color 0 0 cpuShare memory sortValue)
+    (Box id container.name service.name container.color 0 0 cpuShare memory sortValue)

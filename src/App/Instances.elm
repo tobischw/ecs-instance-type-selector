@@ -146,7 +146,6 @@ mapToInstances original =
 findOptimalSuggestions: Filters -> Instances -> Int -> Int -> Int -> (Instance, Instances)
 findOptimalSuggestions filters instances vcpu memory numSuggestions =
    let 
-        _ = Debug.log "Filters" filters
         suggestions = instances 
             |> List.filter (isSuitableInstance vcpu memory)
             |> List.filter (isNotExludedInstance filters)
@@ -156,7 +155,6 @@ findOptimalSuggestions filters instances vcpu memory numSuggestions =
         top = List.head suggestions |> Maybe.withDefault defaultInstance
    in
         (top, removeAt 0 suggestions)
-
 
 
 isNotExludedInstance: Filters -> Instance -> Bool 

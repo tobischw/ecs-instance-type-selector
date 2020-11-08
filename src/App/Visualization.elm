@@ -15,11 +15,12 @@ heightScale = 0.0175
 
 emptyBox : Box 
 emptyBox =
-    (Box -1 "" "" 0 0 0 0 0)
+    (Box -1 "" "" "" 0 0 0 0 0)
 
 type alias Box =
     { id : Int
     , name : String
+    , serviceName : String
     , color : String
     , x : Float
     , y : Float
@@ -87,7 +88,7 @@ calculateRemainingBox visualization (suggestedWidth, suggestedHeight) =
         width = suggestedWidth - visualization.width 
         height = suggestedHeight - visualization.height
     in
-    (Box -1 "Remaining" "#eee" x y width height 0)
+    (Box -1 "Remaining" "Total" "#eee" x y width height 0)
 
 
 drawSuggestedInstance: (Float, Float) -> List (Svg msg)
@@ -99,6 +100,7 @@ drawSuggestedInstance (suggestedWidth, suggestedHeight) =
              fill "#eee"
            ] []
     ]
+
 
 drawBox: Box -> List (Svg msg)
 drawBox box =
@@ -156,10 +158,13 @@ drawBoxInfo box x y offsetX =
     let
         cpuLabel = String.fromFloat box.width
         memLabel = Util.formatMegabytes (round box.height)
+
+        boxLabel = box.name ++ " (" ++ box.serviceName ++ ")"
     in
-    [ drawText (x + offsetX, y + 20) box.name "left"
+    [ drawText (x + offsetX, y + 20) boxLabel "left"
     , drawText (x + offsetX, y + 35) ("CPU: " ++ cpuLabel) "left"
-    , drawText (x + offsetX, y + 50) ("Mem: " ++ memLabel) "left" ]
+    , drawText (x + offsetX, y + 50) ("Mem: " ++ memLabel) "left"
+    ]
 
     
 drawText: (Float, Float) -> String -> String -> Svg msg
