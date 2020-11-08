@@ -142,8 +142,10 @@ update msg ({ flags, navigation } as model) =
                 settingsState = first msgWithCmd     
 
                 oses = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedSystems))
+                instancesExclude = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedInstances))
                 instances2 = Instances.update (Instances.SetFilters (Instances.OS) oses) model.instances
-                instances = Tuple.first instances2
+                instances3 = Instances.update (Instances.SetFilters (Instances.InstanceType) instancesExclude) (Tuple.first instances2)
+                instances = Tuple.first instances3
                 --instances = Instances.updateWithFilters model.settings
             in
             ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
