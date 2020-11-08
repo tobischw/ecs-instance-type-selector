@@ -1,4 +1,4 @@
-module App.Configuration exposing (Cluster, Container, Containers, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, PricingFilter(..), getContainers, init, update, view)
+module App.Configuration exposing (Cluster, Container, Containers, Services, Daemon, Daemons, Model, Msg(..), PackingStrategy(..), Service, Clusters, PricingFilter(..), getContainers, init, update, view)
 
 -- This is probably the only real "messy" file, could do with some refactoring and clean up
 
