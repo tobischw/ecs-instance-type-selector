@@ -77,7 +77,6 @@ type Msg
     | UrlChanged Url.Url
     | ConfigurationMsg Configuration.Msg
     | InstancesMsg Instances.Msg
-    | ClusterMsg Cluster.Msg
     | ServiceMsg Service.Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
@@ -122,9 +121,6 @@ update msg ({ flags, navigation } as model) =
         ConfigurationMsg configurationMsg ->
             ( { model | configuration = Configuration.update configurationMsg model.configuration }, Cmd.none )
 
-        ClusterMsg clusterMsg ->
-            ( { model | configuration = Cluster.update clusterMsg model.configuration }, Cmd.none )
-
         ServiceMsg serviceMsg ->
             ( { model | configuration = Service.update serviceMsg model.configuration }, Cmd.none )
 
@@ -143,9 +139,12 @@ update msg ({ flags, navigation } as model) =
 
                 oses = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedSystems))
                 instancesExclude = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedInstances))
+                regionsExclude = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedRegions))
+                _ = Debug.log "regionsExclude" regionsExclude
                 instances2 = Instances.update (Instances.SetFilters (Instances.OS) oses) model.instances
                 instances3 = Instances.update (Instances.SetFilters (Instances.InstanceType) instancesExclude) (Tuple.first instances2)
-                instances = Tuple.first instances3
+                instances4 = Instances.update (Instances.SetFilters (Instances.Region) regionsExclude) (Tuple.first instances3)
+                instances = Tuple.first instances4
             in
             ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
 
@@ -269,7 +268,7 @@ viewDetail model =
     case model.navigation.currentDetail of
         Cluster id ->
             Dict.get id model.configuration.clusters
-                |> Maybe.map (\value -> Html.map ClusterMsg (Cluster.view id value))
+                |> Maybe.map (\value -> Cluster.view id value)
                 |> Maybe.withDefault viewNotFoundDetail
 
         Service id ->

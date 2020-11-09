@@ -76,7 +76,10 @@ viewResultsForService model =
         [ 
           if showSuggestions then 
           div [] 
-          [ viewVisualization visualization (topWidth, topHeight)
+          [ 
+             h3 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
+            , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
+            , viewInstanceListing topSuggestion
             , hr [] []
             , text ("Ideal CPU share: " ++ String.fromInt share)
             , br [] []
@@ -84,9 +87,7 @@ viewResultsForService model =
             , br [] []
             , text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
             , hr [] []
-            , h3 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
-            , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
-            , viewInstanceListing topSuggestion
+            , viewVisualization visualization (topWidth, topHeight)
         ]
         else
             span [] [ text "No results or suggestions available yet."]
@@ -127,6 +128,7 @@ viewInstanceListing instance =
         Card.config []
         |> Card.block []
             [ Block.text [] [ strong [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> Util.formatMegabytes) ++ " (" ++ instance.operatingSystem ++")") ] ] 
+            , Block.text [] [ text instance.location ]
             , Block.custom <| div [] [ viewPriceList instance.onDemandPrices ]
             , Block.custom <| div [] [ viewPriceList instance.reservedPrices ]
             ]

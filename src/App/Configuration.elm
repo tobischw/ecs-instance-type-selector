@@ -2,7 +2,6 @@ module App.Configuration exposing (Cluster, Container, Containers, Services, Dae
 
 -- This is probably the only real "messy" file, could do with some refactoring and clean up
 
-import App.Constants exposing (RegionRecord, allRegions)
 import App.Util as Util
 import Bootstrap.Button as Button
 import Bootstrap.ListGroup as ListGroup
@@ -20,7 +19,7 @@ import Random
 
 init : Model
 init =
-    { clusters = Dict.fromList [ ( 0, { name = "Cluster", regions = Util.initRegionsMultiselect, pricingFilter = Reserved } ) ]
+    { clusters = Dict.fromList [ ( 0, { name = "Cluster" } ) ]
     , services = Dict.fromList [ ] 
     , containers = Dict.fromList [ ] 
     , daemons = Dict.fromList [ ]
@@ -74,8 +73,6 @@ type PricingFilter
 
 type alias Cluster =
     { name : String
-    , regions : Multiselect.Model
-    , pricingFilter : PricingFilter
     }
 
 
@@ -125,7 +122,7 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         AddCluster ->
-            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster", regions = Util.initRegionsMultiselect, pricingFilter = Reserved }, autoIncrement = generateId model }
+            { model | clusters = model.clusters |> Dict.insert model.autoIncrement { name = "Cluster"}, autoIncrement = generateId model }
 
         AddService clusterId ->
             { model | services = model.services |> Dict.insert model.autoIncrement { name = "Service", clusterId = clusterId, scalingTarget = 0, packingStrategy = ByCPUShares, minTasks = 1, maxTasks = 2, nominalTasks = 1 }, autoIncrement = generateId model }

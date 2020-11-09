@@ -1,4 +1,4 @@
-module App.Util exposing (initRegionsMultiselect, showIf, toInt, formatMegabytes, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider, randomColorString)
+module App.Util exposing (showIf, toInt, formatMegabytes, viewColumnTitle, viewFormCheckbox, viewFormLabel, viewFormRowSlider, randomColorString)
 
 import Random
 import App.Constants as Constants
@@ -75,11 +75,6 @@ viewFormCheckbox label sublabel checked msg =
             , showIf (sublabel /= "") (Form.help [] [ text sublabel ])
             ]
         ]
-
-
-initRegionsMultiselect : Multiselect.Model
-initRegionsMultiselect =
-    Multiselect.initModel (List.map (\region -> ( region.regionName, region.displayName )) Constants.allRegions) "mselect"
 
 
 randomColorString : Random.Seed -> String

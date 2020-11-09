@@ -1,6 +1,6 @@
 module App.Settings exposing (Model, Msg(..), init, subscriptions, update, view)
 import App.Instances as Instances exposing (FilterType, Model, Filters, update, Msg(..))
-import App.Constants exposing (instanceTypes)
+import App.Constants exposing (instanceTypes, allRegions)
 import App.Util as Util
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
@@ -20,6 +20,7 @@ type PreferredPricing
 type alias Model =
     { excludedInstances : Multiselect.Model
     , excludedSystems: Multiselect.Model
+    , excludedRegions: Multiselect.Model
     , enableLiveResults : Bool
     , preferredPricing: PreferredPricing
     }
@@ -27,8 +28,9 @@ type alias Model =
 
 init : Model
 init =
-    { excludedInstances = Multiselect.initModel instanceTypes "A"
+    { excludedInstances = Multiselect.initModel (List.map (\instanceType -> (instanceType, String.toUpper instanceType)) instanceTypes) "A"
     , excludedSystems = Multiselect.initModel [("SUSE", "SUSE"), ("Windows", "Windows"), ("Linux", "Linux"), ("RHEL", "RHEL")] "B"
+    , excludedRegions = Multiselect.initModel (List.map (\region -> (region, region)) allRegions) "C"
     , enableLiveResults = True
     , preferredPricing = Reserved
     }
@@ -41,9 +43,9 @@ init =
 type Msg
     = UpdateExcludedInstances Multiselect.Msg
     | UpdateExcludedOS Multiselect.Msg
+    | UpdateExcludedRegions Multiselect.Msg
     | UpdateEnableLiveResults Bool
     | SetPricingPreference PreferredPricing
-
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -64,6 +66,13 @@ update msg model =
                     Multiselect.update osChangedMessage model.excludedSystems
             in
             ( { model | excludedSystems = newExcludedos}, Cmd.map UpdateExcludedOS subCmd )
+
+        UpdateExcludedRegions regionsChangedMessage ->
+            let
+                ( newExcludedRegions, subCmd, _) =
+                    Multiselect.update regionsChangedMessage model.excludedRegions
+            in
+            ( { model | excludedRegions = newExcludedRegions}, Cmd.map UpdateExcludedRegions subCmd )
 
         SetPricingPreference pref -> 
             ({model | preferredPricing = pref}, Cmd.none)
@@ -97,6 +106,12 @@ view model =
                         , Form.col [ Col.sm9 ]
                             [ Html.map UpdateExcludedOS <| Multiselect.view model.excludedSystems
                             , Form.help [] [ text "Exclude specific operating systems from the EC2 instances." ]
+                            ]
+                        ]
+                    , Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Excluded Regions" ]
+                        , Form.col [ Col.sm9 ]
+                            [ Html.map UpdateExcludedRegions <| Multiselect.view model.excludedRegions
                             ]
                         ]
                     , hr [] []

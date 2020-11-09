@@ -20,17 +20,18 @@ port receiveInstances : (String -> msg) -> Sub msg
 type alias Model =
      { instances: Instances
      , filters: Filters
-     , test: String
      }
     
 type alias Filters = 
     { os: List String
     , instanceType: List String
+    , regions: List String
     }
 
 type FilterType
     = OS
     | InstanceType
+    | Region
 
 type Msg 
     = LoadInstances (Result Json.Decode.Error ApiDecoders.ProductsResponse)
@@ -64,7 +65,7 @@ defaultRegion =
 -- Setup
 
 init : Model
-init = {instances=[], test = "", filters={os=[], instanceType=[]}}
+init = {instances=[], filters={os=[], instanceType=[], regions=[]}}
 
 
 defaultInstance : Instance
@@ -92,7 +93,7 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    2500
+    500
 
 
 --updateWithFilters : 
@@ -127,17 +128,18 @@ update msg model =
                 OS -> 
                     let
                         filters = model.filters
-                        _ = Debug.log "Filters" filters
-                        _ = Debug.log "FilterData" filterData
                     in
                     ({model | filters = { filters | os = filterData}}, Cmd.none)
                 InstanceType ->
                     let
                         filters = model.filters
-                        _ = Debug.log "Filters2" filters
-                        _ = Debug.log "FilterData2" filterData
                     in
                     ({model | filters = { filters | instanceType = filterData}}, Cmd.none)
+                Region ->
+                    let
+                        filters = model.filters
+                    in
+                    ({model | filters = { filters | regions = filterData}}, Cmd.none)
                 
 
 -- Mapping
@@ -174,16 +176,24 @@ isNotExludedInstance filters instance =
         osExcluded = List.member instance.operatingSystem filters.os
         typeExcluded = isNotExcludedInstanceType filters instance -- TODO: Fix and actually make this work
 
+        regionExcluded = isNotExcludedRegion filters instance
     in
-        not osExcluded && not typeExcluded
+        not osExcluded && not typeExcluded && not regionExcluded
 
 isNotExcludedInstanceType: Filters -> Instance -> Bool 
 isNotExcludedInstanceType filters instance =
     let
         itype = instance.instanceType
-        yeet = List.any (\item -> String.startsWith item itype) filters.instanceType
     in
-        yeet
+        List.any (\item -> String.startsWith item itype) filters.instanceType
+
+
+isNotExcludedRegion: Filters -> Instance -> Bool 
+isNotExcludedRegion filters instance =
+    let
+        region = instance.location
+    in
+        List.any (\item -> String.startsWith item region) filters.regions
     
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =
