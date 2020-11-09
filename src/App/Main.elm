@@ -146,7 +146,6 @@ update msg ({ flags, navigation } as model) =
                 instances2 = Instances.update (Instances.SetFilters (Instances.OS) oses) model.instances
                 instances3 = Instances.update (Instances.SetFilters (Instances.InstanceType) instancesExclude) (Tuple.first instances2)
                 instances = Tuple.first instances3
-                --instances = Instances.updateWithFilters model.settings
             in
             ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
 
@@ -323,7 +322,7 @@ viewNavbar model =
         |> Navbar.brand [ href "/", class "text-center", class "col-sm-3", class "col-md-3", class "mr-0", class "p-2" ]
             [ img [ src (model.flags.basePath ++ "ec2.svg"), class "logo" ] [], text "Cluster Prophet" ]
         |> Navbar.customItems
-            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances.instances) ++ " possible instances") ]
+            [ Navbar.textItem [ Spacing.p2Sm, class "muted" ] [ text ("Loaded " ++ (String.fromInt <| List.length model.instances.instances) ++ " total instances") ]
             ]
         |> Navbar.view model.navigation.navbarState
 

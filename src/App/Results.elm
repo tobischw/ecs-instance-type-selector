@@ -6,7 +6,7 @@ import App.Util as Util
 import App.Instances as Instances exposing (Instance, Instances, isSuitableInstance)
 import App.Visualization exposing (..)
 import Dict exposing (Dict)
-import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h2)
+import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h3)
 import Html.Attributes exposing (class, style)
 import FormatNumber.Locales exposing (usLocale, Locale, Decimals(..))
 import FormatNumber exposing (format)
@@ -15,7 +15,7 @@ import Bootstrap.Card.Block as Block
 import Svg exposing (Svg, g, a, rect, svg, line, text_)
 import Svg.Attributes exposing (alignmentBaseline, xlinkHref, fontSize, fill, height, stroke, strokeWidth, strokeDasharray, textAnchor, transform, width, x, y, x1, x2, y1, y2)
 import App.Configuration exposing (Daemons)
-import List
+import List.Extra exposing (mapAccuml)
 
 
 type alias Model = 
@@ -53,8 +53,9 @@ viewResultsForService : Model -> Html msg
 viewResultsForService model =
     let
         services = model.configuration.services
-        containers = Dict.toList model.configuration.containers
-        boxes = List.map (convertToBox services) containers
+        containers = model.configuration.containers
+        boxes = convertToBoxes services containers
+
         visualization = prepareVisualization boxes 
         share = round <| visualization.width / 1024
         memory = round <| visualization.height
@@ -74,22 +75,19 @@ viewResultsForService model =
     div []
         [ 
           if showSuggestions then 
-          div [] [  
-          viewVisualization visualization (topWidth, topHeight)
-        , hr [] []
-        , text ("Ideal CPU share: " ++ String.fromInt share)
-        , br [] []
-        , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
-        , br [] []
-        , text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
-        , hr [] []
-        , h2 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
-        , strong [] [ text "Top Suggestion:"]
-        , viewInstanceListing topSuggestion
-        , hr [] []
-        , strong [] [ text "Other Suggestions:"]
-        , viewSuggestions topRemainingSuggestions 
-        , hr [] [] ]
+          div [] 
+          [ viewVisualization visualization (topWidth, topHeight)
+            , hr [] []
+            , text ("Ideal CPU share: " ++ String.fromInt share)
+            , br [] []
+            , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
+            , br [] []
+            , text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
+            , hr [] []
+            , h3 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
+            , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
+            , viewInstanceListing topSuggestion
+        ]
         else
             span [] [ text "No results or suggestions available yet."]
         ]
@@ -115,6 +113,7 @@ mapPrices price =
     case price of
        Instances.Hourly p -> p
        _ -> 0
+
 
 viewSuggestions : Instances -> Html msg 
 viewSuggestions instances = 
@@ -161,8 +160,18 @@ viewPrice price =
             li [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
 
 
-convertToBox : Configuration.Services -> (Int, Configuration.Container) -> Box
-convertToBox services (id, container) =
+convertToBoxes : Configuration.Services -> Configuration.Containers -> List Box 
+convertToBoxes services containers =
+    let
+        containersList = Dict.toList containers
+
+        initialBoxes = List.concatMap (convertToRepeatedBox services) containersList
+    in
+    initialBoxes
+
+
+convertToRepeatedBox : Configuration.Services -> (Int, Configuration.Container) -> List Box
+convertToRepeatedBox services (id, container) =
     let
         service = Dict.get container.serviceId services |> Maybe.withDefault (Configuration.Service "" 0 0 App.Configuration.ByCPUShares 0 0 0)
         cpuShare = (toFloat container.cpuShare)
@@ -172,4 +181,4 @@ convertToBox services (id, container) =
                 App.Configuration.ByCPUShares -> cpuShare
                 App.Configuration.ByMemory -> memory
     in
-    (Box id container.name service.name container.color 0 0 cpuShare memory sortValue)
+    List.repeat service.nominalTasks (Box id container.name service.name container.color 0 0 cpuShare memory sortValue)

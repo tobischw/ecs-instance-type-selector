@@ -12,7 +12,6 @@ import Html exposing (i)
 
 port requestInstances : ( String, String, Int ) -> Cmd msg
 
-
 port receiveInstances : (String -> msg) -> Sub msg
 
 
@@ -93,7 +92,7 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    1000
+    1300
 
 
 --updateWithFilters : 
@@ -156,10 +155,17 @@ findOptimalSuggestions filters instances vcpu memory =
             |> List.filter (isNotExludedInstance filters)
             |> List.sortBy .memory
             |> List.sortBy .vCPU
+            --|> List.sortBy lowestPrice
              -- TODO: sort by lowest price
         top = List.head suggestions |> Maybe.withDefault defaultInstance
    in
         (top, removeAt 0 suggestions)
+
+
+
+--lowestPrice: Instance -> Instance -> Instances -> Instances
+--lowestPrice instance compare instances =
+ --   []
 
 
 isNotExludedInstance: Filters -> Instance -> Bool 
