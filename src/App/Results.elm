@@ -111,7 +111,7 @@ getPriceForTopSuggestion model topSuggestion =
 mapPrices: Instances.Price -> Float 
 mapPrices price =
     case price of
-       Instances.Hourly p -> p
+       Instances.Hourly p _ -> p
        _ -> 0
 
 
@@ -153,11 +153,11 @@ viewPriceList priceTerm =
 viewPrice :  Instances.Price -> Html msg
 viewPrice price =
     case price of
-        Instances.Upfront value ->
-            li [] [ text <| "$" ++ String.fromFloat value ++ " upfront" ]
+        Instances.Upfront value rateCode ->
+            li [] [ text <| "$" ++ String.fromFloat value ++ " upfront ", span [ class "subtle"] [ text rateCode] ]
 
-        Instances.Hourly value ->
-            li [] [ text <| "$" ++ String.fromFloat value ++ "/hr" ]
+        Instances.Hourly value rateCode ->
+            li [] [ text <| "$" ++ String.fromFloat value ++ "/hr ", span [ class "subtle"] [ text rateCode] ]
 
 
 convertToBoxes : Configuration.Services -> Configuration.Containers -> List Box 

@@ -49,8 +49,8 @@ type alias Instance =
      }
 
 type Price         -- Filter out any non-USD data
-     = Upfront Float
-     | Hourly Float
+     = Upfront Float String
+     | Hourly Float String
 
 
 type PriceTerm
@@ -92,7 +92,7 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    1300
+    2500
 
 
 --updateWithFilters : 
@@ -226,9 +226,9 @@ areValidPrices prices =
 isValidPrice : Price -> Bool 
 isValidPrice price =
     case price of
-        Upfront value ->
+        Upfront value _ ->
             value > 0
-        Hourly value ->
+        Hourly value _ ->
             value > 0
 
 
@@ -243,9 +243,9 @@ priceDimensionToPriceInfo dimension =
         unitPrice = String.toFloat dimension.pricePerUnit.usd |> Maybe.withDefault 0
     in
         if dimension.unit == "Hrs" then
-            Hourly unitPrice
+            Hourly unitPrice dimension.rateCode
         else
-            Upfront unitPrice
+            Upfront unitPrice dimension.rateCode
 
 
 convertMemoryStringToMiB : String -> Int
