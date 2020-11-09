@@ -148,15 +148,15 @@ mapToInstances original =
     values <| List.map priceListingToInstance original 
 
 
-findOptimalSuggestions: Filters -> Instances -> Int -> Int -> Int -> (Instance, Instances)
-findOptimalSuggestions filters instances vcpu memory numSuggestions =
+findOptimalSuggestions: Filters -> Instances -> Int -> Int -> (Instance, Instances)
+findOptimalSuggestions filters instances vcpu memory =
    let 
         suggestions = instances 
             |> List.filter (isSuitableInstance vcpu memory)
             |> List.filter (isNotExludedInstance filters)
             |> List.sortBy .memory
             |> List.sortBy .vCPU
-            |> List.take numSuggestions
+             -- TODO: sort by lowest price
         top = List.head suggestions |> Maybe.withDefault defaultInstance
    in
         (top, removeAt 0 suggestions)

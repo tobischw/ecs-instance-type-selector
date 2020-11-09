@@ -15,6 +15,7 @@ import Bootstrap.Card.Block as Block
 import Svg exposing (Svg, g, a, rect, svg, line, text_)
 import Svg.Attributes exposing (alignmentBaseline, xlinkHref, fontSize, fill, height, stroke, strokeWidth, strokeDasharray, textAnchor, transform, width, x, y, x1, x2, y1, y2)
 import App.Configuration exposing (Daemons)
+import List
 
 
 type alias Model = 
@@ -33,7 +34,7 @@ type alias ContainerData =
 sharesLocale : Locale
 sharesLocale =
     { usLocale
-        | decimals = Exact 3
+        | decimals = Exact 2
         , negativePrefix = "("
         , negativeSuffix = ")"
     }
@@ -61,9 +62,11 @@ viewResultsForService model =
 
         (topSuggestion, remainingSuggestions) = 
             if showSuggestions then
-                Instances.findOptimalSuggestions model.instances.filters model.instances.instances share memory 5
+                Instances.findOptimalSuggestions model.instances.filters model.instances.instances share memory
             else
                (Instances.defaultInstance, []) 
+
+        topRemainingSuggestions = List.take 5 remainingSuggestions
 
         topWidth = (toFloat topSuggestion.vCPU * 1024)
         topHeight = (toFloat topSuggestion.memory)
@@ -77,13 +80,15 @@ viewResultsForService model =
         , text ("Ideal CPU share: " ++ String.fromInt share)
         , br [] []
         , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
+        , br [] []
+        , text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
         , hr [] []
         , h2 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
         , strong [] [ text "Top Suggestion:"]
         , viewInstanceListing topSuggestion
         , hr [] []
         , strong [] [ text "Other Suggestions:"]
-        , viewSuggestions remainingSuggestions 
+        , viewSuggestions topRemainingSuggestions 
         , hr [] [] ]
         else
             span [] [ text "No results or suggestions available yet."]
