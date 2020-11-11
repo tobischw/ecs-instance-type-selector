@@ -191,7 +191,7 @@ view model =
         , viewClusters model
         , hr [] []
         , ListGroup.custom
-            [ simpleListItem "Global Settings" FeatherIcons.settings [ href "settings" ]
+            [ simpleListItem "Filters" FeatherIcons.filter [ href "settings" ]
             , simpleListItem "Export JSON" FeatherIcons.share [ href "#" ]
             , simpleListItem "Load JSON" FeatherIcons.download [ href "#" ]
             ]

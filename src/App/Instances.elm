@@ -93,7 +93,7 @@ numInstancesBatched =
 
 maxInstancesTesting : Int 
 maxInstancesTesting =
-    500
+    1500
 
 
 --updateWithFilters : 

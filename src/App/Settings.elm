@@ -90,7 +90,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     Card.config []
-        |> Card.header [] [ text "Global Settings" ]
+        |> Card.header [] [ text "Filters" ]
         |> Card.block []
             [ Block.custom <|
                 Form.form []
