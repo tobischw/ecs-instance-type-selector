@@ -14,7 +14,8 @@ import Multiselect
 import App.Instances exposing (Instances)
 
 type PreferredPricing
-    = Reserved
+    = Reserved1Yr
+    | Reserved3Yr
     | OnDemand
 
 type alias Model =
@@ -32,7 +33,7 @@ init =
     , excludedSystems = Multiselect.initModel [("SUSE", "SUSE"), ("Windows", "Windows"), ("Linux", "Linux"), ("RHEL", "RHEL")] "B"
     , excludedRegions = Multiselect.initModel (List.map (\region -> (region, region)) allRegions) "C"
     , enableLiveResults = True
-    , preferredPricing = Reserved
+    , preferredPricing = Reserved1Yr
     }
 
 
@@ -122,7 +123,8 @@ view model =
                                 |> Fieldset.asGroup
                                 |> Fieldset.children
                                     (Radio.radioList "pricingOptions"
-                                        [ Radio.create [ Radio.id "reserved", Radio.checked (model.preferredPricing == Reserved), Radio.onClick (SetPricingPreference Reserved) ] "Reserved"
+                                        [ Radio.create [ Radio.id "reserved_1yr", Radio.checked (model.preferredPricing == Reserved1Yr), Radio.onClick (SetPricingPreference Reserved1Yr) ] "Reserved (1 year)"
+                                        , Radio.create [ Radio.id "reserved_3yr", Radio.checked (model.preferredPricing == Reserved3Yr), Radio.onClick (SetPricingPreference Reserved3Yr) ] "Reserved (3 year)"
                                         , Radio.create [ Radio.id "ondemand", Radio.checked (model.preferredPricing == OnDemand), Radio.onClick (SetPricingPreference OnDemand) ] "On-Demand"
                                         ]
                                     )

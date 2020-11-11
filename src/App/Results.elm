@@ -71,13 +71,17 @@ viewResultsForService model =
 
         topWidth = (toFloat topSuggestion.vCPU * 1024)
         topHeight = (toFloat topSuggestion.memory)
+
+        (monthly, yearly) = getPriceForTopSuggestion model topSuggestion
     in
     div []
         [ 
           if showSuggestions then 
           div [] 
           [ 
-             h3 [] [ text ("Total: $" ++ format sharesLocale (getPriceForTopSuggestion model topSuggestion) ++ "/mo")]
+             h3 [] [ text ("Total: $" ++ (format sharesLocale monthly) ++ "/mo")]
+            , strong [] [ text ("$" ++ format sharesLocale yearly ++ "/yr")]
+            , br [] []
             , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
             , viewInstanceListing topSuggestion
             , hr [] []
@@ -94,7 +98,7 @@ viewResultsForService model =
         ]
 
 
-getPriceForTopSuggestion: Model -> Instance -> Float 
+getPriceForTopSuggestion: Model -> Instance -> (Float, Float)
 getPriceForTopSuggestion model topSuggestion =
     let
         pricesTmp = 
@@ -106,8 +110,10 @@ getPriceForTopSuggestion model topSuggestion =
         prices = List.map mapPrices pricesTmp
         output = List.maximum prices |> Maybe.withDefault 0
         
+        monthly = output * 30 * 24
+        yearly = monthly * 12
     in
-        output * 30 * 24
+        (monthly, yearly)
 
 mapPrices: Instances.Price -> Float 
 mapPrices price =
