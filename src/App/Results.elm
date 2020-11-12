@@ -63,7 +63,7 @@ viewResultsForService model =
 
         (topSuggestion, remainingSuggestions) = 
             if showSuggestions then
-                Instances.findOptimalSuggestions model.instances.filters model.instances.instances share memory
+                Instances.findOptimalSuggestions model.instances share memory
             else
                (Instances.defaultInstance, []) 
 
@@ -83,7 +83,7 @@ viewResultsForService model =
             , strong [] [ text ("$" ++ format sharesLocale yearly ++ "/yr")]
             , br [] []
             , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
-            , viewInstanceListing topSuggestion
+            , viewInstanceListing model.instances.pricingType topSuggestion
             , hr [] []
             , text ("Ideal CPU share: " ++ String.fromInt share)
             , br [] []
@@ -101,13 +101,7 @@ viewResultsForService model =
 getPriceForTopSuggestion: Model -> Instance -> (Float, Float)
 getPriceForTopSuggestion model topSuggestion =
     let
-        pricesTmp = 
-            case topSuggestion.onDemandPrices of 
-                Instances.OnDemand lst ->
-                        lst
-                _ -> 
-                        []
-        prices = List.map mapPrices pricesTmp
+        prices = List.map mapPrices topSuggestion.prices
         output = List.maximum prices |> Maybe.withDefault 0
         
         monthly = output * 30 * 24
@@ -115,57 +109,82 @@ getPriceForTopSuggestion model topSuggestion =
     in
         (monthly, yearly)
 
-mapPrices: Instances.Price -> Float 
+
+mapPrices : Instances.BoxPricing -> Float
 mapPrices price =
     case price of
-       Instances.Hourly p _ -> p
-       _ -> 0
+        Instances.OnDemand value -> value
+        Instances.Reserved _ _ value -> value
 
 
-viewSuggestions : Instances -> Html msg 
-viewSuggestions instances = 
-    div []
-        (List.map viewInstanceListing instances)
-
-
-viewInstanceListing : Instance -> Html msg
-viewInstanceListing instance =
+viewInstanceListing : Instances.PreferredPricing -> Instance -> Html msg
+viewInstanceListing prefPrice instance =
     div [ style "margin-top" "10px"] [
         Card.config []
         |> Card.block []
             [ Block.text [] [ strong [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> Util.formatMegabytes) ++ " (" ++ instance.operatingSystem ++")") ] ] 
             , Block.text [] [ text instance.location ]
-            , Block.custom <| div [] [ viewPriceList instance.onDemandPrices ]
-            , Block.custom <| div [] [ viewPriceList instance.reservedPrices ]
+            , Block.custom <| viewPriceList prefPrice instance.prices
             ]
         |> Card.view
     ]
 
 
-viewPriceList : Instances.PriceTerm -> Html msg 
-viewPriceList priceTerm =
-    case priceTerm of
-        Instances.OnDemand prices ->
-            if List.length prices > 0 then
-                div [] [ text "OnDemand:", ul [] (List.map viewPrice prices) ]
-            else
-                span [] []
-
-        Instances.Reserved prices ->
-            if List.length prices > 0 then
-                div [] [ text "Reserved:", ul [] (List.map viewPrice prices) ]
-            else
-                span [] []
+viewPriceList : Instances.PreferredPricing -> List Instances.BoxPricing -> Html msg 
+viewPriceList prefPrice prices =
+    let 
+        newPrices = List.filter (Instances.pricingLambda prefPrice) prices
+    in
+        div [] (List.map viewPrice newPrices)
 
 
-viewPrice :  Instances.Price -> Html msg
+viewPrice : Instances.BoxPricing -> Html msg
 viewPrice price =
     case price of
-        Instances.Upfront value rateCode ->
-            li [] [ text <| "$" ++ String.fromFloat value ++ " upfront ", span [ class "subtle"] [ text rateCode] ]
+        Instances.OnDemand hourlyCost ->
+            li [] [ text <| "$" ++ String.fromFloat hourlyCost ++ "/hr "{-, span [ class "subtle"] [ text rateCode]-} ]
 
-        Instances.Hourly value rateCode ->
-            li [] [ text <| "$" ++ String.fromFloat value ++ "/hr ", span [ class "subtle"] [ text rateCode] ]
+        Instances.Reserved contractLength contractType hourlyCost ->
+            case contractType of
+                Instances.AllUpFront -> viewReservedAllUpFront hourlyCost contractLength
+                Instances.NoUpFront -> viewReservedAllNoUpFront hourlyCost contractLength
+
+
+viewReservedAllUpFront: Float -> Instances.ContractLength -> Html msg
+viewReservedAllUpFront hourlyCost contractLength =
+    let 
+        hourlyStr = format sharesLocale hourlyCost
+        upfrontCost = hourlyCost * (365 * scalar * 24)
+        upfrontStr = format sharesLocale upfrontCost
+        scalar = case contractLength of
+            Instances.OneYear -> 1
+            Instances.ThreeYear -> 3
+    in
+        li [] [ text ("$" ++ hourlyStr ++ "/hr (All upfront)")
+              , span [class "subtle"] [text " DON'T FORGET RATECODE"]
+              ,  ul [] [
+                  li [] [
+                      text ("$" ++ upfrontStr ++ " upfront with " ++ String.fromInt scalar ++ " year contract")
+                  ]
+                ]
+        ]
+
+viewReservedAllNoUpFront: Float -> Instances.ContractLength -> Html msg
+viewReservedAllNoUpFront hourlyCost contractLength = 
+    let 
+        hourlyStr = format sharesLocale hourlyCost
+        scalar = case contractLength of
+            Instances.OneYear -> 1
+            Instances.ThreeYear -> 3
+    in
+        li [] [ text ("$" ++ hourlyStr ++ "/hr")
+              , span [class "subtle"] [text " DON'T FORGET RATECODE"]
+              ,  ul [] [
+                  li [] [
+                      text ("With " ++ String.fromInt scalar ++ " year contract")
+                  ]
+                ]
+        ]
 
 
 convertToBoxes : Configuration.Services -> Configuration.Containers -> List Box 

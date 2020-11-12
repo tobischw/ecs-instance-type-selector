@@ -139,12 +139,12 @@ update msg ({ flags, navigation } as model) =
 
                 oses = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedSystems))
                 instancesExclude = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedInstances))
-                regionsExclude = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.excludedRegions))
-                _ = Debug.log "regionsExclude" regionsExclude
+                regionsInclude = (List.map (\item -> Tuple.first item) (Multiselect.getSelectedValues settingsState.includedRegions))
                 instances2 = Instances.update (Instances.SetFilters (Instances.OS) oses) model.instances
                 instances3 = Instances.update (Instances.SetFilters (Instances.InstanceType) instancesExclude) (Tuple.first instances2)
-                instances4 = Instances.update (Instances.SetFilters (Instances.Region) regionsExclude) (Tuple.first instances3)
-                instances = Tuple.first instances4
+                instances4 = Instances.update (Instances.SetFilters (Instances.Region) regionsInclude) (Tuple.first instances3)
+                instances5 = Instances.update (Instances.SetPreferredPricing settingsState.preferredPricing) (Tuple.first instances4)
+                instances = Tuple.first instances5
             in
             ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
 

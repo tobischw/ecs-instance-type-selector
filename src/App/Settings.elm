@@ -1,5 +1,5 @@
 module App.Settings exposing (Model, Msg(..), init, subscriptions, update, view)
-import App.Instances as Instances exposing (FilterType, Model, Filters, update, Msg(..))
+import App.Instances as Instances exposing (FilterType, Model, Filters, update, Msg(..), PreferredPricing(..))
 import App.Constants exposing (instanceTypes, allRegions)
 import App.Util as Util
 import Bootstrap.Card as Card
@@ -13,16 +13,10 @@ import Html.Attributes exposing (..)
 import Multiselect
 import App.Instances exposing (Instances)
 
-type PreferredPricing
-    = Reserved1Yr
-    | Reserved3Yr
-    | OnDemand
-
 type alias Model =
     { excludedInstances : Multiselect.Model
     , excludedSystems: Multiselect.Model
-    , excludedRegions: Multiselect.Model
-    , enableLiveResults : Bool
+    , includedRegions: Multiselect.Model
     , preferredPricing: PreferredPricing
     }
 
@@ -31,8 +25,7 @@ init : Model
 init =
     { excludedInstances = Multiselect.initModel (List.map (\instanceType -> (instanceType, String.toUpper instanceType)) instanceTypes) "A"
     , excludedSystems = Multiselect.initModel [("SUSE", "SUSE"), ("Windows", "Windows"), ("Linux", "Linux"), ("RHEL", "RHEL")] "B"
-    , excludedRegions = Multiselect.initModel (List.map (\region -> (region, region)) allRegions) "C"
-    , enableLiveResults = True
+    , includedRegions = Multiselect.initModel (List.map (\region -> (region, region)) allRegions) "C"
     , preferredPricing = Reserved1Yr
     }
 
@@ -44,8 +37,7 @@ init =
 type Msg
     = UpdateExcludedInstances Multiselect.Msg
     | UpdateExcludedOS Multiselect.Msg
-    | UpdateExcludedRegions Multiselect.Msg
-    | UpdateEnableLiveResults Bool
+    | UpdateIncludedRegions Multiselect.Msg
     | SetPricingPreference PreferredPricing
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -58,9 +50,6 @@ update msg model =
             in
             ( { model | excludedInstances = newExcludedInstances }, Cmd.map UpdateExcludedInstances subCmd )
 
-        UpdateEnableLiveResults value ->
-            ( { model | enableLiveResults = value }, Cmd.none )
-
         UpdateExcludedOS osChangedMessage ->
             let
                 ( newExcludedos, subCmd, _ ) =
@@ -68,12 +57,12 @@ update msg model =
             in
             ( { model | excludedSystems = newExcludedos}, Cmd.map UpdateExcludedOS subCmd )
 
-        UpdateExcludedRegions regionsChangedMessage ->
+        UpdateIncludedRegions regionsChangedMessage ->
             let
                 ( newExcludedRegions, subCmd, _) =
-                    Multiselect.update regionsChangedMessage model.excludedRegions
+                    Multiselect.update regionsChangedMessage model.includedRegions
             in
-            ( { model | excludedRegions = newExcludedRegions}, Cmd.map UpdateExcludedRegions subCmd )
+            ( { model | includedRegions = newExcludedRegions}, Cmd.map UpdateIncludedRegions subCmd )
 
         SetPricingPreference pref -> 
             ({model | preferredPricing = pref}, Cmd.none)
@@ -84,6 +73,7 @@ subscriptions model =
     Sub.batch 
     [ Sub.map UpdateExcludedInstances <| Multiselect.subscriptions model.excludedInstances
     , Sub.map UpdateExcludedOS <| Multiselect.subscriptions model.excludedSystems
+    , Sub.map UpdateIncludedRegions <| Multiselect.subscriptions model.includedRegions
     ]
     
 
@@ -110,9 +100,9 @@ view model =
                             ]
                         ]
                     , Form.row []
-                        [ Form.colLabel [ Col.sm3 ] [ text "Excluded Regions" ]
+                        [ Form.colLabel [ Col.sm3 ] [ text "Included Regions" ]
                         , Form.col [ Col.sm9 ]
-                            [ Html.map UpdateExcludedRegions <| Multiselect.view model.excludedRegions
+                            [ Html.map UpdateIncludedRegions <| Multiselect.view model.includedRegions
                             ]
                         ]
                     , hr [] []
@@ -125,7 +115,7 @@ view model =
                                     (Radio.radioList "pricingOptions"
                                         [ Radio.create [ Radio.id "reserved_1yr", Radio.checked (model.preferredPricing == Reserved1Yr), Radio.onClick (SetPricingPreference Reserved1Yr) ] "Reserved (1 year)"
                                         , Radio.create [ Radio.id "reserved_3yr", Radio.checked (model.preferredPricing == Reserved3Yr), Radio.onClick (SetPricingPreference Reserved3Yr) ] "Reserved (3 year)"
-                                        , Radio.create [ Radio.id "ondemand", Radio.checked (model.preferredPricing == OnDemand), Radio.onClick (SetPricingPreference OnDemand) ] "On-Demand"
+                                        , Radio.create [ Radio.id "ondemand", Radio.checked (model.preferredPricing == OnDemandPricing), Radio.onClick (SetPricingPreference OnDemandPricing) ] "On-Demand"
                                         ]
                                     )
                                 |> Fieldset.view
