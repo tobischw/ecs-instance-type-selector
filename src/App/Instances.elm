@@ -22,6 +22,10 @@ type PreferredPricing
     | Reserved3Yr
     | OnDemandPricing
 
+type OptomizationOrder
+    = RegionsThenBox
+    | BoxThenRegions
+
 type alias Model =
      { instances: Instances
      , filters: Filters
@@ -162,24 +166,28 @@ mapToInstances original =
     values <| List.map priceListingToInstance original 
 
 
-findOptimalSuggestions: Model -> Int -> Int -> (Instance, Instances)
-findOptimalSuggestions model vcpu memory =
+findOptimalSuggestions: Model -> String -> Int -> Int -> Instance 
+findOptimalSuggestions model region vcpu memory =
    let 
         suggestions = model.instances 
             |> List.filter (isSuitableInstance vcpu memory)
             |> List.filter (isNotExludedInstance model.filters)
             |> List.filter (filterByPricing model.pricingType)
+            |> List.filter (filterByRegion region)
             |> List.sortBy .memory
             |> List.sortBy .vCPU
             --|> List.sortBy lowestPrice
              -- TODO: sort by lowest price
-        top = List.head suggestions |> Maybe.withDefault defaultInstance
    in
-        (top, removeAt 0 suggestions)
+        List.head suggestions |> Maybe.withDefault defaultInstance
 
 filterByPricing: PreferredPricing -> Instance -> Bool
 filterByPricing preferred instance =
     List.any (pricingLambda preferred) instance.prices
+
+filterByRegion: String -> Instance -> Bool
+filterByRegion region instance =
+    String.startsWith region instance.location 
 
 
 pricingLambda: PreferredPricing -> BoxPricing -> Bool
@@ -254,7 +262,7 @@ priceListingToInstance original =
         operatingSystem = attributes.operatingSystem
         memory = attributes.memory |> convertMemoryStringToMiB
         vCPU = attributes.vCPU |> String.toInt |> Maybe.withDefault 0
-        onDemandPrices = List.concatMap termToPrices original.terms.onDemand
+        onDemandPrices = List.concatMap termToPrices original.terms.onDemand |> filterZeroValues
         reservedPrices = List.concatMap termToPrices original.terms.reserved |> filterZeroValues
 
         pricingList = onDemandPrices ++ reservedPrices
@@ -271,7 +279,7 @@ filterZeroValues prices =
         keepPrice: BoxPricing -> Bool
         keepPrice price =
            case price of
-                OnDemand _ _ -> True
+                OnDemand _ value -> (value > 0)
                 Reserved _ _ _ value -> (value > 0)
 
     in

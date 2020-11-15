@@ -142,7 +142,8 @@ body {
 
 
 .priceList > li::before {
-  content: "– ";
+  content: "► ";
+  color: rgb(156, 156, 156);
   text-indent: -5px;
 }
 

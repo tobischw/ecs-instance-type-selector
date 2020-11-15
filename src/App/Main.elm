@@ -259,7 +259,7 @@ viewResultsColumn model =
     in
     Grid.col [ gridSize, Col.attrs [ class "p-0" ] ]
              [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
-                , Results.view (Results.Model model.configuration model.instances)
+                , Results.view (Results.Model model.configuration model.instances model.settings)
              ]
 
 

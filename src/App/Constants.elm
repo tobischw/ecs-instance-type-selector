@@ -11,15 +11,12 @@ instanceTypes =
 
 allRegions : List String
 allRegions =
-    [ "US East" 
-    , "US East (Ohio)"
+    [ "US East (Ohio)"
     , "US East (N. Virginia)"
-    , "US West"
     , "US West (N. California)"
     , "US West (Oregon)"
     , "AWS GovCloud"
     , "Canada (Central)"
-    , "EU"
     , "EU (Frankfurt)"
     , "EU (Ireland)"
     , "EU (London)"
@@ -27,7 +24,6 @@ allRegions =
     , "EU (Paris)"
     , "EU (Stockholm)"
     , "Africa (Cape Town)"
-    , "Asia Pacific"
     , "Asia Pacific (Hong Kong)"
     , "Asia Pacific (Mumbai)"
     , "Asia Pacific (Osaka-Local)"

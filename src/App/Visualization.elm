@@ -3,9 +3,10 @@ module App.Visualization exposing (..)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h2)
 import Html.Attributes exposing (class, style)
 import Svg exposing (Svg, g, a, rect, svg, line, text_)
-import Svg.Attributes exposing (alignmentBaseline, xlinkHref, fontSize, fill, height, stroke, strokeWidth, strokeDasharray, textAnchor, transform, width, x, y, x1, x2, y1, y2)
+import Svg.Attributes exposing (alignmentBaseline, opacity, fontSize, fill, height, stroke, strokeWidth, strokeDasharray, textAnchor, transform, width, x, y, x1, x2, y1, y2)
 import List.Extra exposing (scanl, scanl1)
 import App.Util as Util
+import App.Configuration exposing (Msg)
 
 widthScale : Float
 widthScale = 0.25
@@ -29,9 +30,18 @@ type alias Box =
     , sortValue : Float
     }
 
+type alias SuggestedVisualization =
+    { title: String
+    , suggestedWidth: Float
+    , suggestedHeight: Float
+    , visualization: Visualization
+    }
+
+
 
 type alias Visualization =
-    { width : Float
+    { 
+     width : Float
     , height : Float 
     , boxes : List Box
     }
@@ -47,23 +57,37 @@ prepareVisualization boxes =
     (Visualization maxWidth maxHeight arrangedBoxes)
 
 
-viewVisualization: Visualization -> (Float, Float) -> Html msg
-viewVisualization visualization (suggestedWidth, suggestedHeight) =
+viewVisualization: SuggestedVisualization -> Html msg
+viewVisualization suggestion  =
     let
         padding = 60
-        suggested = (suggestedWidth, suggestedHeight)
+        suggestedDimensions = (suggestion.suggestedWidth, suggestion.suggestedHeight)
+        visualization = suggestion.visualization
     in
     svg
-        [ width (String.fromFloat (suggestedWidth * widthScale + padding) ++ "px")
-        , height (String.fromFloat (suggestedHeight * heightScale + padding) ++ "px")
+        [ width (String.fromFloat (suggestion.suggestedWidth * widthScale + padding) ++ "px")
+        , height (String.fromFloat (suggestion.suggestedHeight * heightScale + padding) ++ "px")
         , style "border" "#a9a9a9"
-        ] ( drawSuggestedInstance suggested ++
-            drawAxisLabels suggested ++
-            drawFreeSpaceBox visualization suggested ++
+        ] ( drawSuggestedInstance suggestedDimensions ++
+            drawWatermark suggestion.title suggestedDimensions ++
+            drawAxisLabels suggestedDimensions ++
+            drawFreeSpaceBox visualization suggestedDimensions ++
             (List.concatMap drawBox visualization.boxes) ++
-            (List.concatMap (drawAnnotation suggested) visualization.boxes)
+            (List.concatMap (drawAnnotation suggestedDimensions) visualization.boxes)
            )
 
+drawWatermark: String -> (Float, Float) -> List (Svg msg)
+drawWatermark text (maxWidth, maxHeight) =
+    [ Svg.text_
+            [ x (maxWidth / 2 * widthScale |> String.fromFloat)
+            , y (maxHeight / 2 * heightScale |> String.fromFloat)
+            , fontSize "38px"
+            , textAnchor "middle" 
+            , alignmentBaseline "central"
+            , fill "rgba(0, 0, 0, 0.15)"
+            ]
+            [ Svg.text text ] 
+    ]
 
 drawFreeSpaceBox: Visualization -> (Float, Float) -> List (Svg msg)
 drawFreeSpaceBox visualization suggested =
@@ -88,7 +112,7 @@ calculateRemainingBox visualization (suggestedWidth, suggestedHeight) =
         width = suggestedWidth - visualization.width 
         height = suggestedHeight - visualization.height
     in
-    (Box -1 "Remaining" "Total" "#eee" x y width height 0)
+    (Box -1 "Remaining" "Total" "rgba(200,200,200,0.6)" x y width height 0)
 
 
 drawSuggestedInstance: (Float, Float) -> List (Svg msg)
@@ -97,7 +121,7 @@ drawSuggestedInstance (suggestedWidth, suggestedHeight) =
            [ width (String.fromFloat (suggestedWidth * widthScale) ++ "px"),
              height (String.fromFloat (suggestedHeight * heightScale) ++ "px"),
              stroke "#a9a9a9", 
-             fill "#eee"
+             fill "rgba(127, 127, 127, 0.2)"
            ] []
     ]
 
@@ -114,6 +138,7 @@ drawBox box =
                 , height (String.fromFloat (box.height * heightScale) ++ "px")
                 , stroke "#a9a9a9"
                 , fill box.color
+                , opacity "0.5"
                 ] []
             ]
         )
@@ -139,9 +164,7 @@ drawAnnotation (suggestedWidth, suggestedHeight) box =
 
         xLeft = box.x * widthScale
         xRight = xLeft + boxWidth
-
         offsetX = 10
-
     in
     [ line [ x1 "0"
            , y1 (yBottom |> String.fromFloat)
@@ -158,7 +181,6 @@ drawBoxInfo box x y offsetX =
     let
         cpuLabel = String.fromFloat box.width
         memLabel = Util.formatMegabytes (round box.height)
-
         boxLabel = box.name ++ " (" ++ box.serviceName ++ ")"
     in
     [ drawText (x + offsetX, y + 20) boxLabel "left"

@@ -5,6 +5,7 @@ import App.Daemon as Daemon exposing (sumDaemonResources, daemonsForContainer)
 import App.Util as Util
 import App.Instances as Instances exposing (Instance, Instances, isSuitableInstance)
 import App.Visualization exposing (..)
+import App.Settings as Settings
 import Dict exposing (Dict)
 import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h3, h4)
 import Html.Attributes exposing (class, style)
@@ -22,6 +23,7 @@ type alias Model =
     {
      configuration : Configuration.Model
     , instances: Instances.Model
+    , settings: Settings.Model
     }
 
 
@@ -56,6 +58,33 @@ view model =
         , viewResultsForService model
         ]
 
+getSuggestedInstances: Model -> List Instance
+getSuggestedInstances model =
+    let
+        services = model.configuration.services
+        containers = model.configuration.containers
+        boxes = convertToBoxes services containers
+        visualization = prepareVisualization boxes 
+        share = round <| visualization.width / 1024
+        memory = round <| visualization.height
+
+        output = case model.settings.optimizeOrder of
+            Instances.RegionsThenBox -> 
+                let
+                    _ = Debug.log "Test" "If you're reading this, don't forget to fix Results.getSuggestedInstances"
+                in
+                List.map -- TODO: HACK: PLZ FIX?? HOW DO REGION FIRST??
+                    (\ region -> 
+                        Instances.findOptimalSuggestions model.instances region share memory )
+                        model.instances.filters.regions
+            Instances.BoxThenRegions -> 
+                List.map 
+                    (\ region -> 
+                        Instances.findOptimalSuggestions model.instances region share memory )
+                        model.instances.filters.regions
+
+    in
+        output
 
 viewResultsForService : Model -> Html msg
 viewResultsForService model =
@@ -63,59 +92,61 @@ viewResultsForService model =
         services = model.configuration.services
         containers = model.configuration.containers
         boxes = convertToBoxes services containers
-
         visualization = prepareVisualization boxes 
         share = round <| visualization.width / 1024
         memory = round <| visualization.height
         showSuggestions = (Dict.isEmpty model.configuration.containers == False)
+        suggestions = getSuggestedInstances model
+        visualizations = List.map
+                        (\instance ->
+                            let 
+                                topWidth = (toFloat instance.vCPU * 1024)
+                                topHeight = (toFloat instance.memory)
+                            in  
+                            (SuggestedVisualization instance.location topWidth topHeight visualization)
+                        ) suggestions
 
-        (topSuggestion, remainingSuggestions) = 
-            if showSuggestions then
-                Instances.findOptimalSuggestions model.instances share memory
-            else
-               (Instances.defaultInstance, []) 
-
-        topRemainingSuggestions = List.take 5 remainingSuggestions
-
-        topWidth = (toFloat topSuggestion.vCPU * 1024)
-        topHeight = (toFloat topSuggestion.memory)
-
-        (monthly, yearly) = getPriceForTopSuggestion model topSuggestion
+        monthlyCost = List.foldl (+) 0 (List.map getMonthlyPriceForInstance suggestions)
+        yearlyCost = monthlyCost * 12
     in
     div []
         [ 
           if showSuggestions then 
           div [] 
           [ 
-             h3 [] [ text ("Total: $" ++ (format sharesLocale monthly) ++ "/mo")]
-            , strong [] [ text ("$" ++ format sharesLocale yearly ++ "/yr")]
+             h3 [] [ text ("Total: $" ++ (format sharesLocale monthlyCost) ++ "/mo")]
+            , strong [] [ text ("$" ++ format sharesLocale yearlyCost ++ "/yr")]
             , br [] []
             , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
-            , viewInstanceListing model.instances.pricingType topSuggestion
+            , div [] (List.map (viewInstanceListing model.instances.pricingType) suggestions)
             , hr [] []
             , text ("Ideal CPU share: " ++ String.fromInt share)
             , br [] []
             , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
             , br [] []
-            , text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
+            --, text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
+            , text ("Results matching requirements: Currently unavailable") 
             , hr [] []
-            , viewVisualization visualization (topWidth, topHeight)
+            , div [] (List.map viewVisualization visualizations)
         ]
         else
             span [] [ text "No results or suggestions available yet."]
         ]
 
 
-getPriceForTopSuggestion: Model -> Instance -> (Float, Float)
-getPriceForTopSuggestion model topSuggestion =
+getMonthlyPriceForInstance: Instance -> Float
+getMonthlyPriceForInstance instance =
     let
-        prices = List.map mapPrices topSuggestion.prices
-        output = List.maximum prices |> Maybe.withDefault 0
-        
-        monthly = output * 30 * 24
-        yearly = monthly * 12
+        output = getBestPriceForInstance instance
     in
-        (monthly, yearly)
+        output * 30 * 24
+
+getBestPriceForInstance: Instance -> Float
+getBestPriceForInstance instance =
+    let
+        prices = List.map mapPrices instance.prices
+    in
+        List.maximum prices |> Maybe.withDefault 0
 
 
 mapPrices : Instances.BoxPricing -> Float

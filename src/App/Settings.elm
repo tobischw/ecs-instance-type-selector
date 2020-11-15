@@ -1,5 +1,5 @@
 module App.Settings exposing (Model, Msg(..), init, subscriptions, update, view)
-import App.Instances as Instances exposing (FilterType, Model, Filters, update, Msg(..), PreferredPricing(..))
+import App.Instances as Instances exposing (FilterType, Model, Filters, update, Msg(..), PreferredPricing(..), OptomizationOrder(..))
 import App.Constants exposing (instanceTypes, allRegions)
 import App.Util as Util
 import Bootstrap.Card as Card
@@ -18,7 +18,9 @@ type alias Model =
     , excludedSystems: Multiselect.Model
     , includedRegions: Multiselect.Model
     , preferredPricing: PreferredPricing
+    , optimizeOrder: OptomizationOrder
     }
+
 
 
 init : Model
@@ -27,6 +29,7 @@ init =
     , excludedSystems = Multiselect.initModel [("SUSE", "SUSE"), ("Windows", "Windows"), ("Linux", "Linux"), ("RHEL", "RHEL")] "B"
     , includedRegions = Multiselect.initModel (List.map (\region -> (region, region)) allRegions) "C"
     , preferredPricing = Reserved1Yr
+    , optimizeOrder = BoxThenRegions
     }
 
 
@@ -39,6 +42,7 @@ type Msg
     | UpdateExcludedOS Multiselect.Msg
     | UpdateIncludedRegions Multiselect.Msg
     | SetPricingPreference PreferredPricing
+    | SetOptOrder OptomizationOrder
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -66,6 +70,9 @@ update msg model =
 
         SetPricingPreference pref -> 
             ({model | preferredPricing = pref}, Cmd.none)
+
+        SetOptOrder order ->
+            ({model | optimizeOrder = order}, Cmd.none)
 
 
 subscriptions : Model -> Sub Msg
@@ -103,6 +110,7 @@ view model =
                         [ Form.colLabel [ Col.sm3 ] [ text "Included Regions" ]
                         , Form.col [ Col.sm9 ]
                             [ Html.map UpdateIncludedRegions <| Multiselect.view model.includedRegions
+                            , Form.help [] [ text "For each of these regions, we will try and find an optimal instance type." ]
                             ]
                         ]
                     , hr [] []
@@ -116,6 +124,20 @@ view model =
                                         [ Radio.create [ Radio.id "reserved_1yr", Radio.checked (model.preferredPricing == Reserved1Yr), Radio.onClick (SetPricingPreference Reserved1Yr) ] "Reserved (1 year)"
                                         , Radio.create [ Radio.id "reserved_3yr", Radio.checked (model.preferredPricing == Reserved3Yr), Radio.onClick (SetPricingPreference Reserved3Yr) ] "Reserved (3 year)"
                                         , Radio.create [ Radio.id "ondemand", Radio.checked (model.preferredPricing == OnDemandPricing), Radio.onClick (SetPricingPreference OnDemandPricing) ] "On-Demand"
+                                        ]
+                                    )
+                                |> Fieldset.view
+                            ]
+                        ]
+                        , Form.row []
+                        [ Form.colLabel [ Col.sm3 ] [ text "Order of Optimization" ]
+                        , Form.col [ Col.sm9 ]
+                            [ Fieldset.config
+                                |> Fieldset.asGroup
+                                |> Fieldset.children
+                                    (Radio.radioList "orderOfOptimizations"
+                                        [ Radio.create [ Radio.id "reg-then-box", Radio.checked (model.optimizeOrder == RegionsThenBox), Radio.onClick (SetOptOrder RegionsThenBox) ] "Optimize by Regions → CPU/Mem"
+                                        , Radio.create [ Radio.id "box-then-reg", Radio.checked (model.optimizeOrder == BoxThenRegions), Radio.onClick (SetOptOrder BoxThenRegions) ] "Optimize by CPU/Mem → Regions"
                                         ]
                                     )
                                 |> Fieldset.view
