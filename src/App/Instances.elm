@@ -65,8 +65,8 @@ type ContractType
 --    | PartialUpFront Float -- NOTE: Not dealing with this. Ignoring for l8r.
 
 type BoxPricing
-    = OnDemand Float -- OnDemand {HourlyCost}
-    | Reserved ContractLength ContractType Float
+    = OnDemand String Float -- OnDemand {HourlyCost}
+    | Reserved String ContractLength ContractType Float
 
 
 
@@ -187,21 +187,21 @@ pricingLambda preferred pricing =
     case preferred of
         Reserved1Yr -> 
             case pricing of
-                Reserved length _ _ -> 
+                Reserved _ length _ _ -> 
                     case length of
                         OneYear -> True
                         _ -> False
                 _ -> False
         Reserved3Yr ->
             case pricing of
-                Reserved length _ _ -> 
+                Reserved _ length _ _ -> 
                     case length of
                         ThreeYear -> True
                         _ -> False
                 _ -> False
         OnDemandPricing ->
             case pricing of
-                OnDemand _ -> True
+                OnDemand _ _ -> True
                 _ -> False    
 
 --lowestPrice: Instance -> Instance -> Instances -> Instances
@@ -255,30 +255,27 @@ priceListingToInstance original =
         memory = attributes.memory |> convertMemoryStringToMiB
         vCPU = attributes.vCPU |> String.toInt |> Maybe.withDefault 0
         onDemandPrices = List.concatMap termToPrices original.terms.onDemand
-        reservedPrices = List.concatMap termToPrices original.terms.reserved
+        reservedPrices = List.concatMap termToPrices original.terms.reserved |> filterZeroValues
+
         pricingList = onDemandPrices ++ reservedPrices
     in 
-        if memory > 0 && vCPU >= 0 && (areValidPrices onDemandPrices || areValidPrices reservedPrices) then
+        if memory > 0 && vCPU >= 0 then
             Just (Instance sku instanceType location operatingSystem memory vCPU pricingList)
         else
             Nothing
 
-areValidPrices : List BoxPricing -> Bool 
-areValidPrices prices =
-    if List.length prices > 0 then
-        List.all isValidPrice prices
-    else
-        False
 
+filterZeroValues: List BoxPricing -> List BoxPricing
+filterZeroValues prices =
+    let
+        keepPrice: BoxPricing -> Bool
+        keepPrice price =
+           case price of
+                OnDemand _ _ -> True
+                Reserved _ _ _ value -> (value > 0)
 
--- We should probably filter these out when we do the decoding, not here
-isValidPrice : BoxPricing -> Bool 
-isValidPrice boxPricing =
-    case boxPricing of
-        OnDemand price ->
-            price > 0
-        Reserved _ _ price ->
-            price > 0
+    in
+        List.filter keepPrice prices
 
 
 termToPrices : ApiDecoders.Term -> List BoxPricing
@@ -294,24 +291,25 @@ termToBoxPricing : ApiDecoders.TermAttributes -> ApiDecoders.PriceDimension -> B
 termToBoxPricing termAttributes dimension =
     let 
         unitPrice = String.toFloat dimension.pricePerUnit.usd |> Maybe.withDefault 0
+        rateCode = dimension.rateCode
     in
         -- Ideally, these should be Maybe's, not just be empty strings
         if String.isEmpty termAttributes.leaseContractLength ||
            String.isEmpty termAttributes.purchaseOption then
-            OnDemand unitPrice
+            OnDemand rateCode unitPrice
         else
             let
                 contractLength = contractLengthStringConverter termAttributes.leaseContractLength
 
                 purchaseOption = contractTypeStringConverter termAttributes.purchaseOption
 
-                length = Maybe.withDefault OneYear contractLength
-                yearScalar = case length of
+                finalLength = Maybe.withDefault OneYear contractLength
+                yearScalar = case finalLength of
                     OneYear -> 1
                     ThreeYear -> 3
                     
             in
-            Reserved length (Maybe.withDefault NoUpFront purchaseOption) ((unitPrice / (365 * yearScalar)) / 24)
+            Reserved rateCode finalLength (Maybe.withDefault NoUpFront purchaseOption) ((unitPrice / (365 * yearScalar)) / 24)
 
 
 contractLengthStringConverter: String -> Maybe ContractLength

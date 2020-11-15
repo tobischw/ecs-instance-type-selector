@@ -131,6 +131,21 @@ body {
   font-weight: bold;
 }
 
+.priceList > li {
+  list-style-type: none;
+  margin-bottom: 0.75em;
+}
+
+.priceList > li > ul > li {
+  list-style-type: none;
+}
+
+
+.priceList > li::before {
+  content: "– ";
+  text-indent: -5px;
+}
+
 .feather {
     vertical-align: middle;
     display: inline-block;
@@ -148,6 +163,6 @@ body {
 }
 
 .subtle {
-  color: #8d8d8d;
-  font-size: 11px;
+  color: #b4b4b4;
+  font-size: 10px;
 }

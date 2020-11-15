@@ -6,7 +6,7 @@ import App.Util as Util
 import App.Instances as Instances exposing (Instance, Instances, isSuitableInstance)
 import App.Visualization exposing (..)
 import Dict exposing (Dict)
-import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h3)
+import Html exposing (Html, br, canvas, div, hr, p, small, span, strong, text, ul, li, h3, h4)
 import Html.Attributes exposing (class, style)
 import FormatNumber.Locales exposing (usLocale, Locale, Decimals(..))
 import FormatNumber exposing (format)
@@ -35,6 +35,14 @@ sharesLocale : Locale
 sharesLocale =
     { usLocale
         | decimals = Exact 2
+        , negativePrefix = "("
+        , negativeSuffix = ")"
+    }
+
+hourlyLocale : Locale
+hourlyLocale =
+    { usLocale
+        | decimals = Exact 8
         , negativePrefix = "("
         , negativeSuffix = ")"
     }
@@ -113,8 +121,8 @@ getPriceForTopSuggestion model topSuggestion =
 mapPrices : Instances.BoxPricing -> Float
 mapPrices price =
     case price of
-        Instances.OnDemand value -> value
-        Instances.Reserved _ _ value -> value
+        Instances.OnDemand _ value -> value
+        Instances.Reserved _ _ _ value -> value
 
 
 viewInstanceListing : Instances.PreferredPricing -> Instance -> Html msg
@@ -122,7 +130,7 @@ viewInstanceListing prefPrice instance =
     div [ style "margin-top" "10px"] [
         Card.config []
         |> Card.block []
-            [ Block.text [] [ strong [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> Util.formatMegabytes) ++ " (" ++ instance.operatingSystem ++")") ] ] 
+            [ Block.text [] [ h4 [] [ text (instance.instanceType ++ ", " ++ (instance.vCPU |> String.fromInt) ++ "vCPUs, " ++ (instance.memory |> Util.formatMegabytes) ++ " (" ++ instance.operatingSystem ++")") ] ] 
             , Block.text [] [ text instance.location ]
             , Block.custom <| viewPriceList prefPrice instance.prices
             ]
@@ -135,25 +143,25 @@ viewPriceList prefPrice prices =
     let 
         newPrices = List.filter (Instances.pricingLambda prefPrice) prices
     in
-        div [] (List.map viewPrice newPrices)
+        ul [class "priceList"] (List.map viewPrice newPrices)
 
 
 viewPrice : Instances.BoxPricing -> Html msg
 viewPrice price =
     case price of
-        Instances.OnDemand hourlyCost ->
-            li [] [ text <| "$" ++ String.fromFloat hourlyCost ++ "/hr "{-, span [ class "subtle"] [ text rateCode]-} ]
+        Instances.OnDemand rateCode hourlyCost ->
+            li [] [ text <| "$" ++ String.fromFloat hourlyCost ++ "/hr ", span [ class "subtle"] [ text (" " ++ rateCode) ] ]
 
-        Instances.Reserved contractLength contractType hourlyCost ->
+        Instances.Reserved rateCode contractLength contractType hourlyCost ->
             case contractType of
-                Instances.AllUpFront -> viewReservedAllUpFront hourlyCost contractLength
-                Instances.NoUpFront -> viewReservedAllNoUpFront hourlyCost contractLength
+                Instances.AllUpFront -> viewReservedAllUpFront rateCode hourlyCost contractLength
+                Instances.NoUpFront -> viewReservedAllNoUpFront rateCode hourlyCost contractLength
 
 
-viewReservedAllUpFront: Float -> Instances.ContractLength -> Html msg
-viewReservedAllUpFront hourlyCost contractLength =
+viewReservedAllUpFront: String -> Float -> Instances.ContractLength -> Html msg
+viewReservedAllUpFront rateCode hourlyCost contractLength =
     let 
-        hourlyStr = format sharesLocale hourlyCost
+        hourlyStr = format hourlyLocale hourlyCost
         upfrontCost = hourlyCost * (365 * scalar * 24)
         upfrontStr = format sharesLocale upfrontCost
         scalar = case contractLength of
@@ -161,7 +169,7 @@ viewReservedAllUpFront hourlyCost contractLength =
             Instances.ThreeYear -> 3
     in
         li [] [ text ("$" ++ hourlyStr ++ "/hr (All upfront)")
-              , span [class "subtle"] [text " DON'T FORGET RATECODE"]
+              , span [class "subtle"] [ text (" " ++ rateCode )]
               ,  ul [] [
                   li [] [
                       text ("$" ++ upfrontStr ++ " upfront with " ++ String.fromInt scalar ++ " year contract")
@@ -169,16 +177,16 @@ viewReservedAllUpFront hourlyCost contractLength =
                 ]
         ]
 
-viewReservedAllNoUpFront: Float -> Instances.ContractLength -> Html msg
-viewReservedAllNoUpFront hourlyCost contractLength = 
+viewReservedAllNoUpFront: String -> Float -> Instances.ContractLength -> Html msg
+viewReservedAllNoUpFront rateCode hourlyCost contractLength = 
     let 
-        hourlyStr = format sharesLocale hourlyCost
+        hourlyStr = format hourlyLocale hourlyCost
         scalar = case contractLength of
             Instances.OneYear -> 1
             Instances.ThreeYear -> 3
     in
         li [] [ text ("$" ++ hourlyStr ++ "/hr")
-              , span [class "subtle"] [text " DON'T FORGET RATECODE"]
+              , span [class "subtle"] [ text (" " ++ rateCode) ]
               ,  ul [] [
                   li [] [
                       text ("With " ++ String.fromInt scalar ++ " year contract")
