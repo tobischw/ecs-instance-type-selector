@@ -24,6 +24,8 @@ type alias Model =
      configuration : Configuration.Model
     , instances: Instances.Model
     , settings: Settings.Model
+    , viewportSize: (Int, Int)
+    , collapsedSidebar: Bool
     }
 
 
@@ -37,16 +39,12 @@ sharesLocale : Locale
 sharesLocale =
     { usLocale
         | decimals = Exact 2
-        , negativePrefix = "("
-        , negativeSuffix = ")"
     }
 
 hourlyLocale : Locale
 hourlyLocale =
     { usLocale
         | decimals = Exact 8
-        , negativePrefix = "("
-        , negativeSuffix = ")"
     }
 
 view : Model -> Html msg
@@ -65,9 +63,8 @@ getSuggestedInstances model =
         containers = model.configuration.containers
         boxes = convertToBoxes services containers
         visualization = prepareVisualization boxes 
-        share = round <| visualization.width / 1024
+        share = round <| visualization.width
         memory = round <| visualization.height
-
         output = case model.settings.optimizeOrder of
             Instances.RegionsThenBox -> 
                 let
@@ -75,12 +72,13 @@ getSuggestedInstances model =
                 in
                 List.map -- TODO: HACK: PLZ FIX?? HOW DO REGION FIRST??
                     (\ region -> 
-                        Instances.findOptimalSuggestions model.instances region share memory )
+                        -- TODO: Need to figure out what best instance is to ensure we duplicate? How do we choose this?
+                        Instances.findOptimalSuggestions model.instances region "" share memory )
                         model.instances.filters.regions
             Instances.BoxThenRegions -> 
                 List.map 
                     (\ region -> 
-                        Instances.findOptimalSuggestions model.instances region share memory )
+                        Instances.findOptimalSuggestions model.instances region "" share memory )
                         model.instances.filters.regions
 
     in
@@ -106,7 +104,7 @@ viewResultsForService model =
                             (SuggestedVisualization instance.location topWidth topHeight visualization)
                         ) suggestions
 
-        monthlyCost = List.foldl (+) 0 (List.map getMonthlyPriceForInstance suggestions)
+        monthlyCost = List.foldl (+) 0 (List.map (getMonthlyPriceForInstance model.instances.pricingType) suggestions)
         yearlyCost = monthlyCost * 12
     in
     div []
@@ -116,16 +114,12 @@ viewResultsForService model =
           [ 
              h3 [] [ text ("Total: $" ++ (format sharesLocale monthlyCost) ++ "/mo")]
             , strong [] [ text ("$" ++ format sharesLocale yearlyCost ++ "/yr")]
-            , br [] []
-            , span [] [ text "We determined that ", strong [] [ text "a single instance" ], text " is a good fit:"]
+            , hr [] []
             , div [] (List.map (viewInstanceListing model.instances.pricingType) suggestions)
             , hr [] []
             , text ("Ideal CPU share: " ++ String.fromInt share)
             , br [] []
             , text ("Ideal memory: " ++ Util.formatMegabytes memory) 
-            , br [] []
-            --, text ("Results matching requirements: " ++ String.fromInt (List.length remainingSuggestions))
-            , text ("Results matching requirements: Currently unavailable") 
             , hr [] []
             , div [] (List.map viewVisualization visualizations)
         ]
@@ -134,16 +128,18 @@ viewResultsForService model =
         ]
 
 
-getMonthlyPriceForInstance: Instance -> Float
-getMonthlyPriceForInstance instance =
+getMonthlyPriceForInstance: Instances.PreferredPricing -> Instance -> Float
+getMonthlyPriceForInstance preferredPricing instance =
     let
-        output = getBestPriceForInstance instance
+        output = getBestPriceForInstance preferredPricing instance
     in
-        output * 30 * 24
+        output * 24 * 30
 
-getBestPriceForInstance: Instance -> Float
-getBestPriceForInstance instance =
+
+getBestPriceForInstance: Instances.PreferredPricing -> Instance -> Float
+getBestPriceForInstance preferredPricing instance =
     let
+        instancePrices = List.filter (Instances.pricingLambda preferredPricing) instance.prices
         prices = List.map mapPrices instance.prices
     in
         List.maximum prices |> Maybe.withDefault 0

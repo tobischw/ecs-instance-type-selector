@@ -48,6 +48,7 @@ type Msg
     | SetFilters FilterType (List String)
     | SetPreferredPricing PreferredPricing
 
+
 type alias Instances = List Instance
 type alias Instance = 
      { sku: String                 -- The SKU (ID) of the EC2 instance
@@ -166,14 +167,15 @@ mapToInstances original =
     values <| List.map priceListingToInstance original 
 
 
-findOptimalSuggestions: Model -> String -> Int -> Int -> Instance 
-findOptimalSuggestions model region vcpu memory =
+findOptimalSuggestions: Model -> String -> String -> Int -> Int -> Instance 
+findOptimalSuggestions model region instanceType vcpu memory =
    let 
         suggestions = model.instances 
             |> List.filter (isSuitableInstance vcpu memory)
             |> List.filter (isNotExludedInstance model.filters)
             |> List.filter (filterByPricing model.pricingType)
             |> List.filter (filterByRegion region)
+            |> List.filter (filterByInstanceType instanceType)
             |> List.sortBy .memory
             |> List.sortBy .vCPU
             --|> List.sortBy lowestPrice
@@ -181,13 +183,20 @@ findOptimalSuggestions model region vcpu memory =
    in
         List.head suggestions |> Maybe.withDefault defaultInstance
 
+
 filterByPricing: PreferredPricing -> Instance -> Bool
 filterByPricing preferred instance =
     List.any (pricingLambda preferred) instance.prices
 
+
 filterByRegion: String -> Instance -> Bool
 filterByRegion region instance =
     String.startsWith region instance.location 
+
+
+filterByInstanceType: String -> Instance -> Bool
+filterByInstanceType instanceType instance =
+    String.startsWith instanceType instance.instanceType 
 
 
 pricingLambda: PreferredPricing -> BoxPricing -> Bool
@@ -246,9 +255,9 @@ isIncludedRegion filters instance =
 isSuitableInstance : Int -> Int -> Instance -> Bool
 isSuitableInstance vcpu memory instance =
     let
-        share = round <| toFloat vcpu / 1024
+        share = round <| toFloat vcpu
     in
-    instance.memory >= memory && instance.vCPU >= share
+    instance.memory >= memory && (instance.vCPU * 1024) >= share
 
 
 priceListingToInstance : ApiDecoders.PriceListing -> Maybe Instance
@@ -308,14 +317,11 @@ termToBoxPricing termAttributes dimension =
         else
             let
                 contractLength = contractLengthStringConverter termAttributes.leaseContractLength
-
                 purchaseOption = contractTypeStringConverter termAttributes.purchaseOption
-
                 finalLength = Maybe.withDefault OneYear contractLength
                 yearScalar = case finalLength of
                     OneYear -> 1
                     ThreeYear -> 3
-                    
             in
             Reserved rateCode finalLength (Maybe.withDefault NoUpFront purchaseOption) ((unitPrice / (365 * yearScalar)) / 24)
 

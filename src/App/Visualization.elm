@@ -57,6 +57,19 @@ prepareVisualization boxes =
     (Visualization maxWidth maxHeight arrangedBoxes)
 
 
+getMaxSVGSize: (Int, Int) -> Bool -> (Int, Int)
+getMaxSVGSize viewPortSize sidebarOpen =
+    let
+        (vW, vH) = viewPortSize
+        --widthScale = case sidebarOpen of
+         --   True -> 0.39
+          --  False -> 0.63
+        --outW = widthScale * vW
+        outH = vH -- TODO: Ignores height considerations
+    in
+        (0, 0) -- todo: fix this
+    
+
 viewVisualization: SuggestedVisualization -> Html msg
 viewVisualization suggestion  =
     let

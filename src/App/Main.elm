@@ -17,6 +17,7 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Navbar as Navbar
 import Bootstrap.Utilities.Spacing as Spacing
 import Browser exposing (UrlRequest(..), application, document)
+import Browser.Events as BrowserEvent
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Html exposing (..)
@@ -52,6 +53,7 @@ type alias Model =
     , error : Maybe String
     , settings : Settings.Model
     , collapsedSidebar : Bool
+    , viewportSize: (Int, Int)
     }
 
 
@@ -81,6 +83,7 @@ type Msg
     | TaskMsg Task.Msg
     | ContainerMsg Container.Msg
     | SettingsMsg Settings.Msg
+    | ViewportResize Int Int
     | ToggleSidebar
 
 
@@ -88,6 +91,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ flags, navigation } as model) =
     case msg of
         NavbarMsg state ->
+            let
+                _ = Debug.log "Nav" state
+            in
             ( { model
                 | navigation = { navigation | navbarState = state }
               }
@@ -149,7 +155,10 @@ update msg ({ flags, navigation } as model) =
             ( { model | settings = first msgWithCmd, instances = instances }, Cmd.map SettingsMsg (second msgWithCmd) )
 
         ToggleSidebar ->
-            ( { model | collapsedSidebar = not model.collapsedSidebar }, Cmd.none )        
+            ( { model | collapsedSidebar = not model.collapsedSidebar }, Cmd.none )     
+            
+        ViewportResize width height ->
+            ( { model | viewportSize = (width, height)}, Cmd.none )
 
 
 urlToDetail : String -> Url -> Detail
@@ -259,7 +268,7 @@ viewResultsColumn model =
     in
     Grid.col [ gridSize, Col.attrs [ class "p-0" ] ]
              [ Maybe.map viewError model.error |> Maybe.withDefault (span [] [])
-                , Results.view (Results.Model model.configuration model.instances model.settings)
+                , Results.view (Results.Model model.configuration model.instances model.settings model.viewportSize model.collapsedSidebar)
              ]
 
 
@@ -337,6 +346,7 @@ subscriptions model =
         [ Navbar.subscriptions model.navigation.navbarState NavbarMsg
         , Sub.map SettingsMsg <| Settings.subscriptions model.settings
         , Sub.map InstancesMsg <| Instances.subscriptions model.instances
+        , BrowserEvent.onResize (\w h -> ViewportResize w h)
         ]
 
 
@@ -363,6 +373,7 @@ init ({ basePath } as flags) url key =
       , error = Nothing
       , settings = Settings.init
       , collapsedSidebar = False
+      , viewportSize = (0, 0)
       }
     , Cmd.batch [ navbarCmd, Instances.requestInstances ( Instances.defaultRegion, "", Instances.numInstancesBatched ) ]
     )
